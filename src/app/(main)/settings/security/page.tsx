@@ -28,7 +28,7 @@ export default function SecuritySettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlWord="newPassword">Nueva contraseña</Label>
+                        <Label htmlFor="newPassword">Nueva contraseña</Label>
                         <Input id="newPassword" type="password" placeholder="••••••••" />
                     </div>
 
