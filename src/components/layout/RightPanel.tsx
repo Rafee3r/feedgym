@@ -11,33 +11,33 @@ import { getInitials } from "@/lib/utils"
 
 // Mock data - en producción vendría de la API
 const trendingTopics = [
-    { tag: "GymLife", posts: 1234 },
-    { tag: "PRDay", posts: 856 },
-    { tag: "LegDay", posts: 654 },
-    { tag: "ProgressPics", posts: 432 },
+    { tag: "GymLife", posts: 5 },
+    { tag: "PRDay", posts: 8 },
+    { tag: "LegDay", posts: 3 },
+    { tag: "ProgressPics", posts: 9 },
 ]
 
 const suggestedUsers = [
     {
         id: "1",
-        username: "fitnessguru",
-        displayName: "Fitness Guru",
+        username: "rafesy",
+        displayName: "Rafesy",
         avatarUrl: null,
-        bio: "Coach certificado 💪",
+        bio: "Full Stack Dev & Gym Bro 💻💪",
     },
     {
         id: "2",
-        username: "gymrat",
-        displayName: "Gym Rat",
+        username: "tully",
+        displayName: "Tully",
         avatarUrl: null,
-        bio: "Levantando hierro desde 2015",
+        bio: "Fitness & Lifestyle ✨",
     },
     {
         id: "3",
-        username: "nutritionpro",
-        displayName: "Nutrition Pro",
+        username: "adanmurillo",
+        displayName: "Adan Murillo",
         avatarUrl: null,
-        bio: "Nutrióloga deportiva",
+        bio: "Entrenador Personal 🏋️",
     },
 ]
 
@@ -129,7 +129,7 @@ export function RightPanel() {
                     Acerca de
                 </Link>
                 <span>·</span>
-                <span>© 2024 FeedGym</span>
+                <span>© 2026 FeedGym</span>
             </div>
         </aside>
     )

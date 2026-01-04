@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -11,6 +11,9 @@ import {
     MoreHorizontal,
     Trash2,
     Flag,
+    Play,
+    Pause,
+    Mic,
 } from "lucide-react"
 import { cn, formatRelativeTime, formatNumber } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -24,6 +27,55 @@ import {
 import { FitnessMetadata } from "./FitnessMetadata"
 import { PostTypeBadge } from "./PostTypeBadge"
 import type { PostData } from "@/types"
+
+function WhatsAppAudioPlayer({ src }: { src: string }) {
+    const [isPlaying, setIsPlaying] = useState(false)
+    const audioRef = useRef<HTMLAudioElement | null>(null)
+
+    const togglePlay = () => {
+        if (!audioRef.current) return
+        if (isPlaying) {
+            audioRef.current.pause()
+        } else {
+            audioRef.current.play()
+        }
+        setIsPlaying(!isPlaying)
+    }
+
+    return (
+        <div className="flex items-center gap-3 bg-accent/50 p-3 rounded-lg border border-border mt-3 w-fit pr-6 rounded-tr-3xl rounded-br-3xl rounded-bl-3xl">
+            <div className="items-center justify-center flex">
+                <button
+                    onClick={togglePlay}
+                    className="w-10 h-10 flex items-center justify-center bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-colors"
+                >
+                    {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-1" />}
+                </button>
+            </div>
+            <div className="flex flex-col gap-1 min-w-[150px]">
+                <div className="h-1 bg-primary/20 rounded-full w-full overflow-hidden">
+                    <div className={cn("h-full bg-primary transition-all duration-300", isPlaying ? "w-full animate-[pulse_2s_infinite]" : "w-0")} />
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                    <span>{isPlaying ? "Reproduciendo..." : "Audio"}</span>
+                </div>
+            </div>
+            <div className="opacity-50">
+                <Mic className="w-5 h-5 text-primary" />
+            </div>
+            <audio
+                ref={audioRef}
+                src={src}
+                onEnded={() => setIsPlaying(false)}
+                onPause={() => setIsPlaying(false)}
+                className="hidden"
+            />
+        </div>
+    )
+}
+// Import useRef inside the PostCard file if not present globally or move this component outside correctly. 
+// Note: Since I'm editing a file, `useRef` needs to be imported at the top. I'll fix imports in another step if needed, but I see `useState` is there. `useRef` is missing.
+
 
 interface PostCardProps {
     post: PostData

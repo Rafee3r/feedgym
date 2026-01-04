@@ -56,6 +56,7 @@ export interface PostMetadata {
     unit?: WeightUnit;
     rpe?: number;
     duration?: number;
+    audioUrl?: string;
 }
 
 export interface PostAuthor {
