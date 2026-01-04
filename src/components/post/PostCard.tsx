@@ -259,7 +259,7 @@ export function PostCard({
                             post.mediaUrls.length === 4 && "grid-cols-2 grid-rows-2",
                             post.mediaUrls.length >= 5 && "grid-cols-6 grid-rows-2", // 2 big, 3 small - simplified common grid
                         )}>
-                            {post.mediaUrls.map((url, i) => {
+                            {post.mediaUrls.map((url: string, i: number) => {
                                 // Simplified grid logic
                                 let spanClass = ""
                                 if (post.mediaUrls!.length === 3 && i === 0) spanClass = "row-span-2"
