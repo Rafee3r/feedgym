@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
             repostsCount: post.repostsCount,
             author: post.author,
             createdAt: post.createdAt,
-            isLiked: session ? (post as { likes?: { id: string }[] }).likes?.length > 0 : false,
-            isBookmarked: session ? (post as { bookmarks?: { id: string }[] }).bookmarks?.length > 0 : false,
+            isLiked: session ? ((post as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
+            isBookmarked: session ? ((post as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
             repostOf: post.repostOf,
         }))
 
