@@ -1,0 +1,328 @@
+// FeedGym Database Schema
+// Prisma ORM with PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// AUTH MODELS (NextAuth compatible)
+// ============================================
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  emailVerified  DateTime?
+  hashedPassword String?
+  
+  // Profile info
+  username       String    @unique
+  displayName    String
+  bio            String?   @db.Text
+  avatarUrl      String?
+  bannerUrl      String?
+  location       String?
+  website        String?
+  
+  // Fitness specific
+  pronouns       String?
+  gymSplit       String?   // e.g., "PPL", "Upper/Lower", "Bro Split"
+  trainingDays   String[]  // e.g., ["Monday", "Wednesday", "Friday"]
+  goal           GoalType  @default(MAINTAIN)
+  
+  // Privacy settings
+  accountPrivacy AccountPrivacy @default(PUBLIC)
+  allowDMs       DMPrivacy      @default(EVERYONE)
+  showMetrics    Boolean        @default(true) // Show likes/followers count
+  discoverable   Boolean        @default(true) // Appear in search
+  
+  // Metadata
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  
+  // Relations
+  accounts       Account[]
+  sessions       Session[]
+  posts          Post[]
+  likes          Like[]
+  bookmarks      Bookmark[]
+  followers      Follow[]  @relation("following")
+  following      Follow[]  @relation("follower")
+  weightLogs     WeightLog[]
+  personalRecords PersonalRecord[]
+  notifications  Notification[] @relation("recipient")
+  notificationsSent Notification[] @relation("actor")
+  
+  @@index([username])
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ============================================
+// SOCIAL MODELS
+// ============================================
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  imageUrl  String?
+  
+  // Post type for fitness context
+  type      PostType @default(NOTE)
+  
+  // Fitness metadata (JSON for flexibility)
+  metadata  Json?    // { exercise, sets, reps, weight, unit, rpe, duration }
+  
+  // Privacy
+  audience  PostAudience @default(PUBLIC)
+  
+  // Thread/Reply structure
+  parentId    String?
+  parent      Post?    @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Post[]   @relation("replies")
+  threadRootId String? // For easy thread navigation
+  
+  // Repost/Quote
+  repostOfId  String?
+  repostOf    Post?    @relation("reposts", fields: [repostOfId], references: [id], onDelete: SetNull)
+  reposts     Post[]   @relation("reposts")
+  isQuote     Boolean  @default(false)
+  
+  // Counters (denormalized for performance)
+  likesCount    Int @default(0)
+  repliesCount  Int @default(0)
+  repostsCount  Int @default(0)
+  
+  // Author
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime? // Soft delete
+  
+  // Relations
+  likes     Like[]
+  bookmarks Bookmark[]
+  notifications Notification[]
+
+  @@index([authorId])
+  @@index([parentId])
+  @@index([threadRootId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ============================================
+// FITNESS MODELS
+// ============================================
+
+model WeightLog {
+  id        String   @id @default(cuid())
+  userId    String
+  weight    Float    // in kg
+  unit      WeightUnit @default(KG)
+  notes     String?
+  loggedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([loggedAt])
+}
+
+model PersonalRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  exercise  String
+  weight    Float
+  unit      WeightUnit @default(KG)
+  reps      Int      @default(1)
+  notes     String?
+  achievedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([exercise])
+}
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  read      Boolean          @default(false)
+  
+  // Who receives
+  recipientId String
+  recipient   User   @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  
+  // Who triggered
+  actorId   String
+  actor     User   @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+  
+  // Related post (if applicable)
+  postId    String?
+  post      Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@index([recipientId, read])
+  @@index([createdAt])
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum PostType {
+  NOTE
+  WORKOUT
+  PROGRESS
+  PR
+  MEAL
+}
+
+enum PostAudience {
+  PUBLIC
+  FOLLOWERS
+  CLOSE_FRIENDS
+  ONLY_ME
+}
+
+enum AccountPrivacy {
+  PUBLIC
+  FOLLOWERS_ONLY
+  PRIVATE
+}
+
+enum DMPrivacy {
+  EVERYONE
+  FOLLOWERS
+  NOBODY
+}
+
+enum GoalType {
+  CUT
+  BULK
+  MAINTAIN
+  RECOMP
+}
+
+enum WeightUnit {
+  KG
+  LB
+}
+
+enum NotificationType {
+  LIKE
+  REPLY
+  REPOST
+  QUOTE
+  FOLLOW
+  MENTION
+}

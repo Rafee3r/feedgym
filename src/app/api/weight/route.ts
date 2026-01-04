@@ -1,0 +1,109 @@
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import prisma from "@/lib/prisma"
+import { weightLogSchema } from "@/lib/validations"
+
+// GET /api/weight - Get weight logs for current user
+export async function GET(request: NextRequest) {
+    try {
+        const session = await auth()
+
+        if (!session) {
+            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+        }
+
+        const { searchParams } = new URL(request.url)
+        const limit = parseInt(searchParams.get("limit") || "30")
+
+        const logs = await prisma.weightLog.findMany({
+            where: { userId: session.user.id },
+            orderBy: { loggedAt: "desc" },
+            take: limit,
+        })
+
+        // Format for chart (reverse for chronological order)
+        const chartData = logs
+            .reverse()
+            .map((log) => ({
+                date: log.loggedAt.toISOString().split("T")[0],
+                weight: log.weight,
+            }))
+
+        const latestWeight = logs.length > 0 ? logs[logs.length - 1].weight : null
+        const previousWeight = logs.length > 1 ? logs[logs.length - 2].weight : null
+        const weightChange =
+            latestWeight && previousWeight ? latestWeight - previousWeight : null
+
+        return NextResponse.json({
+            logs: logs.reverse().map((log) => ({
+                id: log.id,
+                weight: log.weight,
+                unit: log.unit,
+                notes: log.notes,
+                loggedAt: log.loggedAt,
+            })),
+            chartData,
+            stats: {
+                latest: latestWeight,
+                change: weightChange,
+                count: logs.length,
+            },
+        })
+    } catch (error) {
+        console.error("Get weight logs error:", error)
+        return NextResponse.json(
+            { error: "Error al obtener registros de peso" },
+            { status: 500 }
+        )
+    }
+}
+
+// POST /api/weight - Add weight log
+export async function POST(request: NextRequest) {
+    try {
+        const session = await auth()
+
+        if (!session) {
+            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const validated = weightLogSchema.safeParse(body)
+
+        if (!validated.success) {
+            return NextResponse.json(
+                { error: validated.error.errors[0].message },
+                { status: 400 }
+            )
+        }
+
+        const { weight, unit, notes, loggedAt } = validated.data
+
+        const log = await prisma.weightLog.create({
+            data: {
+                userId: session.user.id,
+                weight,
+                unit,
+                notes,
+                loggedAt: loggedAt ? new Date(loggedAt) : new Date(),
+            },
+        })
+
+        return NextResponse.json(
+            {
+                id: log.id,
+                weight: log.weight,
+                unit: log.unit,
+                notes: log.notes,
+                loggedAt: log.loggedAt,
+            },
+            { status: 201 }
+        )
+    } catch (error) {
+        console.error("Create weight log error:", error)
+        return NextResponse.json(
+            { error: "Error al registrar peso" },
+            { status: 500 }
+        )
+    }
+}

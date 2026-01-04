@@ -1,0 +1,217 @@
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import prisma from "@/lib/prisma"
+import { postSchema } from "@/lib/validations"
+
+// GET /api/posts - Get feed posts
+export async function GET(request: NextRequest) {
+    try {
+        const session = await auth()
+        const { searchParams } = new URL(request.url)
+
+        const cursor = searchParams.get("cursor")
+        const limit = parseInt(searchParams.get("limit") || "20")
+        const userId = searchParams.get("userId")
+
+        const where = {
+            parentId: null, // Only top-level posts, not replies
+            deletedAt: null,
+            ...(userId && { authorId: userId }),
+        }
+
+        const posts = await prisma.post.findMany({
+            where,
+            take: limit + 1,
+            ...(cursor && {
+                cursor: { id: cursor },
+                skip: 1,
+            }),
+            orderBy: { createdAt: "desc" },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                        displayName: true,
+                        avatarUrl: true,
+                    },
+                },
+                repostOf: {
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                displayName: true,
+                                avatarUrl: true,
+                            },
+                        },
+                    },
+                },
+                ...(session && {
+                    likes: {
+                        where: { userId: session.user.id },
+                        select: { id: true },
+                    },
+                    bookmarks: {
+                        where: { userId: session.user.id },
+                        select: { id: true },
+                    },
+                }),
+            },
+        })
+
+        const hasMore = posts.length > limit
+        const postsToReturn = hasMore ? posts.slice(0, -1) : posts
+
+        const formattedPosts = postsToReturn.map((post) => ({
+            id: post.id,
+            content: post.content,
+            imageUrl: post.imageUrl,
+            type: post.type,
+            metadata: post.metadata,
+            audience: post.audience,
+            parentId: post.parentId,
+            threadRootId: post.threadRootId,
+            repostOfId: post.repostOfId,
+            isQuote: post.isQuote,
+            likesCount: post.likesCount,
+            repliesCount: post.repliesCount,
+            repostsCount: post.repostsCount,
+            author: post.author,
+            createdAt: post.createdAt,
+            isLiked: session ? (post as { likes?: { id: string }[] }).likes?.length > 0 : false,
+            isBookmarked: session ? (post as { bookmarks?: { id: string }[] }).bookmarks?.length > 0 : false,
+            repostOf: post.repostOf,
+        }))
+
+        return NextResponse.json({
+            posts: formattedPosts,
+            nextCursor: hasMore ? posts[posts.length - 2]?.id : null,
+            hasMore,
+        })
+    } catch (error) {
+        console.error("Get posts error:", error)
+        return NextResponse.json(
+            { error: "Error al obtener posts" },
+            { status: 500 }
+        )
+    }
+}
+
+// POST /api/posts - Create a new post
+export async function POST(request: NextRequest) {
+    try {
+        const session = await auth()
+        if (!session) {
+            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const validated = postSchema.safeParse(body)
+
+        if (!validated.success) {
+            return NextResponse.json(
+                { error: validated.error.errors[0].message },
+                { status: 400 }
+            )
+        }
+
+        const { content, type, imageUrl, parentId, audience, metadata } = validated.data
+
+        // If this is a reply, check if parent exists
+        let threadRootId = null
+        if (parentId) {
+            const parentPost = await prisma.post.findUnique({
+                where: { id: parentId },
+                select: { id: true, threadRootId: true, authorId: true },
+            })
+
+            if (!parentPost) {
+                return NextResponse.json(
+                    { error: "Post padre no encontrado" },
+                    { status: 404 }
+                )
+            }
+
+            // Set thread root
+            threadRootId = parentPost.threadRootId || parentPost.id
+        }
+
+        // Create post
+        const post = await prisma.post.create({
+            data: {
+                content,
+                type,
+                imageUrl,
+                parentId,
+                threadRootId,
+                audience,
+                metadata: metadata || undefined,
+                authorId: session.user.id,
+            },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        username: true,
+                        displayName: true,
+                        avatarUrl: true,
+                    },
+                },
+            },
+        })
+
+        // Update parent's reply count if this is a reply
+        if (parentId) {
+            await prisma.post.update({
+                where: { id: parentId },
+                data: { repliesCount: { increment: 1 } },
+            })
+
+            // Create notification for parent author
+            const parentPost = await prisma.post.findUnique({
+                where: { id: parentId },
+                select: { authorId: true },
+            })
+
+            if (parentPost && parentPost.authorId !== session.user.id) {
+                await prisma.notification.create({
+                    data: {
+                        type: "REPLY",
+                        recipientId: parentPost.authorId,
+                        actorId: session.user.id,
+                        postId: post.id,
+                    },
+                })
+            }
+        }
+
+        return NextResponse.json(
+            {
+                id: post.id,
+                content: post.content,
+                imageUrl: post.imageUrl,
+                type: post.type,
+                metadata: post.metadata,
+                audience: post.audience,
+                parentId: post.parentId,
+                threadRootId: post.threadRootId,
+                likesCount: 0,
+                repliesCount: 0,
+                repostsCount: 0,
+                author: post.author,
+                createdAt: post.createdAt,
+                isLiked: false,
+                isBookmarked: false,
+            },
+            { status: 201 }
+        )
+    } catch (error) {
+        console.error("Create post error:", error)
+        return NextResponse.json(
+            { error: "Error al crear post" },
+            { status: 500 }
+        )
+    }
+}

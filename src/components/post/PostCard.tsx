@@ -1,0 +1,265 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import Image from "next/image"
+import {
+    Heart,
+    MessageCircle,
+    Repeat2,
+    Bookmark,
+    MoreHorizontal,
+    Trash2,
+    Flag,
+} from "lucide-react"
+import { cn, formatRelativeTime, formatNumber } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { FitnessMetadata } from "./FitnessMetadata"
+import { PostTypeBadge } from "./PostTypeBadge"
+import type { PostData } from "@/types"
+
+interface PostCardProps {
+    post: PostData
+    currentUserId?: string
+    onLike?: (postId: string) => void
+    onBookmark?: (postId: string) => void
+    onRepost?: (postId: string) => void
+    onDelete?: (postId: string) => void
+    showThread?: boolean
+}
+
+export function PostCard({
+    post,
+    currentUserId,
+    onLike,
+    onBookmark,
+    onRepost,
+    onDelete,
+    showThread = false,
+}: PostCardProps) {
+    const [isLiked, setIsLiked] = useState(post.isLiked || false)
+    const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked || false)
+    const [isReposted, setIsReposted] = useState(post.isReposted || false)
+    const [likesCount, setLikesCount] = useState(post.likesCount)
+
+    const isOwner = currentUserId === post.author.id
+
+    const handleLike = () => {
+        setIsLiked(!isLiked)
+        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1)
+        onLike?.(post.id)
+    }
+
+    const handleBookmark = () => {
+        setIsBookmarked(!isBookmarked)
+        onBookmark?.(post.id)
+    }
+
+    const handleRepost = () => {
+        setIsReposted(!isReposted)
+        onRepost?.(post.id)
+    }
+
+    return (
+        <article className="post-card border-b border-border px-4 py-3">
+            <div className="flex gap-3">
+                {/* Avatar */}
+                <Link href={`/${post.author.username}`} className="shrink-0">
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12">
+                        <AvatarImage src={post.author.avatarUrl || undefined} />
+                        <AvatarFallback>
+                            {post.author.displayName.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                </Link>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1 flex-wrap text-sm">
+                            <Link
+                                href={`/${post.author.username}`}
+                                className="font-bold hover:underline truncate max-w-[150px] sm:max-w-none"
+                            >
+                                {post.author.displayName}
+                            </Link>
+                            <Link
+                                href={`/${post.author.username}`}
+                                className="text-muted-foreground truncate"
+                            >
+                                @{post.author.username}
+                            </Link>
+                            <span className="text-muted-foreground">·</span>
+                            <Link
+                                href={`/post/${post.id}`}
+                                className="text-muted-foreground hover:underline"
+                            >
+                                {formatRelativeTime(post.createdAt)}
+                            </Link>
+                        </div>
+
+                        {/* Menu */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-full -mt-1"
+                                >
+                                    <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {isOwner && (
+                                    <DropdownMenuItem
+                                        onClick={() => onDelete?.(post.id)}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                )}
+                                {!isOwner && (
+                                    <DropdownMenuItem>
+                                        <Flag className="mr-2 h-4 w-4" />
+                                        Reportar
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+
+                    {/* Post Type Badge */}
+                    {post.type !== "NOTE" && (
+                        <div className="mt-1">
+                            <PostTypeBadge type={post.type} />
+                        </div>
+                    )}
+
+                    {/* Content Text */}
+                    <Link href={`/post/${post.id}`}>
+                        <p className="mt-1 text-[15px] whitespace-pre-wrap break-words">
+                            {post.content}
+                        </p>
+                    </Link>
+
+                    {/* Fitness Metadata */}
+                    {post.metadata && Object.keys(post.metadata).length > 0 && (
+                        <FitnessMetadata metadata={post.metadata} />
+                    )}
+
+                    {/* Image */}
+                    {post.imageUrl && (
+                        <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+                            <Image
+                                src={post.imageUrl}
+                                alt="Post image"
+                                width={600}
+                                height={400}
+                                className="w-full h-auto max-h-[500px] object-cover"
+                            />
+                        </div>
+                    )}
+
+                    {/* Quoted Post */}
+                    {post.isQuote && post.repostOf && (
+                        <div className="mt-3 border border-border rounded-2xl p-3">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Avatar className="w-5 h-5">
+                                    <AvatarFallback>
+                                        {post.repostOf.author.displayName.slice(0, 1)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <span className="font-semibold text-foreground">
+                                    {post.repostOf.author.displayName}
+                                </span>
+                                <span>@{post.repostOf.author.username}</span>
+                            </div>
+                            <p className="mt-1 text-sm line-clamp-3">{post.repostOf.content}</p>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between mt-3 -ml-2 max-w-md">
+                        {/* Reply */}
+                        <Link
+                            href={`/post/${post.id}`}
+                            className="action-button action-button-reply flex items-center gap-1 group"
+                        >
+                            <MessageCircle className="w-[18px] h-[18px]" />
+                            <span className="text-sm text-muted-foreground group-hover:text-primary">
+                                {post.repliesCount > 0 && formatNumber(post.repliesCount)}
+                            </span>
+                        </Link>
+
+                        {/* Repost */}
+                        <button
+                            onClick={handleRepost}
+                            className={cn(
+                                "action-button action-button-repost flex items-center gap-1",
+                                isReposted && "reposted"
+                            )}
+                        >
+                            <Repeat2 className="w-[18px] h-[18px]" />
+                            <span className="text-sm">
+                                {post.repostsCount > 0 && formatNumber(post.repostsCount)}
+                            </span>
+                        </button>
+
+                        {/* Like */}
+                        <button
+                            onClick={handleLike}
+                            className={cn(
+                                "action-button action-button-like flex items-center gap-1",
+                                isLiked && "liked"
+                            )}
+                        >
+                            <Heart
+                                className={cn("w-[18px] h-[18px]", isLiked && "fill-current")}
+                            />
+                            <span className="text-sm">
+                                {likesCount > 0 && formatNumber(likesCount)}
+                            </span>
+                        </button>
+
+                        {/* Bookmark */}
+                        <button
+                            onClick={handleBookmark}
+                            className={cn(
+                                "action-button action-button-bookmark flex items-center gap-1",
+                                isBookmarked && "bookmarked"
+                            )}
+                        >
+                            <Bookmark
+                                className={cn(
+                                    "w-[18px] h-[18px]",
+                                    isBookmarked && "fill-current"
+                                )}
+                            />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Thread indicator */}
+            {showThread && post.repliesCount > 0 && (
+                <div className="ml-[52px] mt-2">
+                    <Link
+                        href={`/post/${post.id}`}
+                        className="text-sm text-primary hover:underline"
+                    >
+                        Ver hilo ({post.repliesCount} respuestas)
+                    </Link>
+                </div>
+            )}
+        </article>
+    )
+}
