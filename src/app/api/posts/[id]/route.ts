@@ -99,8 +99,8 @@ export async function GET(
             repliesCount: reply.repliesCount,
             author: reply.author,
             createdAt: reply.createdAt,
-            isLiked: session ? (reply as { likes?: { id: string }[] }).likes?.length > 0 : false,
-            isBookmarked: session ? (reply as { bookmarks?: { id: string }[] }).bookmarks?.length > 0 : false,
+            isLiked: session ? ((reply as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
+            isBookmarked: session ? ((reply as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
         }))
 
         return NextResponse.json({
@@ -120,8 +120,8 @@ export async function GET(
                 repostsCount: post.repostsCount,
                 author: post.author,
                 createdAt: post.createdAt,
-                isLiked: session ? (post as { likes?: { id: string }[] }).likes?.length > 0 : false,
-                isBookmarked: session ? (post as { bookmarks?: { id: string }[] }).bookmarks?.length > 0 : false,
+                isLiked: session ? ((post as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
+                isBookmarked: session ? ((post as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
                 repostOf: post.repostOf,
                 parent: post.parent,
             },
