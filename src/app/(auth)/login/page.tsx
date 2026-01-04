@@ -39,10 +39,11 @@ export default function LoginPage() {
                 router.push("/")
                 router.refresh()
             }
-        } catch {
+        } catch (error) {
+            console.error(error)
             toast({
                 title: "Error",
-                description: "Algo salió mal. Inténtalo de nuevo.",
+                description: error instanceof Error ? error.message : "Algo salió mal. Inténtalo de nuevo.",
                 variant: "destructive",
             })
         } finally {
