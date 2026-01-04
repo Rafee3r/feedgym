@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Header } from "@/components/layout/Header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ import { getInitials } from "@/lib/utils"
 
 export default function ProfileSettingsPage() {
     const router = useRouter()
+    const { update } = useSession()
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [profile, setProfile] = useState({
@@ -91,6 +93,12 @@ export default function ProfileSettingsPage() {
             })
 
             if (response.ok) {
+                // Update client session
+                await update({
+                    name: profile.displayName,
+                    image: profile.avatarUrl,
+                })
+
                 toast({
                     title: "Perfil actualizado",
                     description: "Tus cambios han sido guardados",
