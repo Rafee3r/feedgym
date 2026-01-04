@@ -203,6 +203,11 @@ export function PostCard({
                         </p>
                     </Link>
 
+                    {/* Voice Note (WhatsApp Style) */}
+                    {post.metadata?.audioUrl && (
+                        <WhatsAppAudioPlayer src={post.metadata.audioUrl} />
+                    )}
+
                     {/* Fitness Metadata */}
                     {post.metadata && Object.keys(post.metadata).length > 0 && (
                         <FitnessMetadata metadata={post.metadata} />
