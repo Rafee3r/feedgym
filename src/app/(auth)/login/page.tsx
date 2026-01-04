@@ -56,7 +56,7 @@ export default function LoginPage() {
             <div className="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
                 {/* Logo */}
                 <div className="flex flex-col items-center">
-                    <img src="/logo.png" alt="FeedGym" className="h-12 w-auto mb-6 object-contain" />
+                    <img src="/logo.png" alt="FeedGym" className="h-20 w-auto mb-8 object-contain" />
                     <h1 className="text-2xl font-bold tracking-tight">Bienvenido de nuevo</h1>
                     <p className="text-sm text-muted-foreground mt-2">Ingresa a tu espacio de entrenamiento</p>
                 </div>
