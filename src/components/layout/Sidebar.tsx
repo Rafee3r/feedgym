@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
+import { useState, useEffect } from "react"
 import {
     Home,
     Search,
@@ -36,6 +37,24 @@ const navItems = [
 export function Sidebar() {
     const pathname = usePathname()
     const { data: session } = useSession()
+
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (session?.user) {
+            setAvatarUrl(session.user.image || null)
+
+            // Fetch fresh data
+            fetch("/api/users/me")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.avatarUrl) {
+                        setAvatarUrl(data.avatarUrl)
+                    }
+                })
+                .catch(console.error)
+        }
+    }, [session])
 
     return (
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
@@ -113,7 +132,7 @@ export function Sidebar() {
                     <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-3 p-3 rounded-full hover:bg-accent/50 transition-colors w-full">
                             <Avatar className="w-10 h-10">
-                                <AvatarImage src={session.user.image || undefined} />
+                                <AvatarImage src={avatarUrl || session.user.image || undefined} />
                                 <AvatarFallback>
                                     {getInitials(session.user.name || "U")}
                                 </AvatarFallback>
