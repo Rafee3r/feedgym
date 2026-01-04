@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Dumbbell, Loader2 } from "lucide-react"
+import { Dumbbell, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -48,9 +48,9 @@ export default function RegisterPage() {
             newErrors.username = "Solo letras, números y guiones bajos"
         }
 
-        if (!formData.displayName) {
+        /* if (!formData.displayName) {
             newErrors.displayName = "El nombre es requerido"
-        }
+        } */
 
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
@@ -121,7 +121,7 @@ export default function RegisterPage() {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="displayName">Nombre</Label>
+                        <Label htmlFor="displayName">Nombre <span className="text-muted-foreground text-xs font-normal">(Opcional)</span></Label>
                         <Input
                             id="displayName"
                             type="text"
@@ -190,16 +190,24 @@ export default function RegisterPage() {
 
                     <div className="space-y-2">
                         <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-                        <Input
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.confirmPassword}
-                            onChange={(e) =>
-                                setFormData({ ...formData, confirmPassword: e.target.value })
-                            }
-                            disabled={isLoading}
-                        />
+                        <div className="relative">
+                            <Input
+                                id="confirmPassword"
+                                type="password"
+                                placeholder="••••••••"
+                                value={formData.confirmPassword}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, confirmPassword: e.target.value })
+                                }
+                                disabled={isLoading}
+                                className={formData.confirmPassword && formData.password === formData.confirmPassword ? "border-green-500 pr-10" : ""}
+                            />
+                            {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none">
+                                    <Check className="w-5 h-5" />
+                                </div>
+                            )}
+                        </div>
                         {errors.confirmPassword && (
                             <p className="text-sm text-destructive">{errors.confirmPassword}</p>
                         )}

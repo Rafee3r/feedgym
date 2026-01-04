@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
             data: {
                 email: email.toLowerCase(),
                 username: username.toLowerCase(),
-                displayName,
+                displayName: displayName || username,
                 hashedPassword,
             },
         })

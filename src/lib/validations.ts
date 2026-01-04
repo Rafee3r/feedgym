@@ -5,18 +5,15 @@ export const registerSchema = z.object({
     password: z
         .string()
         .min(8, "La contraseña debe tener al menos 8 caracteres")
-        .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
-        .regex(/[a-z]/, "Debe contener al menos una minúscula")
-        .regex(/[0-9]/, "Debe contener al menos un número"),
+        .regex(/[A-Z]/, "La contraseña debe contener al menos una mayúscula")
+        .regex(/[a-z]/, "La contraseña debe contener al menos una minúscula")
+        .regex(/[0-9]/, "La contraseña debe contener al menos un número"),
     username: z
         .string()
         .min(3, "El username debe tener al menos 3 caracteres")
         .max(20, "El username no puede tener más de 20 caracteres")
         .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guiones bajos"),
-    displayName: z
-        .string()
-        .min(1, "El nombre es requerido")
-        .max(50, "El nombre no puede tener más de 50 caracteres"),
+    displayName: z.string().max(50).optional(),
 });
 
 export const loginSchema = z.object({
