@@ -4,8 +4,9 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
-import { JWT } from "next-auth/jwt";
-import { UserRole } from "@prisma/client";
+
+// Define UserRole locally to avoid Prisma client import issues in Edge/Serverless
+type UserRole = "USER" | "ADMIN" | "STAFF";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
@@ -53,7 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         name: user.displayName,
                         image: user.avatarUrl,
                         username: user.username,
-                        role: user.role,
+                        role: (user as { role?: UserRole }).role ?? "USER",
                     };
                 } catch (error) {
                     console.error("[Auth] Critical error in authorize:", error);
@@ -106,7 +107,7 @@ declare module "next-auth" {
     }
 }
 
-declare module "next-auth/jwt" {
+declare module "@auth/core/jwt" {
     interface JWT {
         id: string;
         username: string;
