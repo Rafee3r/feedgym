@@ -22,34 +22,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
-                const validated = loginSchema.safeParse(credentials);
-                if (!validated.success) {
+                try {
+                    const validated = loginSchema.safeParse(credentials);
+                    if (!validated.success) {
+                        console.error("[Auth] Validation failed:", validated.error.errors);
+                        return null;
+                    }
+
+                    const { email, password } = validated.data;
+
+                    const user = await prisma.user.findUnique({
+                        where: { email: email.toLowerCase() },
+                    });
+
+                    if (!user || !user.hashedPassword) {
+                        console.error("[Auth] User not found or no password:", email);
+                        return null;
+                    }
+
+                    const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
+                    if (!passwordMatch) {
+                        console.error("[Auth] Password mismatch for:", email);
+                        return null;
+                    }
+
+                    console.log("[Auth] Login successful for:", email);
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.displayName,
+                        image: user.avatarUrl,
+                        username: user.username,
+                        role: user.role,
+                    };
+                } catch (error) {
+                    console.error("[Auth] Critical error in authorize:", error);
                     return null;
                 }
-
-                const { email, password } = validated.data;
-
-                const user = await prisma.user.findUnique({
-                    where: { email: email.toLowerCase() },
-                });
-
-                if (!user || !user.hashedPassword) {
-                    return null;
-                }
-
-                const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
-                if (!passwordMatch) {
-                    return null;
-                }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.displayName,
-                    image: user.avatarUrl,
-                    username: user.username,
-                    role: user.role,
-                };
             },
         }),
     ],
