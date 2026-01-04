@@ -81,7 +81,7 @@ export default function SecuritySettingsPage() {
                     <Button
                         variant="outline"
                         className="w-full rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => signOut({ callbackUrl: "/login" })}
+                        onClick={() => signOut({ callbackUrl: window.location.origin + "/login" })}
                     >
                         <LogOut className="w-4 h-4 mr-2" />
                         Cerrar sesión
