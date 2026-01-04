@@ -150,8 +150,11 @@ export default function ProfileSettingsPage() {
                         style={profile.bannerUrl ? { backgroundImage: `url(${profile.bannerUrl})` } : undefined}
                         onClick={() => bannerInputRef.current?.click()}
                     >
-                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <Camera className="w-8 h-8 text-white" />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                            <div className="flex flex-col items-center text-white">
+                                <Camera className="w-8 h-8 opacity-80" />
+                                <span className="text-xs font-medium mt-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">Editar portada</span>
+                            </div>
                         </div>
                         <input
                             type="file"
