@@ -105,7 +105,6 @@ export default function RegisterPage() {
     }
 
     return (
-    return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background py-8">
             <div className="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
                 {/* Logo */}
