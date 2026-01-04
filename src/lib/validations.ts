@@ -42,6 +42,7 @@ export const postSchema = z.object({
             unit: z.enum(["KG", "LB"]).optional(),
             rpe: z.number().min(1).max(10).optional(),
             duration: z.number().optional(), // in minutes
+            audioUrl: z.string().optional(),
         })
         .optional()
         .nullable(),
