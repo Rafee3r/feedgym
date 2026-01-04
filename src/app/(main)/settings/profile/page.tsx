@@ -13,6 +13,8 @@ import { Loader2, Camera } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { getInitials } from "@/lib/utils"
 
+import { ImageCropper } from "@/components/ui/image-cropper"
+
 export default function ProfileSettingsPage() {
     const router = useRouter()
     const { update } = useSession()
@@ -29,6 +31,11 @@ export default function ProfileSettingsPage() {
         bannerUrl: "",
         goal: "MAINTAIN",
     })
+
+    // Cropper State
+    const [isCropperOpen, setIsCropperOpen] = useState(false)
+    const [croppingImage, setCroppingImage] = useState<string | null>(null)
+    const [cropType, setCropType] = useState<"avatarUrl" | "bannerUrl" | null>(null)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const bannerInputRef = useRef<HTMLInputElement>(null)
@@ -74,9 +81,19 @@ export default function ProfileSettingsPage() {
 
             const reader = new FileReader()
             reader.onloadend = () => {
-                setProfile(prev => ({ ...prev, [field]: reader.result as string }))
+                setCroppingImage(reader.result as string)
+                setCropType(field)
+                setIsCropperOpen(true)
+                // Reset input value so same file can be selected again
+                e.target.value = ""
             }
             reader.readAsDataURL(file)
+        }
+    }
+
+    const onCropComplete = (croppedImage: string) => {
+        if (cropType) {
+            setProfile(prev => ({ ...prev, [cropType]: croppedImage }))
         }
     }
 
@@ -140,6 +157,14 @@ export default function ProfileSettingsPage() {
     return (
         <>
             <Header title="Editar perfil" showBack />
+
+            <ImageCropper
+                isOpen={isCropperOpen}
+                onClose={() => setIsCropperOpen(false)}
+                imageSrc={croppingImage}
+                onCropComplete={onCropComplete}
+                aspect={cropType === "bannerUrl" ? 3 : 1}
+            />
 
             <div className="space-y-6">
                 {/* Banner & Avatar Wrapper */}
