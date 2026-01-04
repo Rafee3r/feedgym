@@ -213,6 +213,40 @@ export function PostCard({
                         <FitnessMetadata metadata={post.metadata} />
                     )}
 
+                    {/* Repost/Quote Content */}
+                    {post.repostOf && (
+                        <div className={cn("mt-3 rounded-xl border border-border p-3", post.isQuote ? "bg-background" : "bg-transparent border-none p-0 mt-0")}>
+                            {/* If it's a quote, we show the border/bg. If it's a pure repost, we might want to just show the inner post directly or styled. 
+                                Actually, for consistency, let's keep the box but maybe styled differently? 
+                                User asked for "reposts showing in profile". 
+                                If I just check repostOf, I can render the inner specific card. 
+                             */}
+                            {/* Recursive PostCard or simplified view? 
+                                To avoid infinite recursion issues if data is cyclic (shouldn't be), we usually render a "EmbeddedPost".
+                             */}
+                            <div className="flex items-center gap-2 mb-2">
+                                <Avatar className="h-5 w-5">
+                                    <AvatarImage src={post.repostOf.author.avatarUrl || undefined} />
+                                    <AvatarFallback className="text-[10px]">{post.repostOf.author.displayName[0]}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-bold text-sm">{post.repostOf.author.displayName}</span>
+                                <span className="text-muted-foreground text-xs">@{post.repostOf.author.username}</span>
+                                <span className="text-muted-foreground text-xs">· {formatRelativeTime(post.repostOf.createdAt)}</span>
+                            </div>
+                            <p className="text-sm">{post.repostOf.content}</p>
+                            {post.repostOf.imageUrl && (
+                                <div className="mt-2 rounded-lg overflow-hidden relative aspect-video bg-muted">
+                                    <Image
+                                        src={post.repostOf.imageUrl}
+                                        alt="Repost content"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Image */}
                     {post.imageUrl && (
                         <div className="mt-3 rounded-2xl overflow-hidden border border-border">

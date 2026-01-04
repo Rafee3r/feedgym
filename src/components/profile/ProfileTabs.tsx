@@ -34,6 +34,14 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
         }
     }, [userId])
 
+    const handleRepost = async (postId: string) => {
+        try {
+            await fetch(`/api/posts/${postId}/repost`, { method: "POST" })
+        } catch (err) {
+            console.error("Repost error:", err)
+        }
+    }
+
     useEffect(() => {
         if (activeTab === "posts") {
             fetchPosts()
@@ -86,6 +94,7 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
                             key={post.id}
                             post={post}
                             currentUserId={session?.user.id}
+                            onRepost={handleRepost}
                         />
                     ))
                 )}

@@ -91,6 +91,21 @@ export function Feed() {
         }
     }
 
+    const handleRepost = async (postId: string) => {
+        try {
+            const response = await fetch(`/api/posts/${postId}/repost`, { method: "POST" })
+            if (response.ok) {
+                const data = await response.json()
+                // Ideally we refresh or update local state
+                // For now, let's just refresh to see the change or rely on optimistic UI in PostCard if implemented
+                // PostCard has local state for "isReposted".
+                // But if we return "reposted: boolean", we could update context.
+            }
+        } catch (err) {
+            console.error("Repost error:", err)
+        }
+    }
+
     if (isLoading) {
         return <FeedSkeleton />
     }
@@ -145,6 +160,7 @@ export function Feed() {
                     onLike={handleLike}
                     onBookmark={handleBookmark}
                     onDelete={handleDelete}
+                    onRepost={handleRepost}
                     showThread
                 />
             ))}
