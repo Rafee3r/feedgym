@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import { JWT } from "next-auth/jwt";
+import { UserRole } from "@prisma/client";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: PrismaAdapter(prisma),
@@ -47,6 +48,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     name: user.displayName,
                     image: user.avatarUrl,
                     username: user.username,
+                    role: user.role,
                 };
             },
         }),
@@ -56,6 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.id = user.id ?? "";
                 token.username = (user as { username?: string }).username ?? "";
+                token.role = (user as { role?: UserRole }).role ?? "USER";
             }
             if (trigger === "update" && session) {
                 if (session.image) token.picture = session.image;
@@ -68,6 +71,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 session.user.id = token.id as string;
                 session.user.username = token.username as string;
                 session.user.image = (token.picture as string) || undefined;
+                session.user.role = (token.role as UserRole) || "USER";
             }
             return session;
         },
@@ -83,11 +87,13 @@ declare module "next-auth" {
             name: string;
             image?: string;
             username: string;
+            role: UserRole;
         };
     }
 
     interface User {
         username?: string;
+        role?: UserRole;
     }
 }
 
@@ -95,5 +101,6 @@ declare module "next-auth/jwt" {
     interface JWT {
         id: string;
         username: string;
+        role: UserRole;
     }
 }

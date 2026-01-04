@@ -26,9 +26,11 @@ export default function ProfileSettingsPage() {
         pronouns: "",
         gymSplit: "",
         avatarUrl: "",
+        bannerUrl: "",
     })
 
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const bannerInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -44,6 +46,7 @@ export default function ProfileSettingsPage() {
                         pronouns: data.pronouns || "",
                         gymSplit: data.gymSplit || "",
                         avatarUrl: data.avatarUrl || "",
+                        bannerUrl: data.bannerUrl || "",
                     })
                 }
             } catch (err) {
@@ -55,7 +58,7 @@ export default function ProfileSettingsPage() {
         fetchProfile()
     }, [])
 
-    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, field: "avatarUrl" | "bannerUrl") => {
         const file = e.target.files?.[0]
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
@@ -69,7 +72,7 @@ export default function ProfileSettingsPage() {
 
             const reader = new FileReader()
             reader.onloadend = () => {
-                setProfile(prev => ({ ...prev, avatarUrl: reader.result as string }))
+                setProfile(prev => ({ ...prev, [field]: reader.result as string }))
             }
             reader.readAsDataURL(file)
         }
@@ -89,6 +92,7 @@ export default function ProfileSettingsPage() {
                     pronouns: profile.pronouns || null,
                     gymSplit: profile.gymSplit || null,
                     avatarUrl: profile.avatarUrl || null,
+                    bannerUrl: profile.bannerUrl || null,
                 }),
             })
 
@@ -134,37 +138,54 @@ export default function ProfileSettingsPage() {
         <>
             <Header title="Editar perfil" showBack />
 
-            <div className="p-4 space-y-6">
-                {/* Avatar */}
-                <div className="flex flex-col items-center">
-                    <div className="relative">
-                        <Avatar className="w-24 h-24">
-                            <AvatarImage src={profile.avatarUrl || undefined} />
-                            <AvatarFallback className="text-2xl">
-                                {getInitials(profile.displayName)}
-                            </AvatarFallback>
-                        </Avatar>
+            <div className="space-y-6">
+                {/* Banner & Avatar Wrapper */}
+                <div className="relative mb-16">
+                    {/* Banner */}
+                    <div
+                        className="h-32 sm:h-48 bg-muted relative bg-cover bg-center cursor-pointer group"
+                        style={profile.bannerUrl ? { backgroundImage: `url(${profile.bannerUrl})` } : undefined}
+                        onClick={() => bannerInputRef.current?.click()}
+                    >
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <Camera className="w-8 h-8 text-white" />
+                        </div>
                         <input
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            ref={fileInputRef}
-                            onChange={handleImageSelect}
+                            ref={bannerInputRef}
+                            onChange={(e) => handleImageSelect(e, "bannerUrl")}
                         />
-                        <button
-                            onClick={() => fileInputRef.current?.click()}
-                            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors"
-                        >
-                            <Camera className="w-4 h-4" />
-                        </button>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        Cambiar foto de perfil
-                    </p>
+
+                    {/* Avatar */}
+                    <div className="absolute -bottom-12 left-4">
+                        <div className="relative group">
+                            <Avatar className="w-24 h-24 border-4 border-background">
+                                <AvatarImage src={profile.avatarUrl || undefined} />
+                                <AvatarFallback className="text-2xl">
+                                    {getInitials(profile.displayName)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div
+                                className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <Camera className="w-6 h-6 text-white" />
+                            </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={(e) => handleImageSelect(e, "avatarUrl")}
+                            />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Form */}
-                <div className="space-y-4">
+                <div className="px-4 space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="displayName">Nombre</Label>
                         <Input

@@ -42,6 +42,8 @@ model User {
   showMetrics    Boolean        @default(true) // Show likes/followers count
   discoverable   Boolean        @default(true) // Appear in search
   
+  hashedPassword String? // Moved hashedPassword after role
+  
   // Metadata
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -52,7 +54,7 @@ model User {
   posts          Post[]
   likes          Like[]
   bookmarks      Bookmark[]
-  followers      Follow[]  @relation("following")
+  followedBy     Follow[]  @relation("following") // Renamed from 'followers' to 'followedBy'
   following      Follow[]  @relation("follower")
   weightLogs     WeightLog[]
   personalRecords PersonalRecord[]
@@ -62,6 +64,13 @@ model User {
   @@index([username])
   @@index([email])
   @@index([createdAt])
+  @@map("users") // Added @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  STAFF
 }
 
 model Account {

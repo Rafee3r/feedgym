@@ -85,6 +85,7 @@ interface PostCardProps {
     onRepost?: (postId: string) => void
     onDelete?: (postId: string) => void
     showThread?: boolean
+    priority?: boolean
 }
 
 export function PostCard({
@@ -95,6 +96,7 @@ export function PostCard({
     onRepost,
     onDelete,
     showThread = false,
+    priority = false, // Add priority prop
 }: PostCardProps) {
     const [isLiked, setIsLiked] = useState(post.isLiked || false)
     const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked || false)
@@ -249,13 +251,14 @@ export function PostCard({
 
                     {/* Image */}
                     {post.imageUrl && (
-                        <div className="mt-3 rounded-2xl overflow-hidden border border-border">
+                        <div className="mt-3 rounded-2xl overflow-hidden border border-border relative aspect-video bg-muted">
                             <Image
                                 src={post.imageUrl}
-                                alt="Post image"
-                                width={600}
-                                height={400}
-                                className="w-full h-auto max-h-[500px] object-cover"
+                                alt="Post content"
+                                fill
+                                className="object-cover"
+                                priority={priority}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />
                         </div>
                     )}

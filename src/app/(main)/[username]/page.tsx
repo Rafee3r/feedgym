@@ -48,6 +48,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             accountPrivacy: true,
             showMetrics: true,
             createdAt: true,
+            role: true, // Fetch role
             _count: {
                 select: {
                     posts: { where: { deletedAt: null, parentId: null } },

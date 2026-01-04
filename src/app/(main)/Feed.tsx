@@ -152,7 +152,7 @@ export function Feed() {
 
     return (
         <div>
-            {posts.map((post) => (
+            {posts.map((post, index) => (
                 <PostCard
                     key={post.id}
                     post={post}
@@ -162,6 +162,7 @@ export function Feed() {
                     onDelete={handleDelete}
                     onRepost={handleRepost}
                     showThread
+                    priority={index < 2}
                 />
             ))}
 
