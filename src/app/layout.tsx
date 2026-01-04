@@ -13,6 +13,10 @@ export const metadata: Metadata = {
         "Comparte tu progreso, entrenamientos y conecta con la comunidad fitness",
     keywords: ["gym", "fitness", "social", "workout", "progress", "pr"],
     authors: [{ name: "FeedGym" }],
+    icons: {
+        icon: "/icon.png",
+        apple: "/icon.png",
+    },
     openGraph: {
         title: "FeedGym - Tu Red Social Fitness",
         description:

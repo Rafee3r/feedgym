@@ -59,11 +59,9 @@ export function Sidebar() {
     return (
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 px-3 py-2 mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-                    <Dumbbell className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-bold hidden xl:block">FeedGym</span>
+            <Link href="/" className="flex items-center gap-3 px-3 py-2 mb-4">
+                <img src="/logo.png" alt="FeedGym" className="h-8 w-auto hidden xl:block object-contain" />
+                <img src="/icon.png" alt="FeedGym" className="h-10 w-10 xl:hidden object-contain" />
             </Link>
 
             {/* Navigation */}

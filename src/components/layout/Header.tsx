@@ -34,9 +34,7 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
                     </Button>
                 ) : (
                     <Link href="/" className="md:hidden">
-                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                            <Dumbbell className="w-5 h-5 text-primary-foreground" />
-                        </div>
+                        <img src="/icon.png" alt="FeedGym" className="h-8 w-8 object-contain" />
                     </Link>
                 )}
 

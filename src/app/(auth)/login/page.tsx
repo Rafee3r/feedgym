@@ -53,57 +53,58 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background">
-            <div className="w-full max-w-sm space-y-8">
+            <div className="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
                 {/* Logo */}
                 <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-4">
-                        <Dumbbell className="w-8 h-8 text-primary-foreground" />
-                    </div>
-                    <h1 className="text-2xl font-bold">Inicia sesión en FeedGym</h1>
+                    <img src="/logo.png" alt="FeedGym" className="h-12 w-auto mb-6 object-contain" />
+                    <h1 className="text-2xl font-bold tracking-tight">Bienvenido de nuevo</h1>
+                    <p className="text-sm text-muted-foreground mt-2">Ingresa a tu espacio de entrenamiento</p>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            placeholder="tu@email.com"
-                            value={formData.email}
-                            onChange={(e) =>
-                                setFormData({ ...formData, email: e.target.value })
-                            }
-                            required
-                            disabled={isLoading}
-                        />
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="Email"
+                                value={formData.email}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, email: e.target.value })
+                                }
+                                required
+                                disabled={isLoading}
+                                className="bg-transparent border-0 border-b border-input rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 h-12 text-lg"
+                            />
+                        </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Contraseña</Label>
-                        <Input
-                            id="password"
-                            type="password"
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) =>
-                                setFormData({ ...formData, password: e.target.value })
-                            }
-                            required
-                            disabled={isLoading}
-                        />
+                        <div className="space-y-2">
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="Contraseña"
+                                value={formData.password}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, password: e.target.value })
+                                }
+                                required
+                                disabled={isLoading}
+                                className="bg-transparent border-0 border-b border-input rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 h-12 text-lg"
+                            />
+                        </div>
                     </div>
 
                     <Button
                         type="submit"
-                        className="w-full rounded-full"
+                        className="w-full rounded-full h-12 text-base font-medium shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
                         size="lg"
                         disabled={isLoading}
                     >
                         {isLoading ? (
                             <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Iniciando sesión...
+                                Entrando...
                             </>
                         ) : (
                             "Iniciar sesión"
@@ -111,26 +112,23 @@ export default function LoginPage() {
                     </Button>
                 </form>
 
-                {/* Forgot Password */}
-                <div className="text-center text-sm">
-                    <span className="text-muted-foreground">¿Olvidaste tu contraseña?</span>
-                    <br />
+                {/* Footer Links */}
+                <div className="flex flex-col items-center gap-4 text-sm text-muted-foreground">
+                    <Link
+                        href="/register"
+                        className="hover:text-primary transition-colors hover:underline"
+                    >
+                        ¿No tienes cuenta? <span className="text-primary font-medium">Regístrate</span>
+                    </Link>
+
                     <a
                         href="https://t.me/rafesy"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline font-medium"
+                        className="text-xs hover:text-foreground transition-colors"
                     >
-                        Contacta a Rafesy @rafesy en Telegram
+                        ¿Problemas para entrar? Contacta soporte
                     </a>
-                </div>
-
-                {/* Register Link */}
-                <div className="text-center text-sm text-muted-foreground">
-                    ¿No tienes cuenta?{" "}
-                    <Link href="/register" className="text-primary hover:underline">
-                        Regístrate
-                    </Link>
                 </div>
             </div>
         </div>
