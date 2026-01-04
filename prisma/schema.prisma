@@ -41,8 +41,9 @@ model User {
   allowDMs       DMPrivacy      @default(EVERYONE)
   showMetrics    Boolean        @default(true) // Show likes/followers count
   discoverable   Boolean        @default(true) // Appear in search
+  role           UserRole       @default(USER)
   
-  hashedPassword String? // Moved hashedPassword after role
+
   
   // Metadata
   createdAt      DateTime  @default(now())
@@ -64,7 +65,7 @@ model User {
   @@index([username])
   @@index([email])
   @@index([createdAt])
-  @@map("users") // Added @@map("users")
+
 }
 
 enum UserRole {
@@ -133,6 +134,7 @@ model Post {
   id        String   @id @default(cuid())
   content   String   @db.Text
   imageUrl  String?
+  mediaUrls String[]  @default([])
   
   // Post type for fitness context
   type      PostType @default(NOTE)

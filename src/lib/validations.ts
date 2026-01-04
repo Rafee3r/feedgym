@@ -31,6 +31,7 @@ export const postSchema = z.object({
         .max(500, "Máximo 500 caracteres"),
     type: z.enum(["NOTE", "WORKOUT", "PROGRESS", "PR", "MEAL"]).default("NOTE"),
     imageUrl: z.string().url().optional().nullable(),
+    mediaUrls: z.array(z.string().url()).max(5).optional().default([]),
     parentId: z.string().optional().nullable(),
     audience: z.enum(["PUBLIC", "FOLLOWERS", "CLOSE_FRIENDS", "ONLY_ME"]).default("PUBLIC"),
     metadata: z

@@ -111,13 +111,17 @@ export default function LoginPage() {
                 </form>
 
                 {/* Forgot Password */}
-                <div className="text-center">
-                    <Link
-                        href="/forgot-password"
-                        className="text-sm text-primary hover:underline"
+                <div className="text-center text-sm">
+                    <span className="text-muted-foreground">¿Olvidaste tu contraseña?</span>
+                    <br />
+                    <a
+                        href="https://t.me/rafesy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-medium"
                     >
-                        ¿Olvidaste tu contraseña?
-                    </Link>
+                        Contacta a Rafesy @rafesy en Telegram
+                    </a>
                 </div>
 
                 {/* Register Link */}

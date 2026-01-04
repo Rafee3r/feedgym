@@ -249,8 +249,39 @@ export function PostCard({
                         </div>
                     )}
 
-                    {/* Image */}
-                    {post.imageUrl && (
+                    {/* Images */}
+                    {(post.mediaUrls && post.mediaUrls.length > 0) ? (
+                        <div className={cn(
+                            "mt-3 grid gap-1 rounded-2xl overflow-hidden border border-border aspect-video bg-muted",
+                            post.mediaUrls.length === 1 && "grid-cols-1",
+                            post.mediaUrls.length === 2 && "grid-cols-2",
+                            post.mediaUrls.length === 3 && "grid-cols-2 grid-rows-2",
+                            post.mediaUrls.length === 4 && "grid-cols-2 grid-rows-2",
+                            post.mediaUrls.length >= 5 && "grid-cols-6 grid-rows-2", // 2 big, 3 small - simplified common grid
+                        )}>
+                            {post.mediaUrls.map((url, i) => {
+                                // Simplified grid logic
+                                let spanClass = ""
+                                if (post.mediaUrls!.length === 3 && i === 0) spanClass = "row-span-2"
+                                if (post.mediaUrls!.length >= 5) {
+                                    if (i <= 1) spanClass = "col-span-3 row-span-1"
+                                    else spanClass = "col-span-2 row-span-1"
+                                }
+
+                                return (
+                                    <div key={i} className={cn("relative w-full h-full", spanClass)}>
+                                        <Image
+                                            src={url}
+                                            alt={`Post image ${i + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            priority={priority}
+                                        />
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    ) : post.imageUrl && (
                         <div className="mt-3 rounded-2xl overflow-hidden border border-border relative aspect-video bg-muted">
                             <Image
                                 src={post.imageUrl}

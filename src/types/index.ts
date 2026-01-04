@@ -70,6 +70,7 @@ export interface PostData {
     id: string;
     content: string;
     imageUrl: string | null;
+    mediaUrls?: string[];
     type: PostType;
     metadata: PostMetadata | null;
     audience: PostAudience;

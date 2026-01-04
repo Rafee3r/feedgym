@@ -39,7 +39,6 @@ export function Composer({
     const { data: session } = useSession()
     const [content, setContent] = useState("")
     const [postType, setPostType] = useState<PostType>("NOTE")
-    const [imageUrl, setImageUrl] = useState<string | null>(null)
     const [isFocused, setIsFocused] = useState(false)
     const [isPending, startTransition] = useTransition()
 
@@ -128,21 +127,37 @@ export function Composer({
         return `${mins}:${secs.toString().padStart(2, "0")}`
     }
 
+    const [mediaUrls, setMediaUrls] = useState<string[]>([])
+
+    // Update handlers
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            // Check size (5MB limit)
+        const files = Array.from(e.target.files || [])
+        if (files.length === 0) return
+
+        if (mediaUrls.length + files.length > 5) {
+            toast({
+                title: "Error",
+                description: "Máximo 5 imágenes por post",
+                variant: "destructive",
+            })
+            return
+        }
+
+        files.forEach(file => {
             if (file.size > 5 * 1024 * 1024) {
-                toast({ title: "Error", description: "La imagen es muy pesada (max 5MB)", variant: "destructive" })
+                toast({ title: "Error", description: `La imagen ${file.name} es muy pesada (max 5MB)`, variant: "destructive" })
                 return
             }
-
             const reader = new FileReader()
             reader.onloadend = () => {
-                setImageUrl(reader.result as string)
+                setMediaUrls(prev => [...prev, reader.result as string])
             }
             reader.readAsDataURL(file)
-        }
+        })
+    }
+
+    const removeImage = (index: number) => {
+        setMediaUrls(prev => prev.filter((_, i) => i !== index))
     }
 
     const handleSubmit = async () => {
@@ -167,7 +182,7 @@ export function Composer({
                     body: JSON.stringify({
                         content: content.trim(),
                         type: postType,
-                        imageUrl,
+                        mediaUrls,
                         parentId,
                         metadata: finalAudioUrl ? { audioUrl: finalAudioUrl } : undefined
                     }),
@@ -180,7 +195,7 @@ export function Composer({
                 // Reset state
                 setContent("")
                 setPostType("NOTE")
-                setImageUrl(null)
+                setMediaUrls([])
                 setAudioBlob(null)
                 setAudioPreviewUrl(null)
                 setIsFocused(false)
@@ -192,6 +207,11 @@ export function Composer({
                 })
 
                 onSuccess?.()
+
+                // Auto refresh feed
+                if (!parentId) {
+                    window.location.reload()
+                }
             } catch {
                 toast({
                     title: "Error",
@@ -296,15 +316,19 @@ export function Composer({
                     )}
 
                     {/* Previews */}
-                    {imageUrl && (
-                        <div className="relative mt-2 inline-block">
-                            <img src={imageUrl} alt="Preview" className="max-h-40 rounded-xl" />
-                            <button
-                                onClick={() => setImageUrl(null)}
-                                className="absolute top-1 right-1 p-1 bg-black/70 rounded-full hover:bg-black/90 transition-colors"
-                            >
-                                <X className="w-4 h-4 text-white" />
-                            </button>
+                    {mediaUrls.length > 0 && (
+                        <div className="flex gap-2 overflow-x-auto pb-2 mt-2">
+                            {mediaUrls.map((url, index) => (
+                                <div key={index} className="relative shrink-0">
+                                    <img src={url} alt={`Preview ${index}`} className="h-24 w-24 object-cover rounded-md" />
+                                    <button
+                                        onClick={() => removeImage(index)}
+                                        className="absolute top-1 right-1 p-0.5 bg-black/70 rounded-full hover:bg-black/90 transition-colors"
+                                    >
+                                        <X className="w-3 h-3 text-white" />
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     )}
 
@@ -330,6 +354,7 @@ export function Composer({
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    multiple
                                     className="hidden"
                                     ref={fileInputRef}
                                     onChange={handleImageSelect}

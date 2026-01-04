@@ -11,7 +11,7 @@ interface ProfilePageProps {
 
 export async function generateMetadata({ params }: ProfilePageProps) {
     const { username } = await params
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
         where: { username: username.toLowerCase() },
         select: { displayName: true, username: true, bio: true },
     })
@@ -30,7 +30,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     const { username } = await params
     const session = await auth()
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
         where: { username: username.toLowerCase() },
         select: {
             id: true,
@@ -52,7 +52,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             _count: {
                 select: {
                     posts: { where: { deletedAt: null, parentId: null } },
-                    followers: true,
+                    followedBy: true,
                     following: true,
                 },
             },
@@ -99,7 +99,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
     const profile = {
         ...user,
-        followersCount: user.showMetrics ? user._count.followers : null,
+        followersCount: user.showMetrics ? user._count.followedBy : null,
         followingCount: user.showMetrics ? user._count.following : null,
         postsCount: user._count.posts,
         isFollowing,

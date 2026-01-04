@@ -32,7 +32,7 @@ export async function GET(
                 _count: {
                     select: {
                         posts: { where: { deletedAt: null, parentId: null } },
-                        followers: true,
+                        followedBy: true,
                         following: true,
                     },
                 },
@@ -95,7 +95,7 @@ export async function GET(
             trainingDays: user.trainingDays,
             goal: user.goal,
             createdAt: user.createdAt,
-            followersCount: user.showMetrics ? user._count.followers : null,
+            followersCount: user.showMetrics ? user._count.followedBy : null,
             followingCount: user.showMetrics ? user._count.following : null,
             postsCount: user._count.posts,
             isFollowing,
