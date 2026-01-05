@@ -27,7 +27,14 @@ import type { WeightChartData } from "@/types"
 
 type TimePeriod = "3M" | "6M" | "MAX"
 
-export function WeightSummaryCard({ className }: { className?: string }) {
+interface WeightSummaryCardProps {
+    className?: string
+    userId?: string
+    userName?: string
+    showAddButton?: boolean
+}
+
+export function WeightSummaryCard({ className, userId, userName, showAddButton = true }: WeightSummaryCardProps) {
     const { data: session } = useSession()
 
     // Weight chart state
@@ -44,10 +51,13 @@ export function WeightSummaryCard({ className }: { className?: string }) {
     const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0])
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    const isOwnProfile = !userId || userId === session?.user?.id
+
     // Fetch weight data
     const fetchWeightData = useCallback(async () => {
         try {
-            const response = await fetch("/api/weight")
+            const url = userId ? `/api/weight?userId=${userId}` : "/api/weight"
+            const response = await fetch(url)
             if (response.ok) {
                 const data = await response.json()
                 setWeightData(data.chartData)
@@ -58,7 +68,7 @@ export function WeightSummaryCard({ className }: { className?: string }) {
         } finally {
             setLoadingWeight(false)
         }
-    }, [])
+    }, [userId])
 
     useEffect(() => {
         if (session) {
@@ -158,51 +168,53 @@ export function WeightSummaryCard({ className }: { className?: string }) {
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Scale className="w-5 h-5 text-primary" />
-                        Mi Peso
+                        {userName ? `Peso de ${userName}` : "Mi Peso"}
                     </CardTitle>
-                    <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="icon" variant="ghost" className="h-7 w-7">
-                                <Plus className="w-4 h-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Registrar Peso</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 pt-4">
-                                <Input
-                                    type="number"
-                                    step="0.1"
-                                    placeholder="Peso (kg)"
-                                    value={newWeight}
-                                    onChange={(e) => setNewWeight(e.target.value)}
-                                />
-                                <div className="space-y-2">
-                                    <div className="relative">
-                                        <Input
-                                            type="date"
-                                            value={newDate}
-                                            max={new Date().toISOString().split("T")[0]}
-                                            onChange={(e) => setNewDate(e.target.value)}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                </div>
-                                <Button
-                                    onClick={handleAddWeight}
-                                    disabled={isSubmitting}
-                                    className="w-full"
-                                >
-                                    {isSubmitting ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                        "Guardar"
-                                    )}
+                    {showAddButton && isOwnProfile && (
+                        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-7 w-7">
+                                    <Plus className="w-4 h-4" />
                                 </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Registrar Peso</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-4">
+                                    <Input
+                                        type="number"
+                                        step="0.1"
+                                        placeholder="Peso (kg)"
+                                        value={newWeight}
+                                        onChange={(e) => setNewWeight(e.target.value)}
+                                    />
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Input
+                                                type="date"
+                                                value={newDate}
+                                                max={new Date().toISOString().split("T")[0]}
+                                                onChange={(e) => setNewDate(e.target.value)}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={handleAddWeight}
+                                        disabled={isSubmitting}
+                                        className="w-full"
+                                    >
+                                        {isSubmitting ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            "Guardar"
+                                        )}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </div>
 
                 {/* Period Selector - TradingView style */}

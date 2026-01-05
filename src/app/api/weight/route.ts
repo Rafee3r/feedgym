@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { weightLogSchema } from "@/lib/validations"
 
-// GET /api/weight - Get weight logs for current user
+// GET /api/weight - Get weight logs for current or specified user
 export async function GET(request: NextRequest) {
     try {
         const session = await auth()
@@ -14,9 +14,11 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url)
         const limit = parseInt(searchParams.get("limit") || "30")
+        const userIdParam = searchParams.get("userId")
+        const targetUserId = userIdParam || session.user.id
 
         const logs = await prisma.weightLog.findMany({
-            where: { userId: session.user.id },
+            where: { userId: targetUserId },
             orderBy: { loggedAt: "desc" },
             take: limit,
         })

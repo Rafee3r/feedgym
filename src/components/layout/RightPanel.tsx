@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import {
     LineChart,
     Line,
@@ -39,10 +40,41 @@ interface SuggestedUser {
     isFollowing: boolean
 }
 
+interface ProfileUser {
+    id: string
+    displayName: string
+}
+
 type TimePeriod = "3M" | "6M" | "MAX"
 
 export function RightPanel() {
     const { data: session } = useSession()
+    const pathname = usePathname()
+
+    // Detect if on a profile page (URL like /username where username is not a reserved route)
+    const reservedRoutes = ['search', 'notifications', 'bookmarks', 'settings', 'terms', 'privacy', 'about']
+    const pathParts = pathname.split('/').filter(Boolean)
+    const isProfilePage = pathParts.length === 1 && !reservedRoutes.includes(pathParts[0])
+    const profileUsername = isProfilePage ? pathParts[0] : null
+
+    // Fetched profile user data
+    const [profileUser, setProfileUser] = useState<ProfileUser | null>(null)
+
+    // Fetch profile user info when we detect we're on a profile page
+    useEffect(() => {
+        if (profileUsername && profileUsername !== session?.user?.username) {
+            fetch(`/api/users/${profileUsername}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data) {
+                        setProfileUser({ id: data.id, displayName: data.displayName })
+                    }
+                })
+                .catch(() => setProfileUser(null))
+        } else {
+            setProfileUser(null)
+        }
+    }, [profileUsername, session?.user?.username])
     const [suggestedUsers, setSuggestedUsers] = useState<SuggestedUser[]>([])
     const [loadingUsers, setLoadingUsers] = useState(true)
     const [followingLoading, setFollowingLoading] = useState<string | null>(null)
@@ -118,7 +150,8 @@ export function RightPanel() {
     // Fetch activity data
     const fetchActivityData = useCallback(async () => {
         try {
-            const response = await fetch("/api/user/activity")
+            const url = profileUser?.id ? `/api/user/activity?userId=${profileUser.id}` : "/api/user/activity"
+            const response = await fetch(url)
             if (response.ok) {
                 const data = await response.json()
                 setActivityData(data)
@@ -128,7 +161,7 @@ export function RightPanel() {
         } finally {
             setLoadingActivity(false)
         }
-    }, [])
+    }, [profileUser?.id])
 
     useEffect(() => {
         if (session) {
@@ -328,7 +361,8 @@ export function RightPanel() {
             <ConsistencyCard
                 activityData={activityData}
                 isLoading={loadingActivity}
-                onOpenSettings={() => setIsScheduleDialogOpen(true)}
+                onOpenSettings={!profileUser ? () => setIsScheduleDialogOpen(true) : undefined}
+                userName={profileUser?.displayName}
             />
 
             <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
@@ -364,7 +398,7 @@ export function RightPanel() {
             </Dialog>
 
             {/* Weight Tracker - TradingView style (SECOND) */}
-            <WeightSummaryCard />
+            <WeightSummaryCard userId={profileUser?.id} userName={profileUser?.displayName} />
 
             {/* Who to Follow - Optimized with Scroll */}
             {!isSmallScreen && (
