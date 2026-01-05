@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { BanEnforcer } from "@/components/auth/BanEnforcer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -95,6 +96,7 @@ export default function RootLayout({
                     >
                         {children}
                         <Toaster />
+                        <BanEnforcer />
                     </ThemeProvider>
                 </SessionProvider>
             </body>
