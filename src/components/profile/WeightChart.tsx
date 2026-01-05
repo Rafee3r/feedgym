@@ -1,4 +1,7 @@
+"use client"
+
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import {
     LineChart,
     Line,
@@ -47,6 +50,7 @@ interface WeightChartProps {
 }
 
 export function WeightChart({ userId }: WeightChartProps) {
+    const { data: session } = useSession()
     const [chartData, setChartData] = useState<WeightChartData[]>([])
     const [logs, setLogs] = useState<WeightLogData[]>([])
     const [stats, setStats] = useState<{
@@ -56,6 +60,10 @@ export function WeightChart({ userId }: WeightChartProps) {
     } | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [timeRange, setTimeRange] = useState<TimeRange>("3M")
+    const [showAllHistory, setShowAllHistory] = useState(false)
+
+    // Check if viewing own profile
+    const isOwnProfile = !userId || userId === session?.user?.id
 
     // Dialog & Form States
     const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -383,65 +391,67 @@ export function WeightChart({ userId }: WeightChartProps) {
                 </CardContent>
             </Card>
 
-            {/* History List */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-sm font-medium">Historial</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-1">
-                        {logs.map((log) => (
-                            <div
-                                key={log.id}
-                                className="flex items-center justify-between p-2 hover:bg-accent/50 rounded-lg transition-colors group"
-                            >
-                                <div className="flex flex-col">
-                                    <span className="font-bold">{log.weight} kg</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {format(new Date(log.loggedAt), "d MMM yyyy", { locale: es })}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {log.notes && (
-                                        <span className="text-xs text-muted-foreground hidden sm:inline-block max-w-[150px] truncate">
-                                            {log.notes}
+            {/* History List - Compact */}
+            {logs.length > 0 && (
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Historial</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <div className="space-y-1">
+                            {(showAllHistory ? logs : logs.slice(0, 3)).map((log) => (
+                                <div
+                                    key={log.id}
+                                    className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="font-semibold">{log.weight} kg</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {format(new Date(log.loggedAt), "d MMM", { locale: es })}
                                         </span>
+                                    </div>
+                                    {isOwnProfile && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7"
+                                                >
+                                                    <MoreHorizontal className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => handleOpenDialog(log)}>
+                                                    <Pencil className="w-4 h-4 mr-2" />
+                                                    Editar
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => handleDelete(log.id)}
+                                                    className="text-destructive focus:text-destructive"
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Eliminar
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     )}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                <MoreHorizontal className="w-4 h-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => handleOpenDialog(log)}>
-                                                <Pencil className="w-4 h-4 mr-2" />
-                                                Editar
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={() => handleDelete(log.id)}
-                                                className="text-destructive focus:text-destructive"
-                                            >
-                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                Eliminar
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
                                 </div>
-                            </div>
-                        ))}
-                        {logs.length === 0 && (
-                            <div className="text-center py-4 text-muted-foreground text-sm">
-                                No hay registros en este periodo.
-                            </div>
+                            ))}
+                        </div>
+                        {logs.length > 3 && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full mt-2 text-xs"
+                                onClick={() => setShowAllHistory(!showAllHistory)}
+                            >
+                                {showAllHistory ? "Ver menos" : `Ver ${logs.length - 3} más`}
+                            </Button>
                         )}
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
 }
