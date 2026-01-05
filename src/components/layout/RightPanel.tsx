@@ -183,7 +183,7 @@ export function RightPanel() {
                     )}
                     <Separator />
                     <Link
-                        href="/search?tab=users"
+                        href="/search?q=&tab=users"
                         className="text-sm text-primary hover:underline"
                     >
                         Ver más

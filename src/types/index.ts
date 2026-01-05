@@ -88,7 +88,16 @@ export interface PostData {
     isReposted?: boolean;
     parent?: PostData | null;
     repostOf?: PostData | null;
+    // Featured reply (most liked reply)
+    topReply?: {
+        id: string;
+        content: string;
+        author: PostAuthor;
+        likesCount: number;
+        createdAt: Date;
+    } | null;
 }
+
 
 // Feed types
 export interface FeedResponse {

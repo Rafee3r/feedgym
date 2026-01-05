@@ -84,7 +84,53 @@ export async function GET(request: NextRequest) {
             isLiked: session ? ((post as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
             isBookmarked: session ? ((post as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
             repostOf: post.repostOf,
+            topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
         }))
+
+        // Fetch top replies for posts that have replies
+        const postsWithReplies = formattedPosts.filter(p => p.repliesCount > 0)
+        if (postsWithReplies.length > 0) {
+            const topReplies = await prisma.post.findMany({
+                where: {
+                    parentId: { in: postsWithReplies.map(p => p.id) },
+                    deletedAt: null,
+                },
+                orderBy: { likesCount: "desc" },
+                take: postsWithReplies.length * 1, // One per parent
+                include: {
+                    author: {
+                        select: {
+                            id: true,
+                            username: true,
+                            displayName: true,
+                            avatarUrl: true,
+                        },
+                    },
+                },
+            })
+
+            // Group by parentId and take top one
+            const topReplyMap = new Map<string, typeof topReplies[0]>()
+            for (const reply of topReplies) {
+                if (reply.parentId && !topReplyMap.has(reply.parentId)) {
+                    topReplyMap.set(reply.parentId, reply)
+                }
+            }
+
+            // Attach to posts
+            for (const post of formattedPosts) {
+                const topReply = topReplyMap.get(post.id)
+                if (topReply) {
+                    post.topReply = {
+                        id: topReply.id,
+                        content: topReply.content,
+                        author: topReply.author,
+                        likesCount: topReply.likesCount,
+                        createdAt: topReply.createdAt,
+                    }
+                }
+            }
+        }
 
         return NextResponse.json({
             posts: formattedPosts,

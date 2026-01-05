@@ -374,8 +374,36 @@ export function PostCard({
                 </div>
             </div>
 
+            {/* Featured Reply (most liked) */}
+            {showThread && post.topReply && (
+                <Link
+                    href={`/post/${post.id}`}
+                    className="block ml-[52px] mt-2 p-3 bg-accent/30 rounded-xl border border-border/50 hover:bg-accent/50 transition-colors"
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <Avatar className="w-5 h-5">
+                            <AvatarImage src={post.topReply.author.avatarUrl || undefined} />
+                            <AvatarFallback className="text-[10px]">
+                                {post.topReply.author.displayName?.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{post.topReply.author.displayName}</span>
+                        <span className="text-xs text-muted-foreground">@{post.topReply.author.username}</span>
+                        {post.topReply.likesCount > 0 && (
+                            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                                <Heart className="w-3 h-3 fill-current text-red-500" />
+                                {post.topReply.likesCount}
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                        {post.topReply.content}
+                    </p>
+                </Link>
+            )}
+
             {/* Thread indicator */}
-            {showThread && post.repliesCount > 0 && (
+            {showThread && post.repliesCount > 0 && !post.topReply && (
                 <div className="ml-[52px] mt-2">
                     <Link
                         href={`/post/${post.id}`}
