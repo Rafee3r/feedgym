@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
-import { Moon, Sun, Monitor } from "lucide-react"
+import { Moon, Sun, Monitor, Eclipse } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function AppearanceSettingsPage() {
@@ -14,6 +14,7 @@ export default function AppearanceSettingsPage() {
     const themes = [
         { value: "light", icon: Sun, label: "Claro" },
         { value: "dark", icon: Moon, label: "Oscuro" },
+        { value: "pitch-black", icon: Eclipse, label: "Pitch Black", description: "OLED" },
         { value: "system", icon: Monitor, label: "Sistema" },
     ]
 
@@ -25,7 +26,7 @@ export default function AppearanceSettingsPage() {
                 {/* Theme Selection */}
                 <div>
                     <h3 className="font-semibold mb-4">Tema</h3>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                         {themes.map((t) => {
                             const Icon = t.icon
                             const isActive = theme === t.value
@@ -46,14 +47,19 @@ export default function AppearanceSettingsPage() {
                                             isActive ? "text-primary" : "text-muted-foreground"
                                         )}
                                     />
-                                    <span
-                                        className={cn(
-                                            "text-sm font-medium",
-                                            isActive ? "text-primary" : ""
+                                    <div className="text-center">
+                                        <span
+                                            className={cn(
+                                                "text-sm font-medium block",
+                                                isActive ? "text-primary" : ""
+                                            )}
+                                        >
+                                            {t.label}
+                                        </span>
+                                        {t.description && (
+                                            <span className="text-xs text-muted-foreground">{t.description}</span>
                                         )}
-                                    >
-                                        {t.label}
-                                    </span>
+                                    </div>
                                 </button>
                             )
                         })}
