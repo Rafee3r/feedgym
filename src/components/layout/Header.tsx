@@ -38,13 +38,19 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
                     </Link>
                 )}
 
+                {/* Desktop/Tablet Title */}
                 {title && (
-                    <h1 className="text-xl font-bold">{title}</h1>
+                    <h1 className="text-xl font-bold hidden md:block">{title}</h1>
                 )}
 
                 {!title && !showBack && (
-                    <h1 className="text-xl font-bold md:hidden">FeedGym</h1>
+                    <h1 className="text-xl font-bold hidden md:block">FeedGym</h1>
                 )}
+
+                {/* Mobile Centered Logo */}
+                <div className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+                    <img src="/logo.png" alt="FeedGym" className="h-6 w-auto object-contain" />
+                </div>
             </div>
         </header>
     )

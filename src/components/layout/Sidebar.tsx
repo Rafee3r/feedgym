@@ -62,9 +62,10 @@ export function Sidebar() {
     return (
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-4 px-4 py-3 mb-6 group transition-colors">
-                <img src="/logo.png" alt="FeedGym" className="h-28 w-auto hidden xl:block object-contain" />
-                <img src="/icon.png" alt="FeedGym" className="h-12 w-12 xl:hidden object-contain" />
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-4 px-6 py-4 mb-2 group transition-colors">
+                <img src="/logo.png" alt="FeedGym" className="h-8 w-auto hidden xl:block object-contain" />
+                <img src="/icon.png" alt="FeedGym" className="h-8 w-8 xl:hidden object-contain" />
             </Link>
 
             {/* Navigation */}
@@ -76,7 +77,7 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors relative",
+                                "flex items-center gap-4 px-6 py-3 rounded-full text-lg transition-colors relative",
                                 isActive
                                     ? "font-bold bg-accent"
                                     : "hover:bg-accent/50"

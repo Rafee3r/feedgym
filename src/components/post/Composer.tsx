@@ -28,6 +28,7 @@ interface ComposerProps {
     parentId?: string
     onSuccess?: () => void
     compact?: boolean
+    autoFocus?: boolean
 }
 
 // Rotating engaging placeholders
@@ -49,6 +50,7 @@ export function Composer({
     parentId,
     onSuccess,
     compact = false,
+    autoFocus = false,
 }: ComposerProps) {
     const { data: session } = useSession()
     const [content, setContent] = useState("")
@@ -83,6 +85,17 @@ export function Composer({
             return () => clearInterval(interval)
         }
     }, [isFocused, content])
+
+    // Auto-focus logic
+    useEffect(() => {
+        if (autoFocus && textareaRef.current) {
+            // Small timeout to ensure dialog animation/rendering is complete
+            setTimeout(() => {
+                textareaRef.current?.focus()
+                setIsFocused(true)
+            }, 100)
+        }
+    }, [autoFocus])
 
     const currentPlaceholder = customPlaceholder || placeholders[placeholderIndex]
 
