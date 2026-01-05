@@ -16,7 +16,15 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        const { email, password, username, displayName } = validated.data
+        const { email, password, username, displayName, invitationCode } = validated.data
+
+        // Verify invitation code
+        if (invitationCode !== "A2G0HN102SM") {
+            return NextResponse.json(
+                { error: "Código de invitación inválido" },
+                { status: 400 }
+            )
+        }
 
         // Check if email already exists
         const existingEmail = await prisma.user.findUnique({

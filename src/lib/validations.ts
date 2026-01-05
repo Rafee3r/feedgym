@@ -14,6 +14,7 @@ export const registerSchema = z.object({
         .max(20, "El username no puede tener más de 20 caracteres")
         .regex(/^[a-zA-Z0-9_]+$/, "Solo letras, números y guiones bajos"),
     displayName: z.string().max(50).optional(),
+    invitationCode: z.string().min(1, "El código de invitación es requerido"),
 });
 
 export const loginSchema = z.object({

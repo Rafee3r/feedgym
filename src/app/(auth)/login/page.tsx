@@ -77,7 +77,7 @@ export default function LoginPage() {
                 {/* Logo */}
                 <div className="flex flex-col items-center">
                     <img
-                        src={!mounted ? "/logo-dark.png" : (resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png")}
+                        src="/logo-dark.png"
                         alt="FeedGym"
                         className="h-20 w-auto mb-8 object-contain"
                     />

@@ -20,6 +20,7 @@ export default function RegisterPage() {
         confirmPassword: "",
         username: "",
         displayName: "",
+        invitationCode: "",
     })
     const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -58,6 +59,10 @@ export default function RegisterPage() {
             newErrors.displayName = "El nombre es requerido"
         } */
 
+        if (!formData.invitationCode) {
+            newErrors.invitationCode = "Código requerido"
+        }
+
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
@@ -78,6 +83,7 @@ export default function RegisterPage() {
                     password: formData.password,
                     username: formData.username,
                     displayName: formData.displayName,
+                    invitationCode: formData.invitationCode,
                 }),
             })
 
@@ -116,7 +122,7 @@ export default function RegisterPage() {
                 {/* Logo */}
                 <div className="flex flex-col items-center">
                     <img
-                        src={!mounted ? "/logo-dark.png" : (resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png")}
+                        src="/logo-dark.png"
                         alt="FeedGym"
                         className="h-16 w-auto mb-8 object-contain"
                     />
@@ -214,6 +220,23 @@ export default function RegisterPage() {
                             )}
                             {errors.confirmPassword && (
                                 <p className="text-xs text-destructive">{errors.confirmPassword}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Input
+                                id="invitationCode"
+                                type="text"
+                                placeholder="Código de invitación"
+                                value={formData.invitationCode}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, invitationCode: e.target.value.toUpperCase() })
+                                }
+                                disabled={isLoading}
+                                className="bg-transparent border-0 border-b border-input rounded-none px-0 focus-visible:ring-0 focus-visible:border-primary placeholder:text-muted-foreground/50 h-12 tracking-wide"
+                            />
+                            {errors.invitationCode && (
+                                <p className="text-xs text-destructive">{errors.invitationCode}</p>
                             )}
                         </div>
                     </div>
