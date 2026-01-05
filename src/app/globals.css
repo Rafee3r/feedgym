@@ -82,9 +82,13 @@
         --zoom-scale: 1;
     }
 
+    html {
+        /* Apply text scale to root so all rem-based sizes scale */
+        font-size: calc(16px * var(--text-scale));
+    }
+
     body {
         @apply bg-background text-foreground antialiased;
-        font-size: calc(1rem * var(--text-scale));
         min-height: 100dvh;
         min-height: 100vh;
         /* fallback */
