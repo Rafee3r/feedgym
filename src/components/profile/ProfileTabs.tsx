@@ -16,6 +16,16 @@ interface ProfileTabsProps {
 
 export function ProfileTabs({ username, userId }: ProfileTabsProps) {
     const { data: session } = useSession()
+
+    // Posts State
+    const [posts, setPosts] = useState<PostData[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState("posts")
+
+    // Activity Stats State
+    const [activityData, setActivityData] = useState<ActivityData | null>(null)
+    const [loadingActivity, setLoadingActivity] = useState(true)
+
     // Media State
     const [mediaPosts, setMediaPosts] = useState<PostData[]>([])
     const [loadingMedia, setLoadingMedia] = useState(false)
