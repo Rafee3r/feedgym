@@ -91,8 +91,13 @@
         @apply bg-background text-foreground antialiased;
         min-height: 100dvh;
         min-height: 100vh;
-        /* Use zoom for interface scaling - transform breaks fixed positioning */
-        zoom: var(--zoom-scale);
+    }
+
+    /* Only apply zoom on desktop - causes issues with modals on mobile */
+    @media (min-width: 768px) {
+        body {
+            zoom: var(--zoom-scale);
+        }
     }
 
     /* Reduced motion preference */
