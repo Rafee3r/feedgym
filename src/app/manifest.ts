@@ -10,6 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
         background_color: "#09090b", // zinc-950
         theme_color: "#09090b",
         orientation: "portrait",
+        scope: "/",
         icons: [
             {
                 src: "/icon.png",
