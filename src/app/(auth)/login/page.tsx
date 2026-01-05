@@ -37,11 +37,24 @@ export default function LoginPage() {
             })
 
             if (result?.error) {
-                toast({
-                    title: "Error",
-                    description: "Email o contraseña incorrectos",
-                    variant: "destructive",
-                })
+                // Check if it's a banned user error
+                if (result.error.includes("BANNED") || result.error === "CredentialsSignin") {
+                    // Check if it was specifically a ban by trying to decode the error
+                    const isBanned = result.error.includes("BANNED")
+                    toast({
+                        title: isBanned ? "Cuenta suspendida" : "Error",
+                        description: isBanned
+                            ? "Esta cuenta ha sido baneada. Contacta soporte si crees que es un error."
+                            : "Email o contraseña incorrectos",
+                        variant: "destructive",
+                    })
+                } else {
+                    toast({
+                        title: "Error",
+                        description: "Email o contraseña incorrectos",
+                        variant: "destructive",
+                    })
+                }
             } else {
                 router.push("/")
                 router.refresh()
