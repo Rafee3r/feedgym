@@ -12,7 +12,7 @@ import {
     ResponsiveContainer,
     CartesianGrid,
 } from "recharts"
-import { Scale, Users, Loader2, Plus, TrendingUp, TrendingDown, Minus } from "lucide-react"
+import { Scale, Users, Loader2, Plus, TrendingUp, TrendingDown, Minus, Flame, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -38,6 +38,20 @@ interface SuggestedUser {
     isFollowing: boolean
 }
 
+interface ActivityData {
+    weekDays: {
+        date: string
+        hasPost: boolean
+        isToday: boolean
+        isPast: boolean
+    }[]
+    stats: {
+        daysPosted: number
+        totalDoays: number
+        missedToday: boolean
+    }
+}
+
 type TimePeriod = "1M" | "6M" | "MAX"
 
 export function RightPanel() {
@@ -56,8 +70,13 @@ export function RightPanel() {
     const [timePeriod, setTimePeriod] = useState<TimePeriod>("1M")
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [newWeight, setNewWeight] = useState("")
+
     const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0])
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    // Activity state
+    const [activityData, setActivityData] = useState<ActivityData | null>(null)
+    const [loadingActivity, setLoadingActivity] = useState(true)
 
     // Fetch suggested users from API
     const fetchSuggestedUsers = useCallback(async () => {
@@ -90,12 +109,28 @@ export function RightPanel() {
         }
     }, [])
 
+    // Fetch activity data
+    const fetchActivityData = useCallback(async () => {
+        try {
+            const response = await fetch("/api/user/activity")
+            if (response.ok) {
+                const data = await response.json()
+                setActivityData(data)
+            }
+        } catch (error) {
+            console.error("Error fetching activity data:", error)
+        } finally {
+            setLoadingActivity(false)
+        }
+    }, [])
+
     useEffect(() => {
         if (session) {
             fetchSuggestedUsers()
             fetchWeightData()
+            fetchActivityData()
         }
-    }, [session, fetchSuggestedUsers, fetchWeightData])
+    }, [session, fetchSuggestedUsers, fetchWeightData, fetchActivityData])
 
     // Filter weight data by period
     const getFilteredData = () => {
@@ -386,8 +421,73 @@ export function RightPanel() {
                 </CardContent>
             </Card>
 
-            {/* Who to Follow */}
+            {/* Consitency Tracker */}
             <Card className="bg-transparent border-0 shadow-none">
+                <CardHeader className="pb-2 px-0">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <Flame className="w-5 h-5 text-primary" />
+                        Constancia
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="px-0 pt-0">
+                    {loadingActivity ? (
+                        <div className="flex justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        </div>
+                    ) : activityData ? (
+                        <div className="space-y-4">
+                            <div className="bg-card/50 rounded-xl p-4 border border-border/50">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-sm font-medium text-muted-foreground">Esta semana</span>
+                                    <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                        {activityData.stats.daysPosted}/7 días
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between px-1">
+                                    {activityData.weekDays.map((day) => {
+                                        const date = new Date(day.date)
+                                        const dayName = date.toLocaleDateString("es-ES", { weekday: "narrow" }).toUpperCase().replace(".", "")
+
+                                        return (
+                                            <div key={day.date} className="flex flex-col items-center gap-2">
+                                                <span className="text-[10px] font-medium text-muted-foreground">
+                                                    {dayName}
+                                                </span>
+                                                <div
+                                                    className={`w-3 h-3 rounded-full transition-all ${day.hasPost
+                                                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+                                                        : day.isToday
+                                                            ? "bg-transparent border border-muted-foreground/50 animate-pulse"
+                                                            : "bg-muted/30"
+                                                        }`}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {activityData.stats.missedToday && (
+                                <div className="flex gap-3 items-start bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl">
+                                    <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-yellow-500 leading-none">
+                                            No has publicado tu progreso
+                                        </p>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            Esto puede afectar la motivación de tus próximos entrenamientos.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : null}
+                </CardContent>
+            </Card >
+
+            {/* Who to Follow */}
+            < Card className="bg-transparent border-0 shadow-none" >
                 <CardHeader className="pb-3 px-0">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Users className="w-5 h-5 text-primary" />
