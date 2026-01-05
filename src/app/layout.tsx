@@ -23,11 +23,21 @@ export const metadata: Metadata = {
             "Comparte tu progreso, entrenamientos y conecta con la comunidad fitness",
         type: "website",
         locale: "es_ES",
+        siteName: "FeedGym",
     },
     twitter: {
         card: "summary_large_image",
         title: "FeedGym",
         description: "Tu Red Social Fitness",
+    },
+    appleWebApp: {
+        capable: true,
+        statusBarStyle: "black-translucent",
+        title: "FeedGym",
+        startupImage: ["/icon.png"],
+    },
+    formatDetection: {
+        telephone: false,
     },
 };
 
@@ -35,9 +45,11 @@ export const viewport: Viewport = {
     width: "device-width",
     initialScale: 1,
     maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover", // For notch support
     themeColor: [
         { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-        { media: "(prefers-color-scheme: dark)", color: "#0a0f1a" },
+        { media: "(prefers-color-scheme: dark)", color: "#09090b" },
     ],
 };
 
