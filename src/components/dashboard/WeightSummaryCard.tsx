@@ -72,9 +72,10 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
 
     useEffect(() => {
         if (session) {
+            setLoadingWeight(true)
             fetchWeightData()
         }
-    }, [session, fetchWeightData])
+    }, [session, userId, fetchWeightData])
 
     // Filter weight data by period
     const getFilteredData = () => {

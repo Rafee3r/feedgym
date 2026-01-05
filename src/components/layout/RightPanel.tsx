@@ -167,9 +167,16 @@ export function RightPanel() {
         if (session) {
             fetchSuggestedUsers()
             fetchWeightData()
+        }
+    }, [session, fetchSuggestedUsers, fetchWeightData])
+
+    // Refetch activity when profile changes
+    useEffect(() => {
+        if (session) {
+            setLoadingActivity(true)
             fetchActivityData()
         }
-    }, [session, fetchSuggestedUsers, fetchWeightData, fetchActivityData])
+    }, [session, profileUser?.id, fetchActivityData])
 
     useEffect(() => {
         if (activityData?.trainingDays) {
