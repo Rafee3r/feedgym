@@ -59,6 +59,31 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="es" suppressHydrationWarning>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                try {
+                                    var reducedMotion = localStorage.getItem('feedgym-reduced-motion');
+                                    var textSize = localStorage.getItem('feedgym-text-size');
+                                    var zoom = localStorage.getItem('feedgym-zoom');
+                                    
+                                    if (reducedMotion === 'true') {
+                                        document.documentElement.classList.add('reduce-motion');
+                                    }
+                                    if (textSize) {
+                                        document.documentElement.style.setProperty('--text-scale', parseInt(textSize) / 100);
+                                    }
+                                    if (zoom) {
+                                        document.documentElement.style.setProperty('--zoom-scale', parseInt(zoom) / 100);
+                                    }
+                                } catch(e) {}
+                            })();
+                        `,
+                    }}
+                />
+            </head>
             <body className={inter.className}>
                 <SessionProvider>
                     <ThemeProvider
