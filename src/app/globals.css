@@ -56,7 +56,6 @@
 
     body {
         @apply bg-background text-foreground antialiased min-h-[100dvh];
-        padding-top: env(safe-area-inset-top);
     }
 
     /* Custom scrollbar */

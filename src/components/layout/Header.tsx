@@ -19,7 +19,7 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
     return (
         <header
             className={`${sticky ? "sticky top-0" : ""
-                } z-40 bg-background/95 backdrop-blur-xl border-b border-border supports-[backdrop-filter]:bg-background/85`}
+                } z-40 bg-background/95 backdrop-blur-xl border-b border-border supports-[backdrop-filter]:bg-background/85 pt-[env(safe-area-inset-top,0px)] md:pt-0`}
         >
             <div className="flex items-center justify-center gap-4 px-4 h-14 relative">
                 {showBack && (
