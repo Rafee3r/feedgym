@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast"
 export default function RegisterPage() {
     const router = useRouter()
     const { resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         email: "",
@@ -21,6 +22,10 @@ export default function RegisterPage() {
         displayName: "",
     })
     const [errors, setErrors] = useState<Record<string, string>>({})
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {}
@@ -111,7 +116,7 @@ export default function RegisterPage() {
                 {/* Logo */}
                 <div className="flex flex-col items-center">
                     <img
-                        src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+                        src={!mounted ? "/logo-dark.png" : (resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png")}
                         alt="FeedGym"
                         className="h-16 w-auto mb-8 object-contain"
                     />

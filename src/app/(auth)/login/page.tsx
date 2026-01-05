@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
@@ -14,11 +14,16 @@ import { toast } from "@/hooks/use-toast"
 export default function LoginPage() {
     const router = useRouter()
     const { resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         email: "",
         password: "",
     })
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -59,7 +64,7 @@ export default function LoginPage() {
                 {/* Logo */}
                 <div className="flex flex-col items-center">
                     <img
-                        src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+                        src={!mounted ? "/logo-dark.png" : (resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png")}
                         alt="FeedGym"
                         className="h-20 w-auto mb-8 object-contain"
                     />
