@@ -59,6 +59,21 @@ export function Composer({
         Math.floor(Math.random() * placeholders.length)
     )
 
+    // Fetch avatar if missing from session (due to base64 stripping)
+    const [avatarUrl, setAvatarUrl] = useState<string | undefined>(session?.user?.image)
+    useEffect(() => {
+        if (session?.user) {
+            fetch("/api/users/me")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.avatarUrl) {
+                        setAvatarUrl(data.avatarUrl)
+                    }
+                })
+                .catch(console.error)
+        }
+    }, [session])
+
     // Rotate placeholder every 8 seconds when not focused
     useEffect(() => {
         if (!isFocused && !content) {
@@ -273,7 +288,7 @@ export function Composer({
         >
             <div className="flex gap-3">
                 <Avatar className={cn(compact ? "w-8 h-8" : "w-10 h-10 sm:w-12 sm:h-12")}>
-                    <AvatarImage src={session.user.image || undefined} />
+                    <AvatarImage src={avatarUrl || session.user.image || undefined} />
                     <AvatarFallback>
                         {session.user.name?.slice(0, 2).toUpperCase() || "U"}
                     </AvatarFallback>
