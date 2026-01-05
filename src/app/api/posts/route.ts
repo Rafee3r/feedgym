@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
             ...((!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) && {
                 author: {
                     isShadowbanned: false
-                }
+                } as any
             })
         }
 
@@ -69,29 +69,32 @@ export async function GET(request: NextRequest) {
         const hasMore = posts.length > limit
         const postsToReturn = hasMore ? posts.slice(0, -1) : posts
 
-        const formattedPosts = postsToReturn.map((post) => ({
-            id: post.id,
-            content: post.content,
-            imageUrl: post.imageUrl,
-            mediaUrls: post.mediaUrls,
-            type: post.type,
-            metadata: post.metadata,
-            audience: post.audience,
-            parentId: post.parentId,
-            threadRootId: post.threadRootId,
-            repostOfId: post.repostOfId,
-            isQuote: post.isQuote,
-            likesCount: post.likesCount,
-            repliesCount: post.repliesCount,
-            repostsCount: post.repostsCount,
-            author: post.author,
-            createdAt: post.createdAt,
-            isLiked: session ? ((post as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
-            isBookmarked: session ? ((post as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
-            repostOf: post.repostOf,
-            topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
-            canDelete: session ? (session.user.id === post.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
-        }))
+        const formattedPosts = postsToReturn.map((post) => {
+            const p = post as any // Cast to any because local Prisma client is stale
+            return {
+                id: p.id,
+                content: p.content,
+                imageUrl: p.imageUrl,
+                mediaUrls: p.mediaUrls,
+                type: p.type,
+                metadata: p.metadata,
+                audience: p.audience,
+                parentId: p.parentId,
+                threadRootId: p.threadRootId,
+                repostOfId: p.repostOfId,
+                isQuote: p.isQuote,
+                likesCount: p.likesCount,
+                repliesCount: p.repliesCount,
+                repostsCount: p.repostsCount,
+                author: p.author,
+                createdAt: p.createdAt,
+                isLiked: session ? ((p as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
+                isBookmarked: session ? ((p as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
+                repostOf: p.repostOf,
+                topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
+                canDelete: session ? (session.user.id === p.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
+            }
+        })
 
         // Fetch top replies for posts that have replies
         const postsWithReplies = formattedPosts.filter(p => p.repliesCount > 0)
@@ -170,15 +173,24 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Admin Enforcement
-        if (session.user.isBanned) {
+        // Admin Enforcement - Fetch fresh status from DB
+        const userStatus = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { isBanned: true, isFrozen: true, mutedUntil: true }
+        }) as any // Cast to any because local Prisma client might be stale and locked
+
+        if (!userStatus) {
+            return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+        }
+
+        if (userStatus.isBanned) {
             return NextResponse.json({ error: "Tu cuenta ha sido suspendida permanentemente." }, { status: 403 })
         }
-        if (session.user.isFrozen) {
+        if (userStatus.isFrozen) {
             return NextResponse.json({ error: "Tu cuenta está congelada (solo lectura)." }, { status: 403 })
         }
-        if (session.user.mutedUntil && new Date(session.user.mutedUntil) > new Date()) {
-            const minutes = Math.ceil((new Date(session.user.mutedUntil).getTime() - Date.now()) / 60000)
+        if (userStatus.mutedUntil && new Date(userStatus.mutedUntil) > new Date()) {
+            const minutes = Math.ceil((new Date(userStatus.mutedUntil).getTime() - Date.now()) / 60000)
             return NextResponse.json({ error: `Estás silenciado. Podrás publicar en ${minutes} minutos.` }, { status: 403 })
         }
 
@@ -209,7 +221,7 @@ export async function POST(request: NextRequest) {
                 content,
                 type,
                 imageUrl,
-                mediaUrls: validated.data.mediaUrls,
+                mediaUrls: (validated.data as any).mediaUrls, // Cast for stale client
                 parentId,
                 threadRootId,
                 audience,
