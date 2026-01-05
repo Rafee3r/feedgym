@@ -4,14 +4,16 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
-import { Dumbbell, Loader2 } from "lucide-react"
+import { useTheme } from "next-themes"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
+
 
 export default function LoginPage() {
     const router = useRouter()
+    const { resolvedTheme } = useTheme()
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         email: "",
@@ -56,7 +58,11 @@ export default function LoginPage() {
             <div className="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
                 {/* Logo */}
                 <div className="flex flex-col items-center">
-                    <img src="/logo.png" alt="FeedGym" className="h-20 w-auto mb-8 object-contain" />
+                    <img
+                        src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+                        alt="FeedGym"
+                        className="h-20 w-auto mb-8 object-contain"
+                    />
                     <h1 className="text-2xl font-bold tracking-tight">Bienvenido de nuevo</h1>
                     <p className="text-sm text-muted-foreground mt-2">Ingresa a tu espacio de entrenamiento</p>
                 </div>

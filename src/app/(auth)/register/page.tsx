@@ -3,14 +3,15 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Dumbbell, Loader2, Check } from "lucide-react"
+import { useTheme } from "next-themes"
+import { Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
     const router = useRouter()
+    const { resolvedTheme } = useTheme()
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({
         email: "",
@@ -109,7 +110,11 @@ export default function RegisterPage() {
             <div className="w-full max-w-sm space-y-8 animate-in fade-in duration-500">
                 {/* Logo */}
                 <div className="flex flex-col items-center">
-                    <img src="/logo.png" alt="FeedGym" className="h-16 w-auto mb-8 object-contain" />
+                    <img
+                        src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
+                        alt="FeedGym"
+                        className="h-16 w-auto mb-8 object-contain"
+                    />
                     <h1 className="text-2xl font-bold tracking-tight">Únete a FeedGym</h1>
                     <p className="text-sm text-muted-foreground mt-2">Comienza tu viaje hoy</p>
                 </div>
