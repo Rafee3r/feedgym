@@ -10,6 +10,7 @@ import {
     YAxis,
     Tooltip,
     ResponsiveContainer,
+    CartesianGrid,
 } from "recharts"
 import { Scale, Users, Loader2, Plus, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -323,34 +324,59 @@ export function RightPanel() {
                             </div>
 
                             {/* Chart */}
-                            <div className="h-[100px]">
+                            <div className="h-[200px] w-full mt-4">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={filteredData}>
-                                        <XAxis dataKey="date" hide />
-                                        <YAxis hide domain={["dataMin - 1", "dataMax + 1"]} />
+                                    <LineChart data={filteredData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            vertical={true}
+                                            horizontal={true}
+                                            stroke="hsl(var(--border))"
+                                            opacity={0.3}
+                                        />
+                                        <XAxis
+                                            dataKey="date"
+                                            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => {
+                                                const date = new Date(value)
+                                                return `${date.getDate()}/${date.getMonth() + 1}`
+                                            }}
+                                            interval="preserveStartEnd"
+                                        />
+                                        <YAxis
+                                            domain={["dataMin - 1", "dataMax + 1"]}
+                                            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickFormatter={(value) => value.toFixed(1)}
+                                            width={35}
+                                        />
                                         <Tooltip
                                             contentStyle={{
-                                                backgroundColor: "hsl(var(--background))",
+                                                backgroundColor: "hsl(var(--card))",
                                                 border: "1px solid hsl(var(--border))",
-                                                borderRadius: "6px",
+                                                borderRadius: "8px",
                                                 fontSize: "12px",
                                             }}
+                                            itemStyle={{ color: "hsl(var(--foreground))" }}
                                             formatter={(value: number) => [`${value} kg`, "Peso"]}
                                             labelFormatter={(label) => {
                                                 const date = new Date(label)
                                                 return date.toLocaleDateString("es-ES", {
                                                     day: "numeric",
-                                                    month: "short",
+                                                    month: "long",
                                                 })
                                             }}
                                         />
                                         <Line
                                             type="monotone"
                                             dataKey="weight"
-                                            stroke="hsl(var(--primary))"
+                                            stroke="#22c55e"
                                             strokeWidth={2}
-                                            dot={false}
-                                            activeDot={{ r: 4, fill: "hsl(var(--primary))" }}
+                                            dot={{ fill: "#22c55e", strokeWidth: 2, r: 4, stroke: "#000" }}
+                                            activeDot={{ r: 6, fill: "#22c55e", stroke: "#000", strokeWidth: 2 }}
                                         />
                                     </LineChart>
                                 </ResponsiveContainer>
