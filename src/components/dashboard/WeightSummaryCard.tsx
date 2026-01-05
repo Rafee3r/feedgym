@@ -240,7 +240,7 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                     </div>
                 ) : filteredData.length === 0 ? (
                     <div className="h-[120px] flex items-center justify-center text-sm text-muted-foreground">
-                        Sin datos. ¡Añade tu peso!
+                        {isOwnProfile ? "Sin datos. ¡Añade tu peso!" : "No hay datos de este usuario"}
                     </div>
                 ) : (
                     <>
