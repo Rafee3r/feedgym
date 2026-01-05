@@ -70,7 +70,13 @@ export async function GET(request: NextRequest) {
 
         const trainingDays = user?.trainingDays || []
 
-        const daysPosted = activity.filter(d => d.hasPost).length
+        // Count only scheduled training days that have a post (true consistency!)
+        const daysPosted = activity.filter(d => {
+            const dayDate = new Date(d.date)
+            const dayIndex = dayDate.getDay().toString()
+            const isScheduled = trainingDays.includes(dayIndex)
+            return isScheduled && d.hasPost
+        }).length
 
         // Check if today is a scheduled training day
         const todayIndex = now.getDay().toString()

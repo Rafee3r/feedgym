@@ -83,13 +83,13 @@ export function ConsistencyCard({
                                                 {dayName}
                                             </span>
                                             <div
-                                                className={`w-3 h-3 rounded-full transition-all ${day.hasPost
-                                                    ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
-                                                    : (day.isToday && isScheduled)
-                                                        ? "bg-transparent border border-muted-foreground/50 animate-pulse"
-                                                        : isScheduled
-                                                            ? "bg-secondary"
-                                                            : "bg-muted/10"
+                                                className={`w-3 h-3 rounded-full transition-all ${(isScheduled && day.hasPost)
+                                                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+                                                        : (day.isToday && isScheduled)
+                                                            ? "bg-transparent border border-muted-foreground/50 animate-pulse"
+                                                            : isScheduled
+                                                                ? "bg-secondary"
+                                                                : "bg-muted/10"
                                                     }`}
                                             />
                                         </div>
