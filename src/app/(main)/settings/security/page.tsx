@@ -1,14 +1,88 @@
 "use client"
 
+import { useState } from "react"
 import { signOut } from "next-auth/react"
 import { Header } from "@/components/layout/Header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { LogOut, Smartphone, AlertTriangle } from "lucide-react"
+import { LogOut, Smartphone, AlertTriangle, Loader2 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 export default function SecuritySettingsPage() {
+    const [currentPassword, setCurrentPassword] = useState("")
+    const [newPassword, setNewPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleUpdatePassword = async () => {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            toast({
+                title: "Error",
+                description: "Por favor completa todos los campos",
+                variant: "destructive",
+            })
+            return
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast({
+                title: "Error",
+                description: "Las nuevas contraseñas no coinciden",
+                variant: "destructive",
+            })
+            return
+        }
+
+        if (newPassword.length < 8) {
+            toast({
+                title: "Error",
+                description: "La nueva contraseña debe tener al menos 8 caracteres",
+                variant: "destructive",
+            })
+            return
+        }
+
+        setIsLoading(true)
+
+        try {
+            const response = await fetch("/api/users/me/password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    currentPassword,
+                    newPassword,
+                }),
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || "Error al actualizar contraseña")
+            }
+
+            toast({
+                title: "Contraseña actualizada",
+                description: "Tu contraseña ha sido cambiada exitosamente",
+                variant: "success",
+            })
+
+            // Reset form
+            setCurrentPassword("")
+            setNewPassword("")
+            setConfirmPassword("")
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: err.message,
+                variant: "destructive",
+            })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     return (
         <>
             <Header title="Seguridad" showBack />
@@ -24,12 +98,20 @@ export default function SecuritySettingsPage() {
                             id="currentPassword"
                             type="password"
                             placeholder="••••••••"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
                         />
                     </div>
 
                     <div className="space-y-2">
                         <Label htmlFor="newPassword">Nueva contraseña</Label>
-                        <Input id="newPassword" type="password" placeholder="••••••••" />
+                        <Input
+                            id="newPassword"
+                            type="password"
+                            placeholder="••••••••"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                        />
                     </div>
 
                     <div className="space-y-2">
@@ -38,10 +120,25 @@ export default function SecuritySettingsPage() {
                             id="confirmPassword"
                             type="password"
                             placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                         />
                     </div>
 
-                    <Button className="w-full rounded-full">Actualizar contraseña</Button>
+                    <Button
+                        className="w-full rounded-full"
+                        onClick={handleUpdatePassword}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Actualizando...
+                            </>
+                        ) : (
+                            "Actualizar contraseña"
+                        )}
+                    </Button>
                 </div>
 
                 <Separator />

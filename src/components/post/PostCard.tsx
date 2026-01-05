@@ -103,7 +103,11 @@ export function PostCard({
     const [isReposted, setIsReposted] = useState(post.isReposted || false)
     const [likesCount, setLikesCount] = useState(post.likesCount)
 
-    const isOwner = currentUserId === post.author.id
+    const [likesCount, setLikesCount] = useState(post.likesCount)
+
+    // const isOwner = currentUserId === post.author.id // No longer needed for delete
+    // But we might need currentUserId for other things? It is passed as prop.
+    // Let's just use post.canDelete for the delete button.
 
     const handleLike = () => {
         setIsLiked(!isLiked)
@@ -172,7 +176,7 @@ export function PostCard({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                {isOwner && (
+                                {post.canDelete && (
                                     <DropdownMenuItem
                                         onClick={() => onDelete?.(post.id)}
                                         className="text-destructive focus:text-destructive"

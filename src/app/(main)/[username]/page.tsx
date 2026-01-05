@@ -49,6 +49,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             showMetrics: true,
             createdAt: true,
             role: true, // Fetch role
+            // Admin fields (conditionally fetched effectively, but we select them here if user is admin)
+            ...(session?.user.role === "ADMIN" || session?.user.role === "STAFF"
+                ? {
+                    isBanned: true,
+                    isShadowbanned: true,
+                    isFrozen: true,
+                    mutedUntil: true,
+                }
+                : {}),
             _count: {
                 select: {
                     posts: { where: { deletedAt: null, parentId: null } },

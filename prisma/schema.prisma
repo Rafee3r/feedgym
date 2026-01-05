@@ -43,6 +43,12 @@ model User {
   discoverable   Boolean        @default(true) // Appear in search
   role           UserRole       @default(USER)
   
+  // Admin flags
+  isBanned       Boolean        @default(false)
+  isShadowbanned Boolean        @default(false)
+  isFrozen       Boolean        @default(false)
+  mutedUntil     DateTime?
+  
 
   
   // Metadata

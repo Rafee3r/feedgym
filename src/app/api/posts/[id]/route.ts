@@ -124,8 +124,12 @@ export async function GET(
                 isBookmarked: session ? ((post as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
                 repostOf: post.repostOf,
                 parent: post.parent,
+                canDelete: session ? (session.user.id === post.authorId || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
             },
-            replies: formattedReplies,
+            replies: formattedReplies.map(reply => ({
+                ...reply,
+                canDelete: session ? (session.user.id === reply.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
+            })),
         })
     } catch (error) {
         console.error("Get post error:", error)
@@ -158,7 +162,11 @@ export async function DELETE(
             return NextResponse.json({ error: "Post no encontrado" }, { status: 404 })
         }
 
-        if (post.authorId !== session.user.id) {
+        const isAuthorized = post.authorId === session.user.id ||
+            session.user.role === "ADMIN" ||
+            session.user.role === "STAFF";
+
+        if (!isAuthorized) {
             return NextResponse.json({ error: "No autorizado" }, { status: 403 })
         }
 

@@ -14,9 +14,14 @@ export async function GET(request: NextRequest) {
         const userId = searchParams.get("userId")
 
         const where = {
-            parentId: null, // Only top-level posts, not replies
             deletedAt: null,
             ...(userId && { authorId: userId }),
+            // Shadowban filter: Hide shadowbanned authors unless own profile or admin
+            ...((!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) && {
+                author: {
+                    isShadowbanned: false
+                }
+            })
         }
 
         const posts = await prisma.post.findMany({
@@ -85,6 +90,7 @@ export async function GET(request: NextRequest) {
             isBookmarked: session ? ((post as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
             repostOf: post.repostOf,
             topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
+            canDelete: session ? (session.user.id === post.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
         }))
 
         // Fetch top replies for posts that have replies
@@ -162,6 +168,18 @@ export async function POST(request: NextRequest) {
                 { error: validated.error.errors[0].message },
                 { status: 400 }
             )
+        }
+
+        // Admin Enforcement
+        if (session.user.isBanned) {
+            return NextResponse.json({ error: "Tu cuenta ha sido suspendida permanentemente." }, { status: 403 })
+        }
+        if (session.user.isFrozen) {
+            return NextResponse.json({ error: "Tu cuenta está congelada (solo lectura)." }, { status: 403 })
+        }
+        if (session.user.mutedUntil && new Date(session.user.mutedUntil) > new Date()) {
+            const minutes = Math.ceil((new Date(session.user.mutedUntil).getTime() - Date.now()) / 60000)
+            return NextResponse.json({ error: `Estás silenciado. Podrás publicar en ${minutes} minutos.` }, { status: 403 })
         }
 
         const { content, type, imageUrl, parentId, audience, metadata } = validated.data

@@ -70,6 +70,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 token.username = (user as { username?: string }).username ?? "";
                 token.role = (user as { role?: UserRole }).role ?? "USER";
 
+                // Admin flags
+                const u = user as any;
+                token.isBanned = u.isBanned ?? false;
+                token.isShadowbanned = u.isShadowbanned ?? false;
+                token.isFrozen = u.isFrozen ?? false;
+                token.mutedUntil = u.mutedUntil ?? null;
+
                 // Safety check: Don't store massive base64 in token on initial login
                 if (user.image && user.image.startsWith("data:image")) {
                     token.picture = null;
@@ -90,6 +97,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 session.user.username = token.username as string;
                 session.user.image = (token.picture as string) || undefined;
                 session.user.role = (token.role as UserRole) || "USER";
+
+                // Admin flags
+                session.user.isBanned = token.isBanned as boolean;
+                session.user.isShadowbanned = token.isShadowbanned as boolean;
+                session.user.isFrozen = token.isFrozen as boolean;
+                session.user.mutedUntil = token.mutedUntil as string | null;
             }
             return session;
         },
@@ -106,12 +119,20 @@ declare module "next-auth" {
             image?: string;
             username: string;
             role: UserRole;
+            isBanned: boolean;
+            isShadowbanned: boolean;
+            isFrozen: boolean;
+            mutedUntil: string | null;
         };
     }
 
     interface User {
         username?: string;
         role?: UserRole;
+        isBanned?: boolean;
+        isShadowbanned?: boolean;
+        isFrozen?: boolean;
+        mutedUntil?: Date | string | null;
     }
 }
 
@@ -120,5 +141,9 @@ declare module "@auth/core/jwt" {
         id: string;
         username: string;
         role: UserRole;
+        isBanned: boolean;
+        isShadowbanned: boolean;
+        isFrozen: boolean;
+        mutedUntil: Date | string | null;
     }
 }

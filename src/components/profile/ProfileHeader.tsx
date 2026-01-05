@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { getInitials, formatNumber } from "@/lib/utils"
 import type { GoalType, PersonalRecordData } from "@/types"
+import { AdminControls } from "@/components/admin/AdminControls"
 
 interface ProfileHeaderProps {
     profile: {
@@ -42,6 +43,11 @@ interface ProfileHeaderProps {
         isOwnProfile: boolean
         personalRecords: PersonalRecordData[]
         role?: "USER" | "ADMIN" | "STAFF"
+        // Admin controls
+        isBanned?: boolean
+        isShadowbanned?: boolean
+        isFrozen?: boolean
+        mutedUntil?: Date | string | null
     }
 }
 
@@ -108,7 +114,20 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                         </AvatarFallback>
                     </Avatar>
 
-                    <div className="flex gap-2 mt-16 sm:mt-20">
+                    <div className="flex gap-2 mt-16 sm:mt-20 items-center">
+                        {profile.isBanned !== undefined && (
+                            <AdminControls
+                                userId={profile.id}
+                                username={profile.username}
+                                status={{
+                                    isBanned: profile.isBanned!,
+                                    isShadowbanned: profile.isShadowbanned!,
+                                    isFrozen: profile.isFrozen!,
+                                    mutedUntil: profile.mutedUntil!
+                                }}
+                            />
+                        )}
+
                         {profile.isOwnProfile ? (
                             <Button
                                 variant="outline"
