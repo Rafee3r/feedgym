@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 })
         }
 
+        const user = await prisma.user.findUnique({
+            where: { id: session.user.id },
+            select: { trainingDays: true }
+        })
+
         const now = new Date()
         // Get start and end of current week (starting Monday)
         const weekStart = startOfWeek(now, { weekStartsOn: 1 })
@@ -54,15 +59,27 @@ export async function GET(request: NextRequest) {
             }
         })
 
+        const trainingDays = user?.trainingDays || [] // ["0", "1", "2"...] where 0 is Sunday depending on date.getDay() logic? 
+        // JS getDay(): 0 = Sun, 1 = Mon...
+        // Let's assume frontend sends "0" for Sun, "1" for Mon.
+
         const daysPosted = activity.filter(d => d.hasPost).length
-        const missedToday = activity.find(d => d.isToday && !d.hasPost)
+
+        // Check if today is a scheduled training day
+        // We need to match today's index with trainingDays
+        const todayIndex = now.getDay().toString()
+        const isScheduledToday = trainingDays.includes(todayIndex)
+
+        const missedToday = activity.find(d => d.isToday && !d.hasPost) && isScheduledToday
 
         return NextResponse.json({
             weekDays: activity,
+            trainingDays: trainingDays,
             stats: {
                 daysPosted,
                 totalDoays: 7,
-                missedToday: !!missedToday
+                missedToday: !!missedToday,
+                scheduledToday: isScheduledToday
             }
         })
     } catch (error) {

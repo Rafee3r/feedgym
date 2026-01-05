@@ -12,7 +12,7 @@ import {
     ResponsiveContainer,
     CartesianGrid,
 } from "recharts"
-import { Scale, Users, Loader2, Plus, TrendingUp, TrendingDown, Minus, Flame, AlertTriangle } from "lucide-react"
+import { Scale, Users, Loader2, Plus, TrendingUp, TrendingDown, Minus, Flame, AlertTriangle, Settings } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -45,6 +45,7 @@ interface ActivityData {
         isToday: boolean
         isPast: boolean
     }[]
+    trainingDays: string[]
     stats: {
         daysPosted: number
         totalDoays: number
@@ -73,6 +74,11 @@ export function RightPanel() {
 
     const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0])
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    // Schedule state
+    const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
+    const [selectedDays, setSelectedDays] = useState<string[]>([])
+    const [isSavingSchedule, setIsSavingSchedule] = useState(false)
 
     // Activity state
     const [activityData, setActivityData] = useState<ActivityData | null>(null)
@@ -131,6 +137,60 @@ export function RightPanel() {
             fetchActivityData()
         }
     }, [session, fetchSuggestedUsers, fetchWeightData, fetchActivityData])
+
+    useEffect(() => {
+        if (activityData?.trainingDays) {
+            setSelectedDays(activityData.trainingDays)
+        }
+    }, [activityData])
+
+    // Update schedule
+    const handleSaveSchedule = async () => {
+        setIsSavingSchedule(true)
+        try {
+            const response = await fetch("/api/user/schedule", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ days: selectedDays }),
+            })
+
+            if (response.ok) {
+                toast({
+                    title: "Horario actualizado",
+                    description: "Tu constancia se calculará según estos días.",
+                    variant: "success",
+                })
+                setIsScheduleDialogOpen(false)
+                fetchActivityData()
+            }
+        } catch {
+            toast({
+                title: "Error",
+                description: "No se pudo guardar el horario",
+                variant: "destructive",
+            })
+        } finally {
+            setIsSavingSchedule(false)
+        }
+    }
+
+    const toggleDay = (day: string) => {
+        setSelectedDays(prev =>
+            prev.includes(day)
+                ? prev.filter(d => d !== day)
+                : [...prev, day]
+        )
+    }
+
+    const daysOfWeek = [
+        { id: "1", label: "Lunes" },
+        { id: "2", label: "Martes" },
+        { id: "3", label: "Miércoles" },
+        { id: "4", label: "Jueves" },
+        { id: "5", label: "Viernes" },
+        { id: "6", label: "Sábado" },
+        { id: "0", label: "Domingo" },
+    ]
 
     // Filter weight data by period
     const getFilteredData = () => {
@@ -263,8 +323,116 @@ export function RightPanel() {
 
     return (
         <aside className="hidden lg:flex flex-col w-80 xl:w-96 h-screen sticky top-0 p-4 gap-4">
-            {/* Weight Tracker - TradingView style */}
-            <Card className="bg-transparent border-0 shadow-none">
+
+            {/* Consitency Tracker (FIRST) */}
+            <Card className="bg-transparent border-0 shadow-none shrink-0">
+                <CardHeader className="pb-2 px-0">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <Flame className="w-5 h-5 text-primary" />
+                            Constancia
+                        </CardTitle>
+                        <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                                    <Settings className="w-4 h-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Configurar Días de Entrenamiento</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        Selecciona los días que planeas ir al gimnasio.
+                                        Te recordaremos publicar tu progreso en estos días.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {daysOfWeek.map((day) => (
+                                            <div key={day.id} className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent cursor-pointer" onClick={() => toggleDay(day.id)}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedDays.includes(day.id)}
+                                                    onChange={() => { }} // handled by parent div
+                                                    className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+                                                />
+                                                <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                    {day.label}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <Button onClick={handleSaveSchedule} disabled={isSavingSchedule} className="w-full">
+                                        {isSavingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Horario"}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </CardHeader>
+                <CardContent className="px-0 pt-0">
+                    {loadingActivity ? (
+                        <div className="flex justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                        </div>
+                    ) : activityData ? (
+                        <div className="space-y-4">
+                            <div className="bg-card/50 rounded-xl p-4 border border-border/50">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-sm font-medium text-muted-foreground">Esta semana</span>
+                                    <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                        {activityData.stats.daysPosted}/7 días
+                                    </span>
+                                </div>
+
+                                <div className="flex justify-between px-1">
+                                    {activityData.weekDays.map((day) => {
+                                        const date = new Date(day.date)
+                                        const dayName = date.toLocaleDateString("es-ES", { weekday: "narrow" }).toUpperCase().replace(".", "")
+                                        const dayIndex = date.getDay().toString()
+                                        const isScheduled = activityData.trainingDays.includes(dayIndex)
+
+                                        return (
+                                            <div key={day.date} className="flex flex-col items-center gap-2">
+                                                <span className={`text-[10px] font-medium ${isScheduled ? "text-foreground" : "text-muted-foreground/50"}`}>
+                                                    {dayName}
+                                                </span>
+                                                <div
+                                                    className={`w-3 h-3 rounded-full transition-all ${day.hasPost
+                                                            ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+                                                            : day.isToday
+                                                                ? "bg-transparent border border-muted-foreground/50 animate-pulse"
+                                                                : isScheduled
+                                                                    ? "bg-muted" // Scheduled but not posted (and not today)
+                                                                    : "bg-muted/10" // Not scheduled
+                                                        }`}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {activityData.stats.missedToday && (
+                                <div className="flex gap-3 items-start bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl">
+                                    <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-yellow-500 leading-none">
+                                            No has publicado tu progreso
+                                        </p>
+                                        <p className="text-xs text-muted-foreground leading-relaxed">
+                                            Hoy es día de entrenamiento. ¡No pierdas la racha!
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : null}
+                </CardContent>
+            </Card>
+
+            {/* Weight Tracker - TradingView style (SECOND) */}
+            <Card className="bg-transparent border-0 shadow-none shrink-0">
                 <CardHeader className="pb-2 px-0">
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-lg">
@@ -421,80 +589,15 @@ export function RightPanel() {
                 </CardContent>
             </Card>
 
-            {/* Consitency Tracker */}
-            <Card className="bg-transparent border-0 shadow-none">
-                <CardHeader className="pb-2 px-0">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <Flame className="w-5 h-5 text-primary" />
-                        Constancia
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="px-0 pt-0">
-                    {loadingActivity ? (
-                        <div className="flex justify-center py-4">
-                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                        </div>
-                    ) : activityData ? (
-                        <div className="space-y-4">
-                            <div className="bg-card/50 rounded-xl p-4 border border-border/50">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="text-sm font-medium text-muted-foreground">Esta semana</span>
-                                    <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                                        {activityData.stats.daysPosted}/7 días
-                                    </span>
-                                </div>
-
-                                <div className="flex justify-between px-1">
-                                    {activityData.weekDays.map((day) => {
-                                        const date = new Date(day.date)
-                                        const dayName = date.toLocaleDateString("es-ES", { weekday: "narrow" }).toUpperCase().replace(".", "")
-
-                                        return (
-                                            <div key={day.date} className="flex flex-col items-center gap-2">
-                                                <span className="text-[10px] font-medium text-muted-foreground">
-                                                    {dayName}
-                                                </span>
-                                                <div
-                                                    className={`w-3 h-3 rounded-full transition-all ${day.hasPost
-                                                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
-                                                        : day.isToday
-                                                            ? "bg-transparent border border-muted-foreground/50 animate-pulse"
-                                                            : "bg-muted/30"
-                                                        }`}
-                                                />
-                                            </div>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-
-                            {activityData.stats.missedToday && (
-                                <div className="flex gap-3 items-start bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-xl">
-                                    <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0 mt-0.5" />
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium text-yellow-500 leading-none">
-                                            No has publicado tu progreso
-                                        </p>
-                                        <p className="text-xs text-muted-foreground leading-relaxed">
-                                            Esto puede afectar la motivación de tus próximos entrenamientos.
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : null}
-                </CardContent>
-            </Card >
-
-            {/* Who to Follow */}
-            < Card className="bg-transparent border-0 shadow-none" >
-                <CardHeader className="pb-3 px-0">
+            {/* Who to Follow (THIRD) - Flexible and Scrollable */}
+            <Card className="bg-transparent border-0 shadow-none flex-1 min-h-0 flex flex-col">
+                <CardHeader className="pb-3 px-0 shrink-0">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Users className="w-5 h-5 text-primary" />
                         A quién seguir
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3 px-0">
+                <CardContent className="space-y-3 px-0 overflow-y-auto pr-1">
                     {loadingUsers ? (
                         <div className="flex justify-center py-4">
                             <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -557,7 +660,7 @@ export function RightPanel() {
             </Card>
 
             {/* Footer */}
-            <div className="text-xs text-muted-foreground mt-auto">
+            <div className="text-xs text-muted-foreground mt-auto shrink-0 py-2">
                 <Link href="/terms" className="hover:underline">
                     Términos
                 </Link>
