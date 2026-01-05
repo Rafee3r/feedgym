@@ -107,37 +107,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 session.user.image = (token.picture as string) || undefined;
                 session.user.role = (token.role as UserRole) || "USER";
 
-                // Fetch fresh ban status from DB to ensure real-time ban enforcement
+                // Fetch fresh ban status from DB
                 try {
                     const freshUser = await prisma.user.findUnique({
                         where: { id: token.id as string },
                         select: { isBanned: true, isShadowbanned: true, isFrozen: true, mutedUntil: true }
-                    });
+                    }) as any;
 
                     if (freshUser) {
-                        // If user is banned, invalidate session by returning empty user
-                        if ((freshUser as any).isBanned) {
-                            // Return null session to force logout
-                            return {
-                                ...session,
-                                user: undefined as any,
-                                expires: new Date(0).toISOString() // Expire immediately
-                            };
-                        }
-
-                        session.user.isBanned = (freshUser as any).isBanned ?? false;
-                        session.user.isShadowbanned = (freshUser as any).isShadowbanned ?? false;
-                        session.user.isFrozen = (freshUser as any).isFrozen ?? false;
-                        session.user.mutedUntil = (freshUser as any).mutedUntil?.toISOString() ?? null;
+                        session.user.isBanned = freshUser.isBanned ?? false;
+                        session.user.isShadowbanned = freshUser.isShadowbanned ?? false;
+                        session.user.isFrozen = freshUser.isFrozen ?? false;
+                        session.user.mutedUntil = freshUser.mutedUntil?.toISOString() ?? null;
                     } else {
-                        // User from token, use cached values
                         session.user.isBanned = token.isBanned as boolean;
                         session.user.isShadowbanned = token.isShadowbanned as boolean;
                         session.user.isFrozen = token.isFrozen as boolean;
                         session.user.mutedUntil = token.mutedUntil as string | null;
                     }
                 } catch (error) {
-                    // Fallback to token values if DB query fails
                     session.user.isBanned = token.isBanned as boolean;
                     session.user.isShadowbanned = token.isShadowbanned as boolean;
                     session.user.isFrozen = token.isFrozen as boolean;
