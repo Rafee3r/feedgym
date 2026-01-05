@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { getInitials } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
+import { CalendarIcon } from "lucide-react"
 import type { WeightChartData } from "@/types"
 
 interface SuggestedUser {
@@ -54,6 +55,7 @@ export function RightPanel() {
     const [timePeriod, setTimePeriod] = useState<TimePeriod>("1M")
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [newWeight, setNewWeight] = useState("")
+    const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0])
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Fetch suggested users from API
@@ -127,12 +129,25 @@ export function RightPanel() {
             return
         }
 
+        if (!newDate) {
+            toast({
+                title: "Error",
+                description: "Ingresa una fecha válida",
+                variant: "destructive",
+            })
+            return
+        }
+
         setIsSubmitting(true)
         try {
             const response = await fetch("/api/weight", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ weight, unit: "KG" }),
+                body: JSON.stringify({
+                    weight,
+                    unit: "KG",
+                    loggedAt: new Date(newDate).toISOString()
+                }),
             })
 
             if (response.ok) {
@@ -142,6 +157,7 @@ export function RightPanel() {
                     variant: "success",
                 })
                 setNewWeight("")
+                setNewDate(new Date().toISOString().split("T")[0])
                 setIsAddDialogOpen(false)
                 fetchWeightData()
             }
@@ -212,8 +228,8 @@ export function RightPanel() {
     return (
         <aside className="hidden lg:flex flex-col w-80 xl:w-96 h-screen sticky top-0 p-4 gap-4">
             {/* Weight Tracker - TradingView style */}
-            <Card>
-                <CardHeader className="pb-2">
+            <Card className="bg-transparent border-0 shadow-none">
+                <CardHeader className="pb-2 px-0">
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-lg">
                             <Scale className="w-5 h-5 text-primary" />
@@ -233,10 +249,21 @@ export function RightPanel() {
                                     <Input
                                         type="number"
                                         step="0.1"
-                                        placeholder="75.5 kg"
+                                        placeholder="Peso (kg)"
                                         value={newWeight}
                                         onChange={(e) => setNewWeight(e.target.value)}
                                     />
+                                    <div className="space-y-2">
+                                        <div className="relative">
+                                            <Input
+                                                type="date"
+                                                value={newDate}
+                                                max={new Date().toISOString().split("T")[0]}
+                                                onChange={(e) => setNewDate(e.target.value)}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    </div>
                                     <Button
                                         onClick={handleAddWeight}
                                         disabled={isSubmitting}
@@ -260,8 +287,8 @@ export function RightPanel() {
                                 key={period}
                                 onClick={() => setTimePeriod(period)}
                                 className={`px-2 py-1 text-xs font-medium rounded transition-colors ${timePeriod === period
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-accent"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-accent"
                                     }`}
                             >
                                 {period}
@@ -269,7 +296,7 @@ export function RightPanel() {
                         ))}
                     </div>
                 </CardHeader>
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 px-0">
                     {loadingWeight ? (
                         <div className="h-[120px] flex items-center justify-center">
                             <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -334,14 +361,14 @@ export function RightPanel() {
             </Card>
 
             {/* Who to Follow */}
-            <Card>
-                <CardHeader className="pb-3">
+            <Card className="bg-transparent border-0 shadow-none">
+                <CardHeader className="pb-3 px-0">
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Users className="w-5 h-5 text-primary" />
                         A quién seguir
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 px-0">
                     {loadingUsers ? (
                         <div className="flex justify-center py-4">
                             <Loader2 className="w-5 h-5 animate-spin text-primary" />
