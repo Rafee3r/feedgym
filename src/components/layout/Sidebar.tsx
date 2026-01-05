@@ -63,9 +63,9 @@ export function Sidebar() {
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
             {/* Logo */}
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-4 px-6 py-4 mb-2 group transition-colors">
-                <img src="/logo.png" alt="FeedGym" className="h-8 w-auto hidden xl:block object-contain" />
-                <img src="/icon.png" alt="FeedGym" className="h-8 w-8 xl:hidden object-contain" />
+            <Link href="/" className="flex items-center gap-4 px-4 py-4 mb-2 group transition-colors">
+                <img src="/logo.png" alt="FeedGym" className="h-10 w-auto hidden xl:block object-contain" />
+                <img src="/icon.png" alt="FeedGym" className="h-10 w-10 xl:hidden object-contain" />
             </Link>
 
             {/* Navigation */}
@@ -99,7 +99,7 @@ export function Sidebar() {
                         <Link
                             href={`/${session.user.username}`}
                             className={cn(
-                                "flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors",
+                                "flex items-center gap-4 px-6 py-3 rounded-full text-lg transition-colors",
                                 pathname === `/${session.user.username}`
                                     ? "font-bold bg-accent"
                                     : "hover:bg-accent/50"
@@ -112,7 +112,7 @@ export function Sidebar() {
                         <Link
                             href="/settings"
                             className={cn(
-                                "flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors",
+                                "flex items-center gap-4 px-6 py-3 rounded-full text-lg transition-colors",
                                 pathname.startsWith("/settings")
                                     ? "font-bold bg-accent"
                                     : "hover:bg-accent/50"
