@@ -120,7 +120,8 @@ export default function ProfileSettingsPage() {
                 // Update client session
                 await update({
                     name: profile.displayName,
-                    image: profile.avatarUrl,
+                    // We don't update image here because it's base64 and bloats the cookie/headers
+                    // forcing a 494 error. The router.refresh() will help update UI eventually.
                 })
 
                 toast({

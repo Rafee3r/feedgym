@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { updateProfileSchema, privacySettingsSchema } from "@/lib/validations"
@@ -50,6 +51,8 @@ export async function PATCH(request: NextRequest) {
                 discoverable: true,
             },
         })
+
+        revalidatePath(`/${user.username}`)
 
         return NextResponse.json(user)
     } catch (error) {

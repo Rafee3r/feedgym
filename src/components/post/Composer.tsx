@@ -238,9 +238,9 @@ export function Composer({
 
                 onSuccess?.()
 
-                // Auto refresh feed
+                // Clean refresh of feed
                 if (!parentId) {
-                    window.location.reload()
+                    window.dispatchEvent(new Event("feed-refresh"))
                 }
             } catch {
                 toast({

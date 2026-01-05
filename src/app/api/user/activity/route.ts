@@ -12,10 +12,19 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 })
         }
 
+        const { searchParams } = new URL(request.url)
+        const userIdParam = searchParams.get("userId")
+        const targetUserId = userIdParam || session.user.id
+
+        // Verify if user exists (optional, but good for safety)
         const user = await prisma.user.findUnique({
-            where: { id: session.user.id },
+            where: { id: targetUserId },
             select: { trainingDays: true }
         })
+
+        if (!user) {
+            return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+        }
 
         const now = new Date()
         // Get start and end of current week (starting Monday)
@@ -28,7 +37,7 @@ export async function GET(request: NextRequest) {
         // Fetch posts for this week
         const posts = await prisma.post.findMany({
             where: {
-                authorId: session.user.id,
+                authorId: targetUserId,
                 createdAt: {
                     gte: weekStart,
                     lte: weekEnd,
@@ -59,14 +68,11 @@ export async function GET(request: NextRequest) {
             }
         })
 
-        const trainingDays = user?.trainingDays || [] // ["0", "1", "2"...] where 0 is Sunday depending on date.getDay() logic? 
-        // JS getDay(): 0 = Sun, 1 = Mon...
-        // Let's assume frontend sends "0" for Sun, "1" for Mon.
+        const trainingDays = user?.trainingDays || []
 
         const daysPosted = activity.filter(d => d.hasPost).length
 
         // Check if today is a scheduled training day
-        // We need to match today's index with trainingDays
         const todayIndex = now.getDay().toString()
         const isScheduledToday = trainingDays.includes(todayIndex)
 
@@ -78,6 +84,7 @@ export async function GET(request: NextRequest) {
             stats: {
                 daysPosted,
                 totalDoays: 7,
+                scheduledTarget: trainingDays.length,
                 missedToday: !!missedToday,
                 scheduledToday: isScheduledToday
             }

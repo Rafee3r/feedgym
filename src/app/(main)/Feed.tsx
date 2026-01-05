@@ -48,6 +48,13 @@ export function Feed() {
             setIsLoading(false)
         }
         load()
+
+        // Listen for feed refresh requests (e.g. from Composer)
+        const handleRefreshEvent = () => {
+            fetchPosts()
+        }
+        window.addEventListener("feed-refresh", handleRefreshEvent)
+        return () => window.removeEventListener("feed-refresh", handleRefreshEvent)
     }, [fetchPosts])
 
     const handleLoadMore = async () => {

@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PostCard } from "@/components/post/PostCard"
 import { WeightChart } from "./WeightChart"
-import { FeedSkeleton, PostSkeleton } from "@/components/post/PostSkeleton"
+import { FeedSkeleton } from "@/components/post/PostSkeleton"
 import type { PostData } from "@/types"
+import { ConsistencyCard, type ActivityData } from "@/components/consistency/ConsistencyCard"
 
 interface ProfileTabsProps {
     username: string
@@ -18,6 +19,10 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
     const [posts, setPosts] = useState<PostData[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [activeTab, setActiveTab] = useState("posts")
+
+    // Activity Stats State
+    const [activityData, setActivityData] = useState<ActivityData | null>(null)
+    const [loadingActivity, setLoadingActivity] = useState(true)
 
     const fetchPosts = useCallback(async () => {
         setIsLoading(true)
@@ -34,6 +39,21 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
         }
     }, [userId])
 
+    const fetchActivity = useCallback(async () => {
+        setLoadingActivity(true)
+        try {
+            const response = await fetch(`/api/user/activity?userId=${userId}`)
+            if (response.ok) {
+                const data = await response.json()
+                setActivityData(data)
+            }
+        } catch (err) {
+            console.error("Error fetching activity:", err)
+        } finally {
+            setLoadingActivity(false)
+        }
+    }, [userId])
+
     const handleRepost = async (postId: string) => {
         try {
             await fetch(`/api/posts/${postId}/repost`, { method: "POST" })
@@ -45,8 +65,10 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
     useEffect(() => {
         if (activeTab === "posts") {
             fetchPosts()
+        } else if (activeTab === "stats") {
+            fetchActivity()
         }
-    }, [activeTab, fetchPosts])
+    }, [activeTab, fetchPosts, fetchActivity])
 
     const isOwnProfile = session?.user.id === userId
 
@@ -71,14 +93,12 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
                 >
                     Media
                 </TabsTrigger>
-                {isOwnProfile && (
-                    <TabsTrigger
-                        value="stats"
-                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"
-                    >
-                        Stats
-                    </TabsTrigger>
-                )}
+                <TabsTrigger
+                    value="stats"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"
+                >
+                    Stats
+                </TabsTrigger>
             </TabsList>
 
             <TabsContent value="posts" className="mt-0">
@@ -112,11 +132,21 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
                 </div>
             </TabsContent>
 
-            {isOwnProfile && (
-                <TabsContent value="stats" className="mt-0 p-4">
-                    <WeightChart />
-                </TabsContent>
-            )}
+            <TabsContent value="stats" className="mt-0 p-4 space-y-6">
+                <div className="max-w-md mx-auto">
+                    <ConsistencyCard
+                        activityData={activityData}
+                        isLoading={loadingActivity}
+                    />
+                </div>
+
+                {isOwnProfile && (
+                    <>
+                        <div className="my-6 border-t border-border" />
+                        <WeightChart />
+                    </>
+                )}
+            </TabsContent>
         </Tabs>
     )
 }

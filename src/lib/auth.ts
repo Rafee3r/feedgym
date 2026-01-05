@@ -69,9 +69,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 token.id = user.id ?? "";
                 token.username = (user as { username?: string }).username ?? "";
                 token.role = (user as { role?: UserRole }).role ?? "USER";
+
+                // Safety check: Don't store massive base64 in token on initial login
+                if (user.image && user.image.startsWith("data:image")) {
+                    token.picture = null;
+                }
             }
             if (trigger === "update" && session) {
-                if (session.image) token.picture = session.image;
+                // Safety check: Prevent updates from injecting massive base64
+                if (session.image && !session.image.startsWith("data:image")) {
+                    token.picture = session.image;
+                }
                 if (session.name) token.name = session.name;
             }
             return token;
