@@ -12,16 +12,33 @@ export async function GET(request: NextRequest) {
         const cursor = searchParams.get("cursor")
         const limit = parseInt(searchParams.get("limit") || "20")
         const userId = searchParams.get("userId")
+        const onlyMedia = searchParams.get("onlyMedia") === "true"
+        const onlyReplies = searchParams.get("onlyReplies") === "true"
 
-        const where = {
+        const where: any = {
             deletedAt: null,
             ...(userId && { authorId: userId }),
             // Shadowban filter: Hide shadowbanned authors unless own profile or admin
             ...((!session || (session.user.role !== "ADMIN" && session.user.role !== "STAFF")) && {
                 author: {
                     isShadowbanned: false
-                } as any
+                }
             })
+        }
+
+        if (onlyReplies) {
+            where.parentId = { not: null }
+        } else if (onlyMedia) {
+            where.OR = [
+                { imageUrl: { not: null } },
+                { mediaUrls: { isEmpty: false } } // Works for PostgreSQL with Prisma
+            ]
+            // Usually for media tab we show everything (posts + replies with media), 
+            // but typically users expect "My Media" to be posts they made. 
+            // Let's include replies with media too.
+        } else {
+            // Default "Posts" tab behavior: Only root posts (no replies)
+            where.parentId = null
         }
 
         const posts = await prisma.post.findMany({
