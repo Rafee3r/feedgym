@@ -21,10 +21,13 @@ const navItems = [
     { href: "/bookmarks", icon: Bookmark, label: "Guardados" },
 ]
 
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications"
+
 export function MobileNav() {
     const pathname = usePathname()
     const { data: session } = useSession()
     const [isComposerOpen, setIsComposerOpen] = useState(false)
+    const unreadCount = useUnreadNotifications()
 
     return (
         <>
@@ -58,12 +61,17 @@ export function MobileNav() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
+                                "flex flex-col items-center justify-center p-2 rounded-lg transition-colors relative",
                                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                             )}
                             aria-label={item.label}
                         >
-                            <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5]")} />
+                            <div className="relative">
+                                <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5]")} />
+                                {item.label === "Notificaciones" && unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
+                                )}
+                            </div>
                         </Link>
                     )
                 })}

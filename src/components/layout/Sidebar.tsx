@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { getInitials } from "@/lib/utils"
 
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications"
+
 const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
     { href: "/search", icon: Search, label: "Buscar" },
@@ -36,25 +38,7 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname()
-    const { data: session } = useSession()
-
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-
-    useEffect(() => {
-        if (session?.user) {
-            setAvatarUrl(session.user.image || null)
-
-            // Fetch fresh data
-            fetch("/api/users/me")
-                .then(res => res.json())
-                .then(data => {
-                    if (data.avatarUrl) {
-                        setAvatarUrl(data.avatarUrl)
-                    }
-                })
-                .catch(console.error)
-        }
-    }, [session])
+    const unreadCount = useUnreadNotifications()
 
     return (
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
@@ -73,13 +57,18 @@ export function Sidebar() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors",
+                                "flex items-center gap-4 px-4 py-3 rounded-full text-lg transition-colors relative",
                                 isActive
                                     ? "font-bold bg-accent"
                                     : "hover:bg-accent/50"
                             )}
                         >
-                            <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5]")} />
+                            <div className="relative">
+                                <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5]")} />
+                                {item.label === "Notificaciones" && unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
+                                )}
+                            </div>
                             <span className="hidden xl:block">{item.label}</span>
                         </Link>
                     )
