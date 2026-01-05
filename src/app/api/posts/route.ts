@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { postSchema } from "@/lib/validations"
+import { parseMentions, sendPushNotification } from "@/lib/push"
 
 // GET /api/posts - Get feed posts
 export async function GET(request: NextRequest) {
@@ -278,6 +279,44 @@ export async function POST(request: NextRequest) {
                         actorId: session.user.id,
                         postId: post.id,
                     },
+                })
+
+                // Send push for reply
+                sendPushNotification(parentPost.authorId, {
+                    title: `${(session.user as any).displayName || session.user.username} respondió`,
+                    body: content.slice(0, 100),
+                    url: `/post/${post.id}`
+                })
+            }
+        }
+
+        // Handle mentions
+        const mentionedUsernames = parseMentions(content)
+        if (mentionedUsernames.length > 0) {
+            // Find mentioned users
+            const mentionedUsers = await prisma.user.findMany({
+                where: {
+                    username: { in: mentionedUsernames },
+                    id: { not: session.user.id } // Don't notify yourself
+                },
+                select: { id: true, username: true }
+            })
+
+            // Create notification and send push for each
+            for (const user of mentionedUsers) {
+                await prisma.notification.create({
+                    data: {
+                        type: "MENTION",
+                        recipientId: user.id,
+                        actorId: session.user.id,
+                        postId: post.id,
+                    },
+                })
+
+                sendPushNotification(user.id, {
+                    title: `${(session.user as any).displayName || session.user.username} te mencionó`,
+                    body: content.slice(0, 100),
+                    url: `/post/${post.id}`
                 })
             }
         }
