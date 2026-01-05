@@ -4,10 +4,14 @@ import { Composer } from "@/components/post/Composer"
 import { Feed } from "./Feed"
 import { FeedSkeleton } from "@/components/post/PostSkeleton"
 
+import { MobileDashboard } from "@/components/mobile/MobileDashboard"
+
 export default function HomePage() {
     return (
         <>
             <Header title="Inicio" />
+
+            <MobileDashboard />
 
             {/* Composer */}
             <div className="hidden sm:block">

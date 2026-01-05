@@ -38,7 +38,26 @@ const navItems = [
 
 export function Sidebar() {
     const pathname = usePathname()
+    const { data: session } = useSession()
     const unreadCount = useUnreadNotifications()
+
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (session?.user) {
+            setAvatarUrl(session.user.image || null)
+
+            // Fetch fresh data
+            fetch("/api/users/me")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.avatarUrl) {
+                        setAvatarUrl(data.avatarUrl)
+                    }
+                })
+                .catch(console.error)
+        }
+    }, [session])
 
     return (
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
