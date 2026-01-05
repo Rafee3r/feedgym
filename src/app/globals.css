@@ -83,9 +83,16 @@
     }
 
     body {
-        @apply bg-background text-foreground antialiased min-h-[100dvh];
+        @apply bg-background text-foreground antialiased;
         font-size: calc(1rem * var(--text-scale));
-        zoom: var(--zoom-scale);
+        min-height: 100dvh;
+        min-height: 100vh;
+        /* fallback */
+        /* Use transform for zoom - more compatible and predictable */
+        transform: scale(var(--zoom-scale));
+        transform-origin: top left;
+        width: calc(100% / var(--zoom-scale));
+        min-height: calc(100dvh / var(--zoom-scale));
     }
 
     /* Reduced motion preference */

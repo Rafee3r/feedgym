@@ -181,15 +181,15 @@ export default function AppearanceSettingsPage() {
                         <Slider
                             value={[zoom]}
                             onValueChange={(v: number[]) => setZoom(v[0])}
-                            min={80}
-                            max={120}
+                            min={90}
+                            max={110}
                             step={5}
                             className="w-full"
                         />
                         <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>80%</span>
+                            <span>90%</span>
                             <span>100%</span>
-                            <span>120%</span>
+                            <span>110%</span>
                         </div>
                     </div>
                 </div>
