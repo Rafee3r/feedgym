@@ -279,72 +279,74 @@ export function WeightChart({ userId }: WeightChartProps) {
                             ))}
                         </div>
                     </div>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm" className="rounded-full" onClick={() => handleOpenDialog()}>
-                                <Plus className="w-4 h-4 mr-1" />
-                                Añadir
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>
-                                    {editingLog ? "Editar Peso" : "Registrar Peso"}
-                                </DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 pt-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="weight">Peso (kg)</Label>
-                                    <Input
-                                        id="weight"
-                                        type="number"
-                                        step="0.1"
-                                        placeholder="75.5"
-                                        value={formData.weight}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, weight: e.target.value })
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="date">Fecha</Label>
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, date: e.target.value })
-                                        }
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="notes">Notas (Opcional)</Label>
-                                    <Input
-                                        id="notes"
-                                        placeholder="Ej: Después de entrenar"
-                                        value={formData.notes}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, notes: e.target.value })
-                                        }
-                                    />
-                                </div>
-                                <Button
-                                    onClick={handleSubmit}
-                                    disabled={isSubmitting}
-                                    className="w-full"
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Guardando...
-                                        </>
-                                    ) : (
-                                        "Guardar"
-                                    )}
+                    {isOwnProfile && (
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="sm" className="rounded-full" onClick={() => handleOpenDialog()}>
+                                    <Plus className="w-4 h-4 mr-1" />
+                                    Añadir
                                 </Button>
-                            </div>
-                        </DialogContent>
-                    </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>
+                                        {editingLog ? "Editar Peso" : "Registrar Peso"}
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="weight">Peso (kg)</Label>
+                                        <Input
+                                            id="weight"
+                                            type="number"
+                                            step="0.1"
+                                            placeholder="75.5"
+                                            value={formData.weight}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, weight: e.target.value })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="date">Fecha</Label>
+                                        <Input
+                                            id="date"
+                                            type="date"
+                                            value={formData.date}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, date: e.target.value })
+                                            }
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="notes">Notas (Opcional)</Label>
+                                        <Input
+                                            id="notes"
+                                            placeholder="Ej: Después de entrenar"
+                                            value={formData.notes}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, notes: e.target.value })
+                                            }
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={handleSubmit}
+                                        disabled={isSubmitting}
+                                        className="w-full"
+                                    >
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Guardando...
+                                            </>
+                                        ) : (
+                                            "Guardar"
+                                        )}
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
                 </CardHeader>
                 <CardContent>
                     {chartData.length === 0 ? (
