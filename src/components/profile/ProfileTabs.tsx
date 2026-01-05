@@ -16,13 +16,13 @@ interface ProfileTabsProps {
 
 export function ProfileTabs({ username, userId }: ProfileTabsProps) {
     const { data: session } = useSession()
-    const [posts, setPosts] = useState<PostData[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [activeTab, setActiveTab] = useState("posts")
+    // Media State
+    const [mediaPosts, setMediaPosts] = useState<PostData[]>([])
+    const [loadingMedia, setLoadingMedia] = useState(false)
 
-    // Activity Stats State
-    const [activityData, setActivityData] = useState<ActivityData | null>(null)
-    const [loadingActivity, setLoadingActivity] = useState(true)
+    // Replies State
+    const [replies, setReplies] = useState<PostData[]>([])
+    const [loadingReplies, setLoadingReplies] = useState(false)
 
     const fetchPosts = useCallback(async () => {
         setIsLoading(true)
@@ -36,6 +36,36 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
             console.error("Error fetching posts:", err)
         } finally {
             setIsLoading(false)
+        }
+    }, [userId])
+
+    const fetchReplies = useCallback(async () => {
+        setLoadingReplies(true)
+        try {
+            const response = await fetch(`/api/posts?userId=${userId}&onlyReplies=true`)
+            if (response.ok) {
+                const data = await response.json()
+                setReplies(data.posts)
+            }
+        } catch (err) {
+            console.error("Error fetching replies:", err)
+        } finally {
+            setLoadingReplies(false)
+        }
+    }, [userId])
+
+    const fetchMedia = useCallback(async () => {
+        setLoadingMedia(true)
+        try {
+            const response = await fetch(`/api/posts?userId=${userId}&onlyMedia=true`)
+            if (response.ok) {
+                const data = await response.json()
+                setMediaPosts(data.posts)
+            }
+        } catch (err) {
+            console.error("Error fetching media:", err)
+        } finally {
+            setLoadingMedia(false)
         }
     }, [userId])
 
@@ -63,42 +93,28 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
     }
 
     useEffect(() => {
-        if (activeTab === "posts") {
-            fetchPosts()
-        } else if (activeTab === "stats") {
-            fetchActivity()
-        }
-    }, [activeTab, fetchPosts, fetchActivity])
+        if (activeTab === "posts") fetchPosts()
+        else if (activeTab === "replies") fetchReplies()
+        else if (activeTab === "media") fetchMedia()
+        else if (activeTab === "stats") fetchActivity()
+    }, [activeTab, fetchPosts, fetchReplies, fetchMedia, fetchActivity])
 
     const isOwnProfile = session?.user.id === userId
 
     return (
         <Tabs defaultValue="posts" onValueChange={setActiveTab}>
-            <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent h-auto p-0">
-                <TabsTrigger
-                    value="posts"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"
-                >
-                    Posts
-                </TabsTrigger>
-                <TabsTrigger
-                    value="replies"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"
-                >
-                    Respuestas
-                </TabsTrigger>
-                <TabsTrigger
-                    value="media"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"
-                >
-                    Media
-                </TabsTrigger>
-                <TabsTrigger
-                    value="stats"
-                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3"
-                >
-                    Stats
-                </TabsTrigger>
+            <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent h-auto p-0 scrollbar-hide overflow-x-auto">
+                {["posts", "replies", "media", "stats"].map((tab) => (
+                    <TabsTrigger
+                        key={tab}
+                        value={tab}
+                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-3 capitalize"
+                    >
+                        {tab === "posts" ? "Posts" :
+                            tab === "replies" ? "Respuestas" :
+                                tab === "media" ? "Media" : "Stats"}
+                    </TabsTrigger>
+                ))}
             </TabsList>
 
             <TabsContent value="posts" className="mt-0">
@@ -121,15 +137,61 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
             </TabsContent>
 
             <TabsContent value="replies" className="mt-0">
-                <div className="py-12 text-center text-muted-foreground">
-                    <p>No hay respuestas todavía</p>
-                </div>
+                {loadingReplies ? (
+                    <FeedSkeleton />
+                ) : replies.length === 0 ? (
+                    <div className="py-12 text-center text-muted-foreground">
+                        <p>No hay respuestas todavía</p>
+                    </div>
+                ) : (
+                    replies.map((post) => (
+                        <PostCard
+                            key={post.id}
+                            post={post}
+                            currentUserId={session?.user.id}
+                            onRepost={handleRepost}
+                        />
+                    ))
+                )}
             </TabsContent>
 
             <TabsContent value="media" className="mt-0">
-                <div className="py-12 text-center text-muted-foreground">
-                    <p>No hay media todavía</p>
-                </div>
+                {loadingMedia ? (
+                    <div className="grid grid-cols-3 gap-1">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="aspect-square bg-muted animate-pulse" />
+                        ))}
+                    </div>
+                ) : mediaPosts.length === 0 ? (
+                    <div className="py-12 text-center text-muted-foreground">
+                        <p>No hay media todavía</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-3 gap-0.5 sm:gap-1">
+                        {mediaPosts.map((post) => {
+                            // Prioritize showing image. If multiple media, handle nicely? 
+                            // For now just show main image or first media url.
+                            const img = post.imageUrl || (post.mediaUrls && post.mediaUrls[0])
+                            if (!img) return null
+                            return (
+                                <div key={post.id} className="relative aspect-square group cursor-pointer overflow-hidden bg-muted">
+                                    <img
+                                        src={img}
+                                        alt="Media"
+                                        className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                                        loading="lazy"
+                                    />
+                                    {/* Type indicator */}
+                                    {post.type === "WORKOUT" && (
+                                        <div className="absolute top-1 right-1 bg-black/50 p-1 rounded-full text-white">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6.5 6.5h11" /><path d="M6.5 17.5h11" /><path d="M6 20v-2a6 6 0 0 1 12 0v2" /><path d="M6 4v2a6 6 0 0 0 12 0V4" /></svg>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
             </TabsContent>
 
             <TabsContent value="stats" className="mt-0 p-4 space-y-6">
@@ -137,15 +199,12 @@ export function ProfileTabs({ username, userId }: ProfileTabsProps) {
                     <ConsistencyCard
                         activityData={activityData}
                         isLoading={loadingActivity}
+                        userName={username}
                     />
                 </div>
 
-                {isOwnProfile && (
-                    <>
-                        <div className="my-6 border-t border-border" />
-                        <WeightChart />
-                    </>
-                )}
+                <div className="my-6 border-t border-border" />
+                <WeightChart userId={userId} />
             </TabsContent>
         </Tabs>
     )

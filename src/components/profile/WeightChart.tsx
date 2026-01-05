@@ -42,7 +42,11 @@ import type { WeightChartData, WeightLogData } from "@/types"
 
 type TimeRange = "3M" | "6M" | "MAX"
 
-export function WeightChart() {
+interface WeightChartProps {
+    userId?: string
+}
+
+export function WeightChart({ userId }: WeightChartProps) {
     const [chartData, setChartData] = useState<WeightChartData[]>([])
     const [logs, setLogs] = useState<WeightLogData[]>([])
     const [stats, setStats] = useState<{
@@ -72,7 +76,10 @@ export function WeightChart() {
             if (timeRange === "6M") limit = "180"
             if (timeRange === "MAX") limit = "1000"
 
-            const response = await fetch(`/api/weight?limit=${limit}`)
+            if (timeRange === "MAX") limit = "1000"
+
+            const url = `/api/weight?limit=${limit}${userId ? `&userId=${userId}` : ""}`
+            const response = await fetch(url)
             if (response.ok) {
                 const data = await response.json()
                 setChartData(data.chartData)
