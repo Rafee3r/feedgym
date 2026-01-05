@@ -38,7 +38,7 @@ interface SuggestedUser {
     isFollowing: boolean
 }
 
-type TimePeriod = "1M" | "6M" | "MAX"
+type TimePeriod = "3M" | "6M" | "MAX"
 
 export function RightPanel() {
     const { data: session } = useSession()
@@ -67,7 +67,7 @@ export function RightPanel() {
         change: number | null
     } | null>(null)
     const [loadingWeight, setLoadingWeight] = useState(true)
-    const [timePeriod, setTimePeriod] = useState<TimePeriod>("1M")
+    const [timePeriod, setTimePeriod] = useState<TimePeriod>("3M")
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
     const [newWeight, setNewWeight] = useState("")
 
@@ -198,8 +198,8 @@ export function RightPanel() {
         let cutoffDate: Date
 
         switch (timePeriod) {
-            case "1M":
-                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate())
+            case "3M":
+                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
                 break
             case "6M":
                 cutoffDate = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate())
@@ -417,7 +417,7 @@ export function RightPanel() {
 
                     {/* Period Selector - TradingView style */}
                     <div className="flex gap-1 mt-2">
-                        {(["1M", "6M", "MAX"] as TimePeriod[]).map((period) => (
+                        {(["3M", "6M", "MAX"] as TimePeriod[]).map((period) => (
                             <button
                                 key={period}
                                 onClick={() => setTimePeriod(period)}
