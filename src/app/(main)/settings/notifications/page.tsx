@@ -1,4 +1,8 @@
 import { PushNotificationManager } from "@/components/pwa/PushNotificationManager"
+import { Header } from "@/components/layout/Header"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
 
 export default function NotificationsSettingsPage() {
     return (
