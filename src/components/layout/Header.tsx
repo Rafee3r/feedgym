@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useSession } from "next-auth/react"
+import { useTheme } from "next-themes"
 import { Dumbbell, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
@@ -15,6 +16,9 @@ interface HeaderProps {
 export function Header({ title, showBack = false, sticky = true }: HeaderProps) {
     const { data: session } = useSession()
     const router = useRouter()
+    const { resolvedTheme } = useTheme()
+
+    const logoSrc = resolvedTheme === "light" ? "/logo-light.png" : "/logo-dark.png"
 
     return (
         <header
@@ -45,7 +49,7 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
 
                 {/* Mobile Centered Logo */}
                 <div className="md:hidden flex items-center">
-                    <img src="/logo.png" alt="FeedGym" className="h-10 w-auto object-contain" />
+                    <img src={logoSrc} alt="FeedGym" className="h-10 w-auto object-contain" />
                 </div>
             </div>
         </header>

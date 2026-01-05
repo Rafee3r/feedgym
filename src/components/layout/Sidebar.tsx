@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
+import { useTheme } from "next-themes"
 import { useState, useEffect } from "react"
 import {
     Home,
@@ -39,6 +40,9 @@ const navItems = [
 export function Sidebar() {
     const pathname = usePathname()
     const { data: session } = useSession()
+    const { resolvedTheme } = useTheme()
+
+    const logoSrc = resolvedTheme === "light" ? "/logo-light.png" : "/logo-dark.png"
     const unreadCount = useUnreadNotifications()
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -64,7 +68,7 @@ export function Sidebar() {
             {/* Logo */}
             {/* Logo */}
             <Link href="/" className="flex items-center gap-4 px-4 py-4 mb-2 group transition-colors">
-                <img src="/logo.png" alt="FeedGym" className="h-10 w-auto hidden xl:block object-contain" />
+                <img src={logoSrc} alt="FeedGym" className="h-10 w-auto hidden xl:block object-contain" />
                 <img src="/icon.png" alt="FeedGym" className="h-10 w-10 xl:hidden object-contain" />
             </Link>
 
