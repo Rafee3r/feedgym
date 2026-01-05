@@ -1,7 +1,4 @@
-import { Header } from "@/components/layout/Header"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
+import { PushNotificationManager } from "@/components/pwa/PushNotificationManager"
 
 export default function NotificationsSettingsPage() {
     return (
@@ -9,9 +6,14 @@ export default function NotificationsSettingsPage() {
             <Header title="Notificaciones" showBack />
 
             <div className="p-4 space-y-6">
-                {/* Push Notifications */}
+                {/* Push Subscription Manager */}
+                <PushNotificationManager />
+
+                <Separator />
+
+                {/* Push Notification Preferences */}
                 <div className="space-y-4">
-                    <h3 className="font-semibold">Notificaciones Push</h3>
+                    <h3 className="font-semibold">Preferencias de Push</h3>
 
                     <div className="flex items-center justify-between">
                         <div>

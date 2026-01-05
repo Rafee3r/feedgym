@@ -58,6 +58,7 @@ model User {
   // Relations
   accounts       Account[]
   sessions       Session[]
+  pushSubscriptions PushSubscription[]
   posts          Post[]
   likes          Like[]
   bookmarks      Bookmark[]
@@ -342,4 +343,15 @@ enum NotificationType {
   QUOTE
   FOLLOW
   MENTION
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  keys      Json
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
