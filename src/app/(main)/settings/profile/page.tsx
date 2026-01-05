@@ -314,20 +314,22 @@ export default function ProfileSettingsPage() {
                 </div>
 
                 {/* Save Button */}
-                <Button
-                    onClick={handleSave}
-                    disabled={isSaving || !profile.displayName.trim()}
-                    className="w-full rounded-full"
-                >
-                    {isSaving ? (
-                        <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Guardando...
-                        </>
-                    ) : (
-                        "Guardar cambios"
-                    )}
-                </Button>
+                <div className="pb-24 md:pb-4">
+                    <Button
+                        onClick={handleSave}
+                        disabled={isSaving || !profile.displayName.trim()}
+                        className="w-full rounded-full"
+                    >
+                        {isSaving ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Guardando...
+                            </>
+                        ) : (
+                            "Guardar cambios"
+                        )}
+                    </Button>
+                </div>
             </div >
         </>
     )

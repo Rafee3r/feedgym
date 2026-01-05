@@ -374,32 +374,37 @@ export function PostCard({
                 </div>
             </div>
 
-            {/* Featured Reply (most liked) */}
+            {/* Featured Reply (most liked) - with connecting line */}
             {showThread && post.topReply && (
-                <Link
-                    href={`/post/${post.id}`}
-                    className="block ml-[52px] mt-2 p-3 bg-accent/30 rounded-xl border border-border/50 hover:bg-accent/50 transition-colors"
-                >
-                    <div className="flex items-center gap-2 mb-1">
-                        <Avatar className="w-5 h-5">
-                            <AvatarImage src={post.topReply.author.avatarUrl || undefined} />
-                            <AvatarFallback className="text-[10px]">
-                                {post.topReply.author.displayName?.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{post.topReply.author.displayName}</span>
-                        <span className="text-xs text-muted-foreground">@{post.topReply.author.username}</span>
-                        {post.topReply.likesCount > 0 && (
-                            <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-                                <Heart className="w-3 h-3 fill-current text-red-500" />
-                                {post.topReply.likesCount}
-                            </span>
-                        )}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                        {post.topReply.content}
-                    </p>
-                </Link>
+                <div className="relative ml-[24px] pl-[28px] mt-1">
+                    {/* Connecting line */}
+                    <div className="absolute left-[20px] top-0 bottom-0 w-[2px] bg-border" />
+
+                    <Link
+                        href={`/post/${post.id}`}
+                        className="block py-2 hover:bg-accent/20 transition-colors rounded-lg px-2 -mx-2"
+                    >
+                        <div className="flex items-center gap-2 mb-1">
+                            <Avatar className="w-6 h-6">
+                                <AvatarImage src={post.topReply.author.avatarUrl || undefined} />
+                                <AvatarFallback className="text-[10px]">
+                                    {post.topReply.author.displayName?.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">{post.topReply.author.displayName}</span>
+                            <span className="text-xs text-muted-foreground">@{post.topReply.author.username}</span>
+                            {post.topReply.likesCount > 0 && (
+                                <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
+                                    <Heart className="w-3 h-3 fill-current text-red-500" />
+                                    {post.topReply.likesCount}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm line-clamp-2 ml-8">
+                            {post.topReply.content}
+                        </p>
+                    </Link>
+                </div>
             )}
 
             {/* Thread indicator */}

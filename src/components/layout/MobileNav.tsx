@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useState } from "react"
-import { Home, Search, Bell, User, Bookmark, Settings, Plus, X } from "lucide-react"
+import { Home, Search, Bell, User, Bookmark, Settings, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Composer } from "@/components/post/Composer"
 import {
@@ -18,6 +18,7 @@ const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
     { href: "/search", icon: Search, label: "Buscar" },
     { href: "/notifications", icon: Bell, label: "Notificaciones" },
+    { href: "/bookmarks", icon: Bookmark, label: "Guardados" },
 ]
 
 export function MobileNav() {
@@ -67,35 +68,19 @@ export function MobileNav() {
                     )
                 })}
 
-                {/* Bookmarks */}
+                {/* Settings */}
                 <Link
-                    href="/bookmarks"
+                    href="/settings"
                     className={cn(
                         "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
-                        pathname === "/bookmarks"
+                        pathname.startsWith("/settings")
                             ? "text-primary"
                             : "text-muted-foreground hover:text-foreground"
                     )}
-                    aria-label="Guardados"
+                    aria-label="Configuración"
                 >
-                    <Bookmark className={cn("w-6 h-6", pathname === "/bookmarks" && "stroke-[2.5]")} />
+                    <Settings className={cn("w-6 h-6", pathname.startsWith("/settings") && "stroke-[2.5]")} />
                 </Link>
-
-                {/* Profile */}
-                {session && (
-                    <Link
-                        href={`/${session.user.username}`}
-                        className={cn(
-                            "flex flex-col items-center justify-center p-2 rounded-lg transition-colors",
-                            pathname === `/${session.user.username}`
-                                ? "text-primary"
-                                : "text-muted-foreground hover:text-foreground"
-                        )}
-                        aria-label="Perfil"
-                    >
-                        <User className="w-6 h-6" />
-                    </Link>
-                )}
             </nav>
         </>
     )

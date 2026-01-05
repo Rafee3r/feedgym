@@ -30,8 +30,22 @@ interface ComposerProps {
     compact?: boolean
 }
 
+// Rotating engaging placeholders
+const placeholders = [
+    "¿Qué estás entrenando hoy?",
+    "Comparte tu progreso del día 💪",
+    "¿Cuál fue tu PR esta semana?",
+    "¿Qué te motiva a seguir adelante?",
+    "Cuenta sobre tu rutina de hoy...",
+    "¿Descubriste algo nuevo? ¡Comparte!",
+    "¿Cómo va tu transformación?",
+    "¿Qué hábito estás construyendo?",
+    "¿Qué música te acompaña hoy?",
+    "¿Tienes algún tip para la comunidad?",
+]
+
 export function Composer({
-    placeholder = "¿Qué estás entrenando?",
+    placeholder: customPlaceholder,
     parentId,
     onSuccess,
     compact = false,
@@ -41,6 +55,22 @@ export function Composer({
     const [postType, setPostType] = useState<PostType>("NOTE")
     const [isFocused, setIsFocused] = useState(false)
     const [isPending, startTransition] = useTransition()
+    const [placeholderIndex, setPlaceholderIndex] = useState(() =>
+        Math.floor(Math.random() * placeholders.length)
+    )
+
+    // Rotate placeholder every 8 seconds when not focused
+    useEffect(() => {
+        if (!isFocused && !content) {
+            const interval = setInterval(() => {
+                setPlaceholderIndex(prev => (prev + 1) % placeholders.length)
+            }, 8000)
+            return () => clearInterval(interval)
+        }
+    }, [isFocused, content])
+
+    const currentPlaceholder = customPlaceholder || placeholders[placeholderIndex]
+
 
     // Voice Recording State
     const [isRecording, setIsRecording] = useState(false)
@@ -307,7 +337,7 @@ export function Composer({
                                 value={content}
                                 onChange={handleTextareaChange}
                                 onFocus={() => setIsFocused(true)}
-                                placeholder={audioBlob ? "Añade un comentario a tu audio..." : placeholder}
+                                placeholder={audioBlob ? "Añade un comentario a tu audio..." : currentPlaceholder}
                                 className="composer-textarea"
                                 rows={compact ? 1 : 2}
                                 disabled={isPending}

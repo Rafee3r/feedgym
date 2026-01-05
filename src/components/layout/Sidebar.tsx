@@ -60,7 +60,7 @@ export function Sidebar() {
         <aside className="hidden md:flex flex-col w-64 xl:w-72 h-screen sticky top-0 border-r border-border p-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 px-3 py-2 mb-4">
-                <img src="/logo.png" alt="FeedGym" className="h-14 w-auto hidden xl:block object-contain" />
+                <img src="/logo.png" alt="FeedGym" className="h-20 w-auto hidden xl:block object-contain" />
                 <img src="/icon.png" alt="FeedGym" className="h-10 w-10 xl:hidden object-contain" />
             </Link>
 
