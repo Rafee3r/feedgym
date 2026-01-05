@@ -18,8 +18,8 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
 
     return (
         <header
-            className={`${sticky ? "sticky top-[env(safe-area-inset-top,0px)]" : ""
-                } z-40 bg-background/80 backdrop-blur-sm border-b border-border`}
+            className={`${sticky ? "sticky top-0" : ""
+                } z-40 bg-background/95 backdrop-blur-xl border-b border-border supports-[backdrop-filter]:bg-background/85`}
         >
             <div className="flex items-center justify-center gap-4 px-4 h-14 relative">
                 {showBack && (
@@ -45,7 +45,7 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
 
                 {/* Mobile Centered Logo */}
                 <div className="md:hidden flex items-center">
-                    <img src="/logo.png" alt="FeedGym" className="h-8 w-auto object-contain" />
+                    <img src="/logo.png" alt="FeedGym" className="h-10 w-auto object-contain" />
                 </div>
             </div>
         </header>
