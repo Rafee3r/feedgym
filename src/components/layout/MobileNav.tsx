@@ -42,11 +42,11 @@ export function MobileNav() {
 
             {/* Compose Dialog */}
             <Dialog open={isComposerOpen} onOpenChange={setIsComposerOpen}>
-                <DialogContent className="sm:max-w-lg p-0 h-[100dvh] w-full max-w-none rounded-none sm:h-auto sm:w-full sm:rounded-lg flex flex-col">
-                    <DialogHeader className="px-4 pt-4 pb-0 shrink-0">
+                <DialogContent className="sm:max-w-lg p-0 max-h-[90vh] w-[95vw] rounded-xl">
+                    <DialogHeader className="px-4 pt-4 pb-0">
                         <DialogTitle className="text-lg font-bold">Nueva publicación</DialogTitle>
                     </DialogHeader>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="overflow-y-auto max-h-[70vh]">
                         <Composer
                             onSuccess={() => setIsComposerOpen(false)}
                             autoFocus={true}
