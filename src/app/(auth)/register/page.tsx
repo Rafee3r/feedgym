@@ -98,13 +98,30 @@ export default function RegisterPage() {
                 return
             }
 
-            toast({
-                title: "¡Cuenta creada!",
-                description: "Ahora puedes iniciar sesión",
-                variant: "success",
+            // Auto-login after registration
+            const { signIn } = await import("next-auth/react")
+            const loginResult = await signIn("credentials", {
+                email: formData.email,
+                password: formData.password,
+                redirect: false,
             })
 
-            router.push("/login")
+            if (loginResult?.ok) {
+                toast({
+                    title: "¡Cuenta creada!",
+                    description: "Vamos a configurar tu perfil",
+                    variant: "success",
+                })
+                router.push("/onboarding")
+            } else {
+                // If auto-login fails, redirect to login
+                toast({
+                    title: "¡Cuenta creada!",
+                    description: "Ahora puedes iniciar sesión",
+                    variant: "success",
+                })
+                router.push("/login")
+            }
         } catch {
             toast({
                 title: "Error",

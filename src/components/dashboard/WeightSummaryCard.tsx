@@ -50,6 +50,7 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
 
     const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0])
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [userGoal, setUserGoal] = useState<"CUT" | "BULK" | "MAINTAIN" | "RECOMP">("MAINTAIN")
 
     const isOwnProfile = !userId || userId === session?.user?.id
 
@@ -62,6 +63,9 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                 const data = await response.json()
                 setWeightData(data.chartData)
                 setWeightStats(data.stats)
+                if (data.goal) {
+                    setUserGoal(data.goal)
+                }
             }
         } catch (error) {
             console.error("Error fetching weight data:", error)
@@ -155,8 +159,20 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
 
     const getTrendIcon = () => {
         if (!weightStats?.change) return <Minus className="w-3 h-3" />
-        if (weightStats.change > 0) return <TrendingUp className="w-3 h-3 text-green-500" />
-        return <TrendingDown className="w-3 h-3 text-red-500" />
+
+        const isGainingWeight = weightStats.change > 0
+        let colorClass = "text-yellow-500"
+
+        if (userGoal === "CUT") {
+            colorClass = isGainingWeight ? "text-red-500" : "text-green-500"
+        } else if (userGoal === "BULK") {
+            colorClass = isGainingWeight ? "text-green-500" : "text-red-500"
+        }
+
+        if (isGainingWeight) {
+            return <TrendingUp className={`w-3 h-3 ${colorClass}`} />
+        }
+        return <TrendingDown className={`w-3 h-3 ${colorClass}`} />
     }
 
     if (!session) return null

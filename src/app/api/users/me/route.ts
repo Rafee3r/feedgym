@@ -49,6 +49,9 @@ export async function PATCH(request: NextRequest) {
                 allowDMs: true,
                 showMetrics: true,
                 discoverable: true,
+                onboardingCompleted: true,
+                tutorialCompleted: true,
+                timezone: true,
             },
         })
 

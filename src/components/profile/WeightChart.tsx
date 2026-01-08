@@ -58,6 +58,7 @@ export function WeightChart({ userId }: WeightChartProps) {
         change: number | null
         count: number
     } | null>(null)
+    const [userGoal, setUserGoal] = useState<"CUT" | "BULK" | "MAINTAIN" | "RECOMP">("MAINTAIN")
     const [isLoading, setIsLoading] = useState(true)
     const [timeRange, setTimeRange] = useState<TimeRange>("3M")
     const [showAllHistory, setShowAllHistory] = useState(false)
@@ -93,6 +94,9 @@ export function WeightChart({ userId }: WeightChartProps) {
                 setChartData(data.chartData)
                 setLogs(data.logs)
                 setStats(data.stats)
+                if (data.goal) {
+                    setUserGoal(data.goal)
+                }
             }
         } catch (err) {
             console.error("Error fetching weight data:", err)
@@ -203,8 +207,25 @@ export function WeightChart({ userId }: WeightChartProps) {
 
     const getTrendIcon = () => {
         if (!stats?.change) return <Minus className="w-4 h-4" />
-        if (stats.change > 0) return <TrendingUp className="w-4 h-4 text-green-500" />
-        return <TrendingDown className="w-4 h-4 text-red-500" />
+
+        // Determine if change is good or bad based on goal
+        const isGainingWeight = stats.change > 0
+
+        // CUT: losing weight is good (green), gaining is bad (red)
+        // BULK: gaining weight is good (green), losing is bad (red)
+        // MAINTAIN/RECOMP: any change is neutral (yellow/orange)
+        let colorClass = "text-yellow-500"
+
+        if (userGoal === "CUT") {
+            colorClass = isGainingWeight ? "text-red-500" : "text-green-500"
+        } else if (userGoal === "BULK") {
+            colorClass = isGainingWeight ? "text-green-500" : "text-red-500"
+        }
+
+        if (isGainingWeight) {
+            return <TrendingUp className={`w-4 h-4 ${colorClass}`} />
+        }
+        return <TrendingDown className={`w-4 h-4 ${colorClass}`} />
     }
 
     if (isLoading && chartData.length === 0) {

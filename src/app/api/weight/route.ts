@@ -23,6 +23,12 @@ export async function GET(request: NextRequest) {
             take: limit,
         })
 
+        // Get user's goal for color logic
+        const targetUser = await prisma.user.findUnique({
+            where: { id: targetUserId },
+            select: { goal: true }
+        })
+
         // Format for chart (reverse for chronological order)
         const chartData = logs
             .reverse()
@@ -50,6 +56,7 @@ export async function GET(request: NextRequest) {
                 change: weightChange,
                 count: logs.length,
             },
+            goal: targetUser?.goal || "MAINTAIN",
         })
     } catch (error) {
         console.error("Get weight logs error:", error)

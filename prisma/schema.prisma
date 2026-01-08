@@ -49,6 +49,18 @@ model User {
   isFrozen       Boolean        @default(false)
   mutedUntil     DateTime?
   
+  // Onboarding & Tutorial
+  onboardingCompleted Boolean   @default(false)
+  tutorialCompleted   Boolean   @default(false)
+  timezone            String    @default("America/Santiago")
+  
+  // Engagement & Gamification
+  lastEngagementPush  DateTime?
+  consistencyTitle    String?   // "Atleta Constante", "Leyenda Fitness", etc.
+  badges              String[]  @default([])
+  currentStreak       Int       @default(0)
+  longestStreak       Int       @default(0)
+  lastPostDate        DateTime?
 
   
   // Metadata
