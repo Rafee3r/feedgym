@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { postSchema } from "@/lib/validations"
 import { parseMentions, sendPushNotification } from "@/lib/push"
+import { updateUserStreak } from "@/lib/streaks"
 
 // GET /api/posts - Get feed posts
 export async function GET(request: NextRequest) {
@@ -257,6 +258,9 @@ export async function POST(request: NextRequest) {
                 },
             },
         })
+
+        // Update user's streak (for consistency tracking)
+        updateUserStreak(session.user.id)
 
         // Update parent's reply count if this is a reply
         if (parentId) {
