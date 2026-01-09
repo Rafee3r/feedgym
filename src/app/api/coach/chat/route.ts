@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Create streaming response
         const stream = await getOpenAI().chat.completions.create({
-            model: "gpt-5.1",
+            model: "gpt-5.2-chat-latest",
             messages,
             stream: true,
             max_tokens: 800,
