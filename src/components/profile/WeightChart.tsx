@@ -378,32 +378,6 @@ export function WeightChart({ userId }: WeightChartProps) {
                         <div className="h-[250px] sm:h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={chartData}>
-                                    <defs>
-                                        {/* Define gradient for each segment */}
-                                        {chartData.map((point, index) => {
-                                            if (index === 0) return null
-                                            const prevWeight = chartData[index - 1].weight
-                                            const currWeight = point.weight
-                                            const isGaining = currWeight > prevWeight
-                                            const isLosing = currWeight < prevWeight
-
-                                            let color = "#9ca3af" // Gray for neutral
-                                            if (userGoal === "CUT") {
-                                                if (isLosing) color = "#22c55e" // Green - good
-                                                else if (isGaining) color = "#ef4444" // Red - bad
-                                            } else if (userGoal === "BULK") {
-                                                if (isGaining) color = "#22c55e" // Green - good
-                                                else if (isLosing) color = "#ef4444" // Red - bad
-                                            }
-
-                                            return (
-                                                <linearGradient key={`gradient-${index}`} id={`segment-${index}`}>
-                                                    <stop offset="0%" stopColor={color} />
-                                                    <stop offset="100%" stopColor={color} />
-                                                </linearGradient>
-                                            )
-                                        })}
-                                    </defs>
                                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                                     <XAxis
                                         dataKey="date"
@@ -430,52 +404,43 @@ export function WeightChart({ userId }: WeightChartProps) {
                                         }}
                                         formatter={(value: number) => [`${value.toFixed(1)} kg`, "Peso"]}
                                     />
-                                    {/* Render individual line segments with colors */}
-                                    {chartData.map((point, index) => {
-                                        if (index === 0) return null
-                                        const prevWeight = chartData[index - 1].weight
-                                        const currWeight = point.weight
-                                        const isGaining = currWeight > prevWeight
-                                        const isLosing = currWeight < prevWeight
-
-                                        let color = "#9ca3af" // Gray for neutral
-                                        if (userGoal === "CUT") {
-                                            if (isLosing) color = "#22c55e" // Green - good
-                                            else if (isGaining) color = "#ef4444" // Red - bad
-                                        } else if (userGoal === "BULK") {
-                                            if (isGaining) color = "#22c55e" // Green - good
-                                            else if (isLosing) color = "#ef4444" // Red - bad
-                                        }
-
-                                        const segmentData = [
-                                            chartData[index - 1],
-                                            point
-                                        ]
-
-                                        return (
-                                            <Line
-                                                key={`segment-${index}`}
-                                                data={segmentData}
-                                                type="monotone"
-                                                dataKey="weight"
-                                                stroke={color}
-                                                strokeWidth={2.5}
-                                                dot={false}
-                                                activeDot={false}
-                                                isAnimationActive={false}
-                                            />
-                                        )
-                                    })}
-                                    {/* Render dots on top */}
+                                    {/* Single line with goal-based overall trend color */}
                                     <Line
                                         type="monotone"
                                         dataKey="weight"
-                                        stroke="transparent"
-                                        strokeWidth={0}
+                                        stroke={(() => {
+                                            if (chartData.length < 2) return "#9ca3af"
+                                            const first = chartData[0].weight
+                                            const last = chartData[chartData.length - 1].weight
+                                            const isGaining = last > first
+                                            const isLosing = last < first
+
+                                            if (userGoal === "CUT") {
+                                                if (isLosing) return "#22c55e"
+                                                if (isGaining) return "#ef4444"
+                                            } else if (userGoal === "BULK") {
+                                                if (isGaining) return "#22c55e"
+                                                if (isLosing) return "#ef4444"
+                                            }
+                                            return "#9ca3af"
+                                        })()}
+                                        strokeWidth={2.5}
                                         dot={(props: any) => {
                                             const { cx, cy, index } = props
                                             if (index === 0 || !chartData[index - 1]) {
-                                                return <circle cx={cx} cy={cy} r={4} fill="#9ca3af" />
+                                                const first = chartData[0]?.weight
+                                                const last = chartData[chartData.length - 1]?.weight
+                                                const isGaining = last > first
+                                                const isLosing = last < first
+                                                let color = "#9ca3af"
+                                                if (userGoal === "CUT") {
+                                                    if (isLosing) color = "#22c55e"
+                                                    else if (isGaining) color = "#ef4444"
+                                                } else if (userGoal === "BULK") {
+                                                    if (isGaining) color = "#22c55e"
+                                                    else if (isLosing) color = "#ef4444"
+                                                }
+                                                return <circle cx={cx} cy={cy} r={4} fill={color} />
                                             }
                                             const prevWeight = chartData[index - 1].weight
                                             const currWeight = chartData[index].weight
