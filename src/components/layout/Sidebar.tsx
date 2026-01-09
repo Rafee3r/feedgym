@@ -27,6 +27,14 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Composer } from "@/components/post/Composer"
 import { getInitials } from "@/lib/utils"
 
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications"
@@ -48,6 +56,7 @@ export function Sidebar() {
     const unreadCount = useUnreadNotifications()
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const [isComposerOpen, setIsComposerOpen] = useState(false)
 
     useEffect(() => {
         if (session?.user) {
@@ -132,12 +141,36 @@ export function Sidebar() {
             </nav>
 
             {/* Post Button */}
-            <Button size="xl" className="w-full rounded-full my-4 hidden xl:flex">
+            {/* Post Button */}
+            <Button
+                size="xl"
+                className="w-full rounded-full my-4 hidden xl:flex text-lg font-bold shadow-lg hover:shadow-primary/25"
+                onClick={() => setIsComposerOpen(true)}
+            >
                 Publicar
             </Button>
-            <Button size="icon" className="w-12 h-12 rounded-full my-4 xl:hidden mx-auto">
-                <Dumbbell className="w-6 h-6" />
+            <Button
+                size="icon"
+                className="w-12 h-12 rounded-full my-4 xl:hidden mx-auto shadow-lg"
+                onClick={() => setIsComposerOpen(true)}
+            >
+                <Sparkles className="w-6 h-6" />
             </Button>
+
+            {/* Compose Dialog */}
+            <Dialog open={isComposerOpen} onOpenChange={setIsComposerOpen}>
+                <DialogContent className="sm:max-w-lg p-0 max-h-[90vh] gap-0">
+                    <DialogHeader className="px-4 py-3 border-b">
+                        <DialogTitle className="text-lg font-bold">Nueva publicación</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-4 overflow-y-auto max-h-[70vh]">
+                        <Composer
+                            onSuccess={() => setIsComposerOpen(false)}
+                            autoFocus={true}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* User Menu */}
             {session && (
