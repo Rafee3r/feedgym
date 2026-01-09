@@ -16,6 +16,7 @@ export default function LoginPage() {
     const { resolvedTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [rememberMe, setRememberMe] = useState(false)
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -23,6 +24,12 @@ export default function LoginPage() {
 
     useEffect(() => {
         setMounted(true)
+        // Load saved email if remember me was used
+        const savedEmail = localStorage.getItem("feedgym-remember-email")
+        if (savedEmail) {
+            setFormData(prev => ({ ...prev, email: savedEmail }))
+            setRememberMe(true)
+        }
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +63,12 @@ export default function LoginPage() {
                     })
                 }
             } else {
+                // Save or remove email based on remember me
+                if (rememberMe) {
+                    localStorage.setItem("feedgym-remember-email", formData.email)
+                } else {
+                    localStorage.removeItem("feedgym-remember-email")
+                }
                 router.push("/")
                 router.refresh()
             }
@@ -118,6 +131,17 @@ export default function LoginPage() {
                             />
                         </div>
                     </div>
+
+                    {/* Remember me checkbox */}
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            className="w-4 h-4 rounded border-input bg-background text-primary focus:ring-primary accent-primary"
+                        />
+                        <span className="text-sm text-muted-foreground">Recordarme la próxima vez</span>
+                    </label>
 
                     <Button
                         type="submit"
