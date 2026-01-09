@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Create streaming response
         const stream = await getOpenAI().chat.completions.create({
-            model: "gpt-5.2",
+            model: "gpt-4o",
             messages,
             stream: true,
             max_tokens: 800,
@@ -109,10 +109,11 @@ export async function POST(request: NextRequest) {
                 "Connection": "keep-alive",
             },
         })
-    } catch (error) {
+    } catch (error: any) {
         console.error("Coach chat error:", error)
+        const errorMessage = error?.message || "Error desconocido"
         return new Response(
-            JSON.stringify({ error: "Error al procesar mensaje" }),
+            JSON.stringify({ error: "Error al procesar mensaje", details: errorMessage }),
             {
                 status: 500,
                 headers: { "Content-Type": "application/json" },
