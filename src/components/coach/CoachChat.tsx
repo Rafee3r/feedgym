@@ -301,10 +301,16 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                                     <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-xs font-bold text-black">
                                         I
                                     </div>
-                                    <div className="flex items-center gap-1 pt-2">
-                                        <div className="w-2 h-2 rounded-full bg-zinc-400 animate-pulse" />
-                                        <div className="w-2 h-2 rounded-full bg-zinc-400 animate-pulse delay-100" />
-                                        <div className="w-2 h-2 rounded-full bg-zinc-400 animate-pulse delay-200" />
+                                    <div className="flex flex-col gap-1 pt-1">
+                                        <p className="text-xs font-medium text-muted-foreground">IRON</p>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-muted-foreground animate-pulse">Analizando tus datos...</span>
+                                            <div className="flex gap-1">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
