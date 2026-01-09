@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface Message {
+    id?: string
     role: "user" | "assistant"
     content: string
-    image?: string // base64 image
+    image?: string // base64 image (only stored locally, not in DB)
 }
 
 interface CoachChatProps {
@@ -17,26 +18,32 @@ interface CoachChatProps {
 }
 
 export function CoachChat({ onClose, className }: CoachChatProps) {
-    const [messages, setMessages] = useState<Message[]>(() => {
-        if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("iron-chat-history")
-            return saved ? JSON.parse(saved) : []
-        }
-        return []
-    })
+    const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    // Save messages to localStorage
+    // Load messages from database on mount
     useEffect(() => {
-        if (messages.length > 0) {
-            localStorage.setItem("iron-chat-history", JSON.stringify(messages.slice(-50)))
+        async function loadHistory() {
+            try {
+                const res = await fetch("/api/coach/history")
+                if (res.ok) {
+                    const data = await res.json()
+                    setMessages(data.messages || [])
+                }
+            } catch (error) {
+                console.error("Error loading chat history:", error)
+            } finally {
+                setIsLoadingHistory(false)
+            }
         }
-    }, [messages])
+        loadHistory()
+    }, [])
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -50,6 +57,19 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
             inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 120) + "px"
         }
     }, [input])
+
+    // Save message to database
+    const saveMessage = async (role: "user" | "assistant", content: string) => {
+        try {
+            await fetch("/api/coach/history", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role, content })
+            })
+        } catch (error) {
+            console.error("Error saving message:", error)
+        }
+    }
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -78,6 +98,9 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
         }
         setMessages(prev => [...prev, newUserMsg])
         setIsLoading(true)
+
+        // Save user message to DB (without image - too large)
+        saveMessage("user", newUserMsg.content)
 
         try {
             const response = await fetch("/api/coach/chat", {
@@ -127,6 +150,11 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                     }
                 }
             }
+
+            // Save assistant message to DB
+            if (assistantMessage) {
+                saveMessage("assistant", assistantMessage)
+            }
         } catch (error) {
             console.error("Chat error:", error)
             setMessages(prev => [
@@ -145,9 +173,22 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
         }
     }
 
-    const clearHistory = () => {
-        setMessages([])
-        localStorage.removeItem("iron-chat-history")
+    const clearHistory = async () => {
+        try {
+            await fetch("/api/coach/history", { method: "DELETE" })
+            setMessages([])
+        } catch (error) {
+            console.error("Error clearing history:", error)
+        }
+    }
+
+    if (isLoadingHistory) {
+        return (
+            <div className={cn("flex flex-col h-full bg-background items-center justify-center", className)}>
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mt-2">Cargando historial...</p>
+            </div>
+        )
     }
 
     return (
@@ -218,7 +259,7 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                     <div className="py-4">
                         {messages.map((msg, i) => (
                             <div
-                                key={i}
+                                key={msg.id || i}
                                 className={cn(
                                     "px-4 py-4",
                                     msg.role === "assistant" && "bg-muted/30"

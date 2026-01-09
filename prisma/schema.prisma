@@ -80,6 +80,7 @@ model User {
   personalRecords PersonalRecord[]
   notifications  Notification[] @relation("recipient")
   notificationsSent Notification[] @relation("actor")
+  coachMessages  CoachMessage[]
   
   @@index([username])
   @@index([email])
@@ -366,4 +367,17 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// IRON AI Coach conversation history
+model CoachMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // "user" or "assistant"
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
