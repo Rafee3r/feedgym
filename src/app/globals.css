@@ -10,7 +10,7 @@
         --card-foreground: 224 71% 4%;
         --popover: 0 0% 100%;
         --popover-foreground: 224 71% 4%;
-        --primary: 158 64% 52%;
+        --primary: 152 80% 32%;
         --primary-foreground: 0 0% 100%;
         --secondary: 220 14% 96%;
         --secondary-foreground: 220 9% 46%;
@@ -22,7 +22,7 @@
         --destructive-foreground: 0 0% 100%;
         --border: 220 13% 91%;
         --input: 220 13% 91%;
-        --ring: 158 64% 52%;
+        --ring: 152 80% 32%;
         --radius: 0.75rem;
     }
 
@@ -33,7 +33,7 @@
         --card-foreground: 213 31% 91%;
         --popover: 224 71% 7%;
         --popover-foreground: 213 31% 91%;
-        --primary: 158 64% 52%;
+        --primary: 152 80% 32%;
         --primary-foreground: 0 0% 100%;
         --secondary: 215 28% 17%;
         --secondary-foreground: 213 31% 91%;
@@ -45,7 +45,7 @@
         --destructive-foreground: 0 0% 100%;
         --border: 215 28% 17%;
         --input: 215 28% 17%;
-        --ring: 158 64% 52%;
+        --ring: 152 80% 32%;
     }
 
     /* Pitch Black OLED Theme - Pure black for battery saving */
@@ -56,7 +56,7 @@
         --card-foreground: 0 0% 95%;
         --popover: 0 0% 3%;
         --popover-foreground: 0 0% 95%;
-        --primary: 158 64% 52%;
+        --primary: 152 80% 32%;
         --primary-foreground: 0 0% 100%;
         --secondary: 0 0% 8%;
         --secondary-foreground: 0 0% 95%;
@@ -68,7 +68,7 @@
         --destructive-foreground: 0 0% 100%;
         --border: 0 0% 12%;
         --input: 0 0% 12%;
-        --ring: 158 64% 52%;
+        --ring: 152 80% 32%;
     }
 }
 
@@ -232,13 +232,27 @@
         @apply h-32 sm:h-48 bg-gradient-to-r from-primary/20 to-primary/40;
     }
 
-    /* Floating action button */
+    /* Floating action button with glow animation */
     .fab {
         @apply fixed bottom-20 left-1/2 -translate-x-1/2 h-12 px-5 rounded-full;
-        @apply bg-primary text-primary-foreground shadow-lg;
+        @apply bg-primary text-primary-foreground;
         @apply flex items-center justify-center gap-2;
         @apply transition-transform hover:scale-105 active:scale-95;
         @apply md:hidden font-medium text-sm;
+        box-shadow: 0 0 20px hsl(var(--primary) / 0.5), 0 0 40px hsl(var(--primary) / 0.3);
+        animation: fab-glow 5s ease-in-out infinite;
+    }
+
+    @keyframes fab-glow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 15px hsl(var(--primary) / 0.4), 0 0 30px hsl(var(--primary) / 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 25px hsl(var(--primary) / 0.7), 0 0 50px hsl(var(--primary) / 0.4);
+        }
     }
 }
 

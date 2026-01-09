@@ -77,7 +77,6 @@ export async function POST(request: NextRequest) {
             messages,
             stream: true,
             max_completion_tokens: 800,
-            temperature: 0.8,
         })
 
         // Create readable stream for response
