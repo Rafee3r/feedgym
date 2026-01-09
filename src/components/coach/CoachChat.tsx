@@ -321,7 +321,7 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
             </div>
 
             {/* Input - ChatGPT style */}
-            <div className="border-t border-border p-4 bg-background">
+            <div className="border-t border-border p-4 bg-background pb-20 md:pb-4">
                 <div className="max-w-2xl mx-auto">
                     {/* Image preview */}
                     {imagePreview && (
