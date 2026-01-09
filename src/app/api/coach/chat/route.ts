@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
             model: "gpt-5.2-chat-latest",
             messages,
             stream: true,
-            max_tokens: 800,
+            max_completion_tokens: 800,
             temperature: 0.8,
         })
 
