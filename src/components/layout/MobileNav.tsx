@@ -31,15 +31,17 @@ export function MobileNav() {
 
     return (
         <>
-            {/* Floating Action Button */}
-            <button
-                className="fab"
-                onClick={() => setIsComposerOpen(true)}
-                aria-label="Crear publicación"
-            >
-                <Plus className="w-5 h-5" />
-                <span>Publicar</span>
-            </button>
+            {/* Floating Action Button - Hide on coach page to avoid blocking input */}
+            {pathname !== "/coach" && (
+                <button
+                    className="fab"
+                    onClick={() => setIsComposerOpen(true)}
+                    aria-label="Crear publicación"
+                >
+                    <Plus className="w-5 h-5" />
+                    <span>Publicar</span>
+                </button>
+            )}
 
             {/* Compose Dialog */}
             <Dialog open={isComposerOpen} onOpenChange={setIsComposerOpen}>
