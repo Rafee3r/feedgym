@@ -3,9 +3,16 @@ import { auth } from "@/lib/auth"
 import { buildUserContext, buildFullPrompt } from "@/lib/coach-prompt"
 import OpenAI from "openai"
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+// Lazy initialization to avoid build errors when API key is not set
+let openaiClient: OpenAI | null = null
+function getOpenAI() {
+    if (!openaiClient) {
+        openaiClient = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        })
+    }
+    return openaiClient
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -65,7 +72,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create streaming response
-        const stream = await openai.chat.completions.create({
+        const stream = await getOpenAI().chat.completions.create({
             model: "gpt-5.2",
             messages,
             stream: true,
