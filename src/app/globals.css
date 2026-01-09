@@ -234,11 +234,11 @@
 
     /* Floating action button */
     .fab {
-        @apply fixed bottom-20 right-4 w-14 h-14 rounded-full;
+        @apply fixed bottom-20 right-4 h-12 px-5 rounded-full;
         @apply bg-primary text-primary-foreground shadow-lg;
-        @apply flex items-center justify-center;
-        @apply transition-transform hover:scale-110 active:scale-95;
-        @apply md:hidden;
+        @apply flex items-center justify-center gap-2;
+        @apply transition-transform hover:scale-105 active:scale-95;
+        @apply md:hidden font-medium text-sm;
     }
 }
 

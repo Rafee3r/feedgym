@@ -37,7 +37,8 @@ export function MobileNav() {
                 onClick={() => setIsComposerOpen(true)}
                 aria-label="Crear publicación"
             >
-                <Plus className="w-6 h-6" />
+                <Plus className="w-5 h-5" />
+                <span>Publicar</span>
             </button>
 
             {/* Compose Dialog */}
