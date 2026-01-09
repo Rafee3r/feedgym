@@ -15,6 +15,7 @@ import {
     LogOut,
     Dumbbell,
     MoreHorizontal,
+    Sparkles,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -32,6 +33,7 @@ import { useUnreadNotifications } from "@/hooks/use-unread-notifications"
 
 const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
+    { href: "/coach", icon: Sparkles, label: "IRON" },
     { href: "/search", icon: Search, label: "Buscar" },
     { href: "/notifications", icon: Bell, label: "Notificaciones" },
     { href: "/bookmarks", icon: Bookmark, label: "Guardados" },

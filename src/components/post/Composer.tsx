@@ -81,7 +81,7 @@ export function Composer({
         if (!isFocused && !content) {
             const interval = setInterval(() => {
                 setPlaceholderIndex(prev => (prev + 1) % placeholders.length)
-            }, 8000)
+            }, 10000)
             return () => clearInterval(interval)
         }
     }, [isFocused, content])

@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { BanEnforcer } from "@/components/auth/BanEnforcer";
 import { FeedTutorial } from "@/components/tutorial/FeedTutorial";
-import { CoachProvider } from "@/components/coach";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -100,7 +99,6 @@ export default function RootLayout({
                         <Toaster />
                         <BanEnforcer />
                         <FeedTutorial />
-                        <CoachProvider />
                     </ThemeProvider>
                 </SessionProvider>
             </body>
