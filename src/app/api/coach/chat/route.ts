@@ -17,10 +17,10 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        const { message, conversationHistory = [] } = await request.json()
+        const { message, image, conversationHistory = [] } = await request.json()
 
-        if (!message || typeof message !== "string") {
-            return new Response(JSON.stringify({ error: "Mensaje requerido" }), {
+        if (!message && !image) {
+            return new Response(JSON.stringify({ error: "Mensaje o imagen requerido" }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" },
             })
@@ -33,20 +33,44 @@ export async function POST(request: NextRequest) {
         // Build messages array
         const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
             { role: "system", content: systemPrompt },
-            ...conversationHistory.slice(-10).map((msg: { role: string; content: string }) => ({
-                role: msg.role as "user" | "assistant",
-                content: msg.content,
-            })),
-            { role: "user", content: message },
+            ...conversationHistory.slice(-10).map((msg: { role: string; content: string; image?: string }) => {
+                // Handle messages with images in history
+                if (msg.image && msg.role === "user") {
+                    return {
+                        role: "user" as const,
+                        content: [
+                            { type: "text" as const, text: msg.content || "Analiza esta imagen" },
+                            { type: "image_url" as const, image_url: { url: msg.image } }
+                        ]
+                    }
+                }
+                return {
+                    role: msg.role as "user" | "assistant",
+                    content: msg.content,
+                }
+            }),
         ]
+
+        // Add current user message (with optional image)
+        if (image) {
+            messages.push({
+                role: "user",
+                content: [
+                    { type: "text", text: message || "Analiza esta imagen sin rodeos. Dime lo que ves." },
+                    { type: "image_url", image_url: { url: image } }
+                ]
+            })
+        } else {
+            messages.push({ role: "user", content: message })
+        }
 
         // Create streaming response
         const stream = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-4o",
             messages,
             stream: true,
-            max_tokens: 500,
-            temperature: 0.7,
+            max_tokens: 800,
+            temperature: 0.8,
         })
 
         // Create readable stream for response
