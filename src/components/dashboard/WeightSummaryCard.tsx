@@ -266,17 +266,25 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                             <span className="text-2xl font-bold">
                                 {weightStats?.latest ?? "—"} kg
                             </span>
-                            {weightStats?.change && (
-                                <span className={`text-sm flex items-center gap-1 ${weightStats.change > 0 ? "text-green-500" : "text-red-500"
-                                    }`}>
-                                    {getTrendIcon()}
-                                    {weightStats.change > 0 ? "+" : ""}
-                                    {weightStats.change.toFixed(1)} kg
-                                </span>
-                            )}
+                            {weightStats?.change && (() => {
+                                const isGaining = weightStats.change > 0
+                                let colorClass = "text-yellow-500"
+                                if (userGoal === "CUT") {
+                                    colorClass = isGaining ? "text-red-500" : "text-green-500"
+                                } else if (userGoal === "BULK") {
+                                    colorClass = isGaining ? "text-green-500" : "text-red-500"
+                                }
+                                return (
+                                    <span className={`text-sm flex items-center gap-1 ${colorClass}`}>
+                                        {getTrendIcon()}
+                                        {weightStats.change > 0 ? "+" : ""}
+                                        {weightStats.change.toFixed(1)} kg
+                                    </span>
+                                )
+                            })()}
                         </div>
 
-                        {/* Chart */}
+                        {/* Chart - Multicolor based on goal */}
                         <div className="h-[200px] w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={filteredData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
@@ -323,13 +331,70 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                                             })
                                         }}
                                     />
+                                    {/* Render individual line segments with colors */}
+                                    {filteredData.map((point, index) => {
+                                        if (index === 0) return null
+                                        const prevWeight = filteredData[index - 1].weight
+                                        const currWeight = point.weight
+                                        const isGaining = currWeight > prevWeight
+                                        const isLosing = currWeight < prevWeight
+
+                                        let color = "#9ca3af" // Gray for neutral
+                                        if (userGoal === "CUT") {
+                                            if (isLosing) color = "#22c55e" // Green - good
+                                            else if (isGaining) color = "#ef4444" // Red - bad
+                                        } else if (userGoal === "BULK") {
+                                            if (isGaining) color = "#22c55e" // Green - good
+                                            else if (isLosing) color = "#ef4444" // Red - bad
+                                        }
+
+                                        const segmentData = [
+                                            filteredData[index - 1],
+                                            point
+                                        ]
+
+                                        return (
+                                            <Line
+                                                key={`segment-${index}`}
+                                                data={segmentData}
+                                                type="monotone"
+                                                dataKey="weight"
+                                                stroke={color}
+                                                strokeWidth={2}
+                                                dot={false}
+                                                activeDot={false}
+                                                isAnimationActive={false}
+                                            />
+                                        )
+                                    })}
+                                    {/* Render dots on top */}
                                     <Line
                                         type="monotone"
                                         dataKey="weight"
-                                        stroke="#22c55e"
-                                        strokeWidth={2}
-                                        dot={{ fill: "#22c55e", strokeWidth: 2, r: 4, stroke: "#000" }}
-                                        activeDot={{ r: 6, fill: "#22c55e", stroke: "#000", strokeWidth: 2 }}
+                                        stroke="transparent"
+                                        strokeWidth={0}
+                                        dot={(props: any) => {
+                                            const { cx, cy, index } = props
+                                            if (index === 0 || !filteredData[index - 1]) {
+                                                return <circle cx={cx} cy={cy} r={4} fill="#9ca3af" stroke="#000" strokeWidth={2} />
+                                            }
+                                            const prevWeight = filteredData[index - 1].weight
+                                            const currWeight = filteredData[index].weight
+                                            const isGaining = currWeight > prevWeight
+                                            const isLosing = currWeight < prevWeight
+
+                                            let color = "#9ca3af"
+                                            if (userGoal === "CUT") {
+                                                if (isLosing) color = "#22c55e"
+                                                else if (isGaining) color = "#ef4444"
+                                            } else if (userGoal === "BULK") {
+                                                if (isGaining) color = "#22c55e"
+                                                else if (isLosing) color = "#ef4444"
+                                            }
+
+                                            return <circle cx={cx} cy={cy} r={4} fill={color} stroke="#000" strokeWidth={2} />
+                                        }}
+                                        activeDot={{ r: 6, fill: "hsl(var(--primary))", stroke: "#000", strokeWidth: 2 }}
                                     />
                                 </LineChart>
                             </ResponsiveContainer>
