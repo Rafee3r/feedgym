@@ -193,8 +193,11 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
 
     return (
         <div className={cn("flex flex-col h-full bg-background", className)}>
-            {/* Header - Dark, minimalist */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-zinc-950">
+            {/* Header - Sticky & Safe Area */}
+            <div
+                className="sticky top-0 z-50 flex items-center justify-between px-4 py-3 border-b border-border bg-zinc-950"
+                style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+            >
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
                         <span className="text-lg font-black text-black">I</span>
