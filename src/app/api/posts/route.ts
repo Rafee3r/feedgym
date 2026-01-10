@@ -193,8 +193,31 @@ export async function GET(request: NextRequest) {
         const hasMore = posts.length > limit
         const postsToReturn = hasMore ? posts.slice(0, -1) : posts
 
+        // Get post IDs for counting total thread replies
+        const postIds = postsToReturn.map(p => p.id)
+
+        // Count total replies in threads (all posts with threadRootId = postId)
+        // This gives us the recursive count of all nested replies
+        const threadCounts = await prisma.post.groupBy({
+            by: ['threadRootId'],
+            where: {
+                threadRootId: { in: postIds },
+                deletedAt: null
+            },
+            _count: { id: true }
+        })
+
+        const threadCountMap = new Map<string, number>()
+        for (const tc of threadCounts) {
+            if (tc.threadRootId) {
+                threadCountMap.set(tc.threadRootId, tc._count.id)
+            }
+        }
+
         const formattedPosts = postsToReturn.map((post) => {
             const p = post as any // Cast to any because local Prisma client is stale
+            // Total replies = all posts in thread (from threadRootId count)
+            const totalRepliesCount = threadCountMap.get(p.id) || p.repliesCount
             return {
                 id: p.id,
                 content: p.content,
@@ -208,7 +231,7 @@ export async function GET(request: NextRequest) {
                 repostOfId: p.repostOfId,
                 isQuote: p.isQuote,
                 likesCount: p.likesCount,
-                repliesCount: p.repliesCount,
+                repliesCount: totalRepliesCount, // Use total recursive count
                 repostsCount: p.repostsCount,
                 author: p.author,
                 createdAt: p.createdAt,

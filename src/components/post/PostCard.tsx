@@ -467,16 +467,26 @@ export function PostCard({
                         <p className="text-sm line-clamp-2 ml-8">
                             {post.topReply.content}
                         </p>
+
+                        {/* Ver más button - shown if there are more replies */}
+                        {post.repliesCount > 1 && (
+                            <Link
+                                href={`/post/${post.id}`}
+                                className="ml-8 mt-2 text-sm text-cyan-500 hover:text-cyan-400 hover:underline inline-block"
+                            >
+                                Ver más ({post.repliesCount - 1} respuestas más)
+                            </Link>
+                        )}
                     </Link>
                 </div>
             )}
 
-            {/* Thread indicator */}
+            {/* Thread indicator - only show if no topReply and has replies */}
             {showThread && post.repliesCount > 0 && !post.topReply && (
                 <div className="ml-[52px] mt-2">
                     <Link
                         href={`/post/${post.id}`}
-                        className="text-sm text-primary hover:underline"
+                        className="text-sm text-cyan-500 hover:text-cyan-400 hover:underline"
                     >
                         Ver hilo ({post.repliesCount} respuestas)
                     </Link>
