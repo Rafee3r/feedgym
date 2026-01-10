@@ -73,7 +73,9 @@ export function ConsistencyCard({
                             <div className="flex justify-between px-1">
                                 {activityData.weekDays.map((day) => {
                                     const date = new Date(day.date)
-                                    const dayName = date.toLocaleDateString("es-ES", { weekday: "narrow" }).toUpperCase().replace(".", "")
+                                    // Custom day names: L M M J V S D (starting Monday)
+                                    const dayNames = ["D", "L", "M", "M", "J", "V", "S"]
+                                    const dayName = dayNames[date.getDay()]
                                     const dayIndex = date.getDay().toString()
                                     const isScheduled = activityData.trainingDays.includes(dayIndex)
 
@@ -84,12 +86,12 @@ export function ConsistencyCard({
                                             </span>
                                             <div
                                                 className={`w-3 h-3 rounded-full transition-all ${(isScheduled && day.hasPost)
-                                                        ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
-                                                        : (day.isToday && isScheduled)
-                                                            ? "bg-transparent border border-muted-foreground/50 animate-pulse"
-                                                            : isScheduled
-                                                                ? "bg-secondary"
-                                                                : "bg-muted/10"
+                                                    ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"
+                                                    : (day.isToday && isScheduled)
+                                                        ? "bg-transparent border border-muted-foreground/50 animate-pulse"
+                                                        : isScheduled
+                                                            ? "bg-secondary"
+                                                            : "bg-muted/10"
                                                     }`}
                                             />
                                         </div>
