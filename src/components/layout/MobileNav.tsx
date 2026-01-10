@@ -17,8 +17,8 @@ import {
 const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
     { href: "/search", icon: Search, label: "Buscar" },
+    { href: "/coach", icon: Sparkles, label: "IRON", hasGlow: true },
     { href: "/notifications", icon: Bell, label: "Notificaciones" },
-    { href: "/coach", icon: Sparkles, label: "IRON" },
 ]
 
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications"
@@ -73,7 +73,13 @@ export function MobileNav() {
                             aria-label={item.label}
                         >
                             <div className="relative">
-                                <item.icon className={cn("w-6 h-6", isActive && "stroke-[2.5]")} />
+                                <item.icon
+                                    className={cn(
+                                        "w-6 h-6",
+                                        isActive && "stroke-[2.5]",
+                                        item.hasGlow && "animate-iron-glow"
+                                    )}
+                                />
                                 {item.label === "Notificaciones" && unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background" />
                                 )}
@@ -96,6 +102,31 @@ export function MobileNav() {
                     <Settings className={cn("w-6 h-6", pathname.startsWith("/settings") && "stroke-[2.5]")} />
                 </Link>
             </nav>
+
+            {/* IRON glow animation styles */}
+            <style jsx global>{`
+                @keyframes iron-glow {
+                    0%, 100% {
+                        filter: drop-shadow(0 0 0 transparent);
+                        opacity: 0.7;
+                    }
+                    75% {
+                        filter: drop-shadow(0 0 0 transparent);
+                        opacity: 0.7;
+                    }
+                    85% {
+                        filter: drop-shadow(0 0 8px hsl(var(--primary)));
+                        opacity: 1;
+                    }
+                    95% {
+                        filter: drop-shadow(0 0 4px hsl(var(--primary)));
+                        opacity: 1;
+                    }
+                }
+                .animate-iron-glow {
+                    animation: iron-glow 4s ease-in-out infinite;
+                }
+            `}</style>
         </>
     )
 }
