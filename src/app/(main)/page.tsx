@@ -9,7 +9,7 @@ import { MobileDashboard } from "@/components/mobile/MobileDashboard"
 export default function HomePage() {
     return (
         <>
-            <Header title="Inicio" />
+            <Header />
 
             <MobileDashboard />
 
