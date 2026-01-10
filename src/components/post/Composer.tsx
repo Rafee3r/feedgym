@@ -116,6 +116,12 @@ export function Composer({
     const remaining = maxLength - content.length
     const isOverLimit = remaining < 0
 
+    // Mention autocomplete state
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+    const [mentionSuggestions, setMentionSuggestions] = useState<Array<{ id: string, username: string, displayName: string, avatarUrl: string | null, isBot?: boolean }>>([])
+    const [mentionIndex, setMentionIndex] = useState(0)
+    const [cursorPosition, setCursorPosition] = useState(0)
+
     // Cleanup URLs on unmount
     useEffect(() => {
         return () => {
@@ -281,10 +287,68 @@ export function Composer({
     }
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setContent(e.target.value)
+        const value = e.target.value
+        const cursorPos = e.target.selectionStart || 0
+        setContent(value)
+        setCursorPosition(cursorPos)
+
         if (textareaRef.current) {
             textareaRef.current.style.height = "auto"
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+        }
+
+        // Check for mention trigger
+        const textBeforeCursor = value.slice(0, cursorPos)
+        const mentionMatch = textBeforeCursor.match(/@([a-zA-Z0-9_]*)$/)
+
+        if (mentionMatch) {
+            const query = mentionMatch[1]
+            setMentionQuery(query)
+            setMentionIndex(0)
+
+            // Fetch suggestions
+            if (query.length >= 0) {
+                fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => setMentionSuggestions(data.users || []))
+                    .catch(() => setMentionSuggestions([]))
+            }
+        } else {
+            setMentionQuery(null)
+            setMentionSuggestions([])
+        }
+    }
+
+    const insertMention = (username: string) => {
+        if (mentionQuery === null) return
+
+        const textBeforeMention = content.slice(0, cursorPosition - mentionQuery.length - 1)
+        const textAfterCursor = content.slice(cursorPosition)
+        const newContent = `${textBeforeMention}@${username} ${textAfterCursor}`
+
+        setContent(newContent)
+        setMentionQuery(null)
+        setMentionSuggestions([])
+
+        // Focus back on textarea
+        setTimeout(() => textareaRef.current?.focus(), 0)
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (mentionSuggestions.length > 0 && mentionQuery !== null) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault()
+                setMentionIndex(prev => Math.min(prev + 1, mentionSuggestions.length - 1))
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault()
+                setMentionIndex(prev => Math.max(prev - 1, 0))
+            } else if (e.key === "Enter" || e.key === "Tab") {
+                e.preventDefault()
+                insertMention(mentionSuggestions[mentionIndex].username)
+            } else if (e.key === "Escape") {
+                setMentionQuery(null)
+                setMentionSuggestions([])
+            }
         }
     }
 
@@ -359,17 +423,51 @@ export function Composer({
                                 </DropdownMenu>
                             )}
 
-                            {/* Text Input */}
-                            <textarea
-                                ref={textareaRef}
-                                value={content}
-                                onChange={handleTextareaChange}
-                                onFocus={() => setIsFocused(true)}
-                                placeholder={audioBlob ? "Añade un comentario a tu audio..." : currentPlaceholder}
-                                className="composer-textarea"
-                                rows={compact ? 1 : 2}
-                                disabled={isPending}
-                            />
+                            {/* Text Input with Mention Dropdown */}
+                            <div className="relative">
+                                <textarea
+                                    ref={textareaRef}
+                                    value={content}
+                                    onChange={handleTextareaChange}
+                                    onKeyDown={handleKeyDown}
+                                    onFocus={() => setIsFocused(true)}
+                                    placeholder={audioBlob ? "Añade un comentario a tu audio..." : currentPlaceholder}
+                                    className="composer-textarea"
+                                    rows={compact ? 1 : 2}
+                                    disabled={isPending}
+                                />
+
+                                {/* Mention Suggestions Dropdown */}
+                                {mentionSuggestions.length > 0 && mentionQuery !== null && (
+                                    <div className="absolute left-0 right-0 bottom-full mb-1 bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden max-h-48">
+                                        {mentionSuggestions.map((user, idx) => (
+                                            <button
+                                                key={user.id}
+                                                type="button"
+                                                onClick={() => insertMention(user.username)}
+                                                className={cn(
+                                                    "flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-accent transition-colors",
+                                                    idx === mentionIndex && "bg-accent"
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold",
+                                                    user.isBot ? "bg-white text-black" : "bg-muted"
+                                                )}>
+                                                    {user.isBot ? "I" : user.displayName[0]?.toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-sm truncate">{user.displayName}</div>
+                                                    <div className="text-xs text-muted-foreground">@{user.username}</div>
+                                                </div>
+                                                {user.isBot && (
+                                                    <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">AI</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </>
                     )}
 

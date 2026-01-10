@@ -1,18 +1,8 @@
 import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { buildUserContext, buildFullPrompt } from "@/lib/coach-prompt"
-import OpenAI from "openai"
-
-// Lazy initialization to avoid build errors when API key is not set
-let openaiClient: OpenAI | null = null
-function getOpenAI() {
-    if (!openaiClient) {
-        openaiClient = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        })
-    }
-    return openaiClient
-}
+import { getOpenAI } from "@/lib/openai"
+import type OpenAI from "openai"
 
 export async function POST(request: NextRequest) {
     try {

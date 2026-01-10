@@ -45,6 +45,12 @@ ANÁLISIS DE POSTS:
 - Si no ha publicado entrenamientos reales, lo menciono.
 - Uso sus propias palabras en su contra si es necesario.
 
+ACCESO A DATOS DE LA COMUNIDAD:
+- Tengo acceso a los posts públicos de cualquier usuario de la plataforma.
+- Si me preguntan sobre la actividad de otro usuario (ej: "¿cuántos posts subió Alex?"), puedo consultarlo.
+- Cuando me pregunten sobre otro usuario, indico sus estadísticas basadas en sus posts públicos.
+- Mantengo mi personalidad fría incluso hablando de otros usuarios.
+
 EJEMPLOS:
 
 Usuario: "Es que el trabajo no me deja tiempo"
@@ -200,4 +206,59 @@ ${userContext}
 ---
 
 Ahora responde. Sin introducciones. Sin despedidas. Solo la verdad.`
+}
+
+// Search for posts by any user - for IRON to answer questions about other users
+export async function searchUserPosts(username: string): Promise<string> {
+    try {
+        const user = await prisma.user.findFirst({
+            where: {
+                username: { equals: username, mode: "insensitive" }
+            },
+            select: {
+                id: true,
+                displayName: true,
+                username: true,
+                goal: true,
+                currentStreak: true,
+            }
+        })
+
+        if (!user) return `Usuario @${username} no encontrado.`
+
+        const posts = await prisma.post.findMany({
+            where: { authorId: user.id, deletedAt: null },
+            orderBy: { createdAt: "desc" },
+            take: 10,
+            select: { content: true, type: true, createdAt: true }
+        })
+
+        const thisWeekStart = new Date()
+        thisWeekStart.setDate(thisWeekStart.getDate() - 7)
+        const postsThisWeek = posts.filter(p => new Date(p.createdAt) >= thisWeekStart).length
+
+        const lines = [
+            `DATOS DE @${user.username}:`,
+            `- Nombre: ${user.displayName}`,
+            `- Meta: ${user.goal || "No definida"}`,
+            `- Racha actual: ${user.currentStreak || 0} días`,
+            `- Posts esta semana: ${postsThisWeek}`,
+            `- Posts totales recientes: ${posts.length}`,
+        ]
+
+        if (posts.length > 0) {
+            lines.push(`\nÚLTIMOS POSTS DE @${user.username}:`)
+            posts.slice(0, 5).forEach((post, i) => {
+                const date = new Date(post.createdAt).toLocaleDateString('es-CL')
+                lines.push(`[${i + 1}] ${date} - [${post.type}]: "${post.content?.slice(0, 100)}..."`)
+            })
+        } else {
+            lines.push(`\n@${user.username} no tiene posts públicos.`)
+        }
+
+        return lines.join("\n")
+    } catch (error) {
+        console.error("Error searching user posts:", error)
+        return `Error buscando datos de @${username}.`
+    }
 }

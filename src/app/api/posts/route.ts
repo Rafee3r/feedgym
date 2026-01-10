@@ -4,6 +4,76 @@ import prisma from "@/lib/prisma"
 import { postSchema } from "@/lib/validations"
 import { parseMentions, sendPushNotification } from "@/lib/push"
 import { updateUserStreak } from "@/lib/streaks"
+import { buildUserContext, IRON_SYSTEM_PROMPT } from "@/lib/coach-prompt"
+import { getOpenAI } from "@/lib/openai"
+
+// IRON Bot ID - we'll use a special constant for identifying IRON's replies
+const IRON_BOT_DISPLAY_NAME = "IRON"
+const IRON_BOT_AVATAR = null // Will show "I" fallback
+
+// Generate IRON's reply to a post mentioning @IRON
+async function generateIronReply(postId: string, postContent: string, userId: string) {
+    try {
+        // Get or create IRON bot user
+        let ironUser = await prisma.user.findFirst({
+            where: { username: "IRON" }
+        })
+
+        if (!ironUser) {
+            // Create IRON bot user if doesn't exist
+            ironUser = await prisma.user.create({
+                data: {
+                    email: "iron@feedgym.bot",
+                    username: "IRON",
+                    displayName: "IRON",
+                    bio: "Soy IRON. No busco caerte bien. Busco que progreses.",
+                    avatarUrl: null,
+                    goal: "MAINTAIN",
+                    onboardingCompleted: true,
+                }
+            })
+        }
+
+        // Build context for the user who mentioned IRON
+        const userContext = await buildUserContext(userId)
+
+        // Generate response using OpenAI
+        const openai = getOpenAI()
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                { role: "system", content: IRON_SYSTEM_PROMPT },
+                { role: "system", content: `CONTEXTO DEL USUARIO:\n${userContext}` },
+                { role: "user", content: `El usuario te mencionó en un post público diciendo: "${postContent}"\n\nResponde brevemente (máximo 100 palabras). Mantén tu personalidad fría y directa.` }
+            ],
+            max_tokens: 200,
+        })
+
+        const ironResponse = completion.choices[0]?.message?.content?.trim()
+        if (!ironResponse) return
+
+        // Create IRON's reply post
+        await prisma.post.create({
+            data: {
+                content: ironResponse,
+                type: "NOTE",
+                parentId: postId,
+                threadRootId: postId,
+                authorId: ironUser.id,
+                audience: "PUBLIC",
+            }
+        })
+
+        // Update reply count on parent
+        await prisma.post.update({
+            where: { id: postId },
+            data: { repliesCount: { increment: 1 } }
+        })
+
+    } catch (error) {
+        console.error("IRON auto-reply error:", error)
+    }
+}
 
 // GET /api/posts - Get feed posts
 export async function GET(request: NextRequest) {
@@ -323,6 +393,13 @@ export async function POST(request: NextRequest) {
                     url: `/post/${post.id}`
                 })
             }
+        }
+
+        // IRON Auto-Reply: If @IRON is mentioned, generate and post a reply
+        const ironMentioned = mentionedUsernames.some(u => u.toUpperCase() === "IRON")
+        if (ironMentioned) {
+            // Fire and forget - don't block the response
+            generateIronReply(post.id, content, session.user.id).catch(console.error)
         }
 
         return NextResponse.json(

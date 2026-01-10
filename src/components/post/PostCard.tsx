@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import React, { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -121,6 +121,52 @@ export function PostCard({
         onRepost?.(post.id)
     }
 
+    // Parse content and render @mentions with blue color and links
+    const renderContentWithMentions = (content: string) => {
+        // Match @username patterns (alphanumeric and underscores)
+        const mentionRegex = /@([a-zA-Z0-9_]+)/g
+        const parts: React.ReactNode[] = []
+        let lastIndex = 0
+        let match
+
+        while ((match = mentionRegex.exec(content)) !== null) {
+            // Add text before the mention
+            if (match.index > lastIndex) {
+                parts.push(content.slice(lastIndex, match.index))
+            }
+
+            const username = match[1]
+            // Special case for IRON - no link, just styled
+            if (username.toUpperCase() === "IRON") {
+                parts.push(
+                    <span key={match.index} className="text-blue-500 font-medium">
+                        @{username}
+                    </span>
+                )
+            } else {
+                parts.push(
+                    <Link
+                        key={match.index}
+                        href={`/${username}`}
+                        className="text-blue-500 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        @{username}
+                    </Link>
+                )
+            }
+
+            lastIndex = match.index + match[0].length
+        }
+
+        // Add remaining text after last mention
+        if (lastIndex < content.length) {
+            parts.push(content.slice(lastIndex))
+        }
+
+        return parts.length > 0 ? parts : content
+    }
+
     return (
         <article className="post-card border-b border-border px-4 py-3">
             <div className="flex gap-3">
@@ -198,10 +244,10 @@ export function PostCard({
                         </div>
                     )}
 
-                    {/* Content Text */}
+                    {/* Content Text with Mentions */}
                     <Link href={`/post/${post.id}`}>
                         <p className="mt-1 text-[15px] whitespace-pre-wrap break-words">
-                            {post.content}
+                            {renderContentWithMentions(post.content)}
                         </p>
                     </Link>
 
@@ -217,26 +263,37 @@ export function PostCard({
 
                     {/* Repost/Quote Content */}
                     {post.repostOf && (
-                        <div className={cn("mt-3 rounded-xl border border-border p-3", post.isQuote ? "bg-background" : "bg-transparent border-none p-0 mt-0")}>
-                            {/* If it's a quote, we show the border/bg. If it's a pure repost, we might want to just show the inner post directly or styled. 
-                                Actually, for consistency, let's keep the box but maybe styled differently? 
-                                User asked for "reposts showing in profile". 
-                                If I just check repostOf, I can render the inner specific card. 
-                             */}
-                            {/* Recursive PostCard or simplified view? 
-                                To avoid infinite recursion issues if data is cyclic (shouldn't be), we usually render a "EmbeddedPost".
-                             */}
+                        <div className={cn(
+                            "mt-3 rounded-xl border border-border p-3",
+                            post.isQuote ? "bg-background" : "bg-muted/30"
+                        )}>
                             <div className="flex items-center gap-2 mb-2">
                                 <Avatar className="h-5 w-5">
                                     <AvatarImage src={post.repostOf.author.avatarUrl || undefined} />
                                     <AvatarFallback className="text-[10px]">{post.repostOf.author.displayName[0]}</AvatarFallback>
                                 </Avatar>
-                                <span className="font-bold text-sm">{post.repostOf.author.displayName}</span>
+                                <Link href={`/${post.repostOf.author.username}`} className="font-bold text-sm hover:underline">{post.repostOf.author.displayName}</Link>
                                 <span className="text-muted-foreground text-xs">@{post.repostOf.author.username}</span>
                                 <span className="text-muted-foreground text-xs">· {formatRelativeTime(post.repostOf.createdAt)}</span>
                             </div>
-                            <p className="text-sm">{post.repostOf.content}</p>
-                            {post.repostOf.imageUrl && (
+                            <p className="text-sm whitespace-pre-wrap">{post.repostOf.content}</p>
+
+                            {/* Repost Media - Images */}
+                            {(post.repostOf.mediaUrls && post.repostOf.mediaUrls.length > 0) ? (
+                                <div className="mt-2 rounded-lg overflow-hidden relative aspect-video bg-muted">
+                                    <Image
+                                        src={post.repostOf.mediaUrls[0]}
+                                        alt="Repost content"
+                                        fill
+                                        className="object-cover"
+                                    />
+                                    {post.repostOf.mediaUrls.length > 1 && (
+                                        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                            +{post.repostOf.mediaUrls.length - 1}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : post.repostOf.imageUrl && (
                                 <div className="mt-2 rounded-lg overflow-hidden relative aspect-video bg-muted">
                                     <Image
                                         src={post.repostOf.imageUrl}
@@ -244,6 +301,13 @@ export function PostCard({
                                         fill
                                         className="object-cover"
                                     />
+                                </div>
+                            )}
+
+                            {/* Repost Audio */}
+                            {post.repostOf.metadata?.audioUrl && (
+                                <div className="mt-2">
+                                    <WhatsAppAudioPlayer src={post.repostOf.metadata.audioUrl} />
                                 </div>
                             )}
                         </div>
