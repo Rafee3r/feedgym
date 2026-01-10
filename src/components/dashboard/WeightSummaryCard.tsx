@@ -186,6 +186,11 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                     <CardTitle className="flex items-center gap-2 text-lg">
                         <Scale className="w-5 h-5 text-primary" />
                         {userName ? `Peso de ${userName}` : "Mi Peso"}
+                        {userGoal && (
+                            <span className="text-xs font-medium text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full">
+                                @{userGoal === "CUT" ? "Definición" : userGoal === "BULK" ? "Volumen" : userGoal === "MAINTAIN" ? "Mantener" : "Recomp"}
+                            </span>
+                        )}
                     </CardTitle>
                     {showAddButton && isOwnProfile && (
                         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
