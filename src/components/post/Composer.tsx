@@ -437,9 +437,9 @@ export function Composer({
                                     disabled={isPending}
                                 />
 
-                                {/* Mention Suggestions Dropdown */}
+                                {/* Mention Suggestions Dropdown - Mobile: above, Desktop: below */}
                                 {mentionSuggestions.length > 0 && mentionQuery !== null && (
-                                    <div className="absolute left-0 right-0 bottom-full mb-1 bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden max-h-48">
+                                    <div className="absolute left-0 right-0 bottom-full mb-1 md:bottom-auto md:top-full md:mt-1 md:mb-0 bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden max-h-48">
                                         {mentionSuggestions.map((user, idx) => (
                                             <button
                                                 key={user.id}
