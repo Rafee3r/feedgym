@@ -34,17 +34,52 @@ async function generateIronReply(postId: string, postContent: string, userId: st
             })
         }
 
+        // Get the post where IRON was mentioned
+        const mentionPost = await prisma.post.findUnique({
+            where: { id: postId },
+            include: {
+                author: { select: { displayName: true, username: true } }
+            }
+        })
+
+        if (!mentionPost) return
+
+        // Get the thread root ID (original post)
+        const threadRootId = mentionPost.threadRootId || postId
+
+        // Fetch the entire thread: root post + all replies in order
+        const threadPosts = await prisma.post.findMany({
+            where: {
+                OR: [
+                    { id: threadRootId },
+                    { threadRootId: threadRootId }
+                ],
+                deletedAt: null
+            },
+            include: {
+                author: { select: { displayName: true, username: true } }
+            },
+            orderBy: { createdAt: "asc" }
+        })
+
+        // Build thread context for IRON
+        const threadContext = threadPosts.map((post, idx) => {
+            const isRoot = post.id === threadRootId
+            const isMention = post.id === postId
+            return `[${idx + 1}] @${post.author.username} (${post.author.displayName})${isRoot ? " [POST ORIGINAL]" : ""}${isMention ? " [TE MENCIONÓ]" : ""}:\n"${post.content}"`
+        }).join("\n\n")
+
         // Build context for the user who mentioned IRON
         const userContext = await buildUserContext(userId)
 
-        // Generate response using OpenAI
+        // Generate response using OpenAI with full thread context
         const openai = getOpenAI()
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: IRON_SYSTEM_PROMPT },
-                { role: "system", content: `CONTEXTO DEL USUARIO:\n${userContext}` },
-                { role: "user", content: `El usuario te mencionó en un post público diciendo: "${postContent}"\n\nResponde brevemente (máximo 100 palabras). Mantén tu personalidad fría y directa.` }
+                { role: "system", content: `CONTEXTO DEL USUARIO QUE TE MENCIONÓ:\n${userContext}` },
+                { role: "user", content: `HILO COMPLETO DE LA CONVERSACIÓN:\n\n${threadContext}\n\n---\n\nEl usuario @${mentionPost.author.username} te mencionó en este hilo. Lee todo el contexto y responde al mensaje donde te mencionaron. Responde brevemente (máximo 100 palabras). Mantén tu personalidad fría y directa.` }
             ],
             max_tokens: 200,
         })
@@ -58,7 +93,7 @@ async function generateIronReply(postId: string, postContent: string, userId: st
                 content: ironResponse,
                 type: "NOTE",
                 parentId: postId,
-                threadRootId: postId,
+                threadRootId: threadRootId,
                 authorId: ironUser.id,
                 audience: "PUBLIC",
             }
