@@ -102,6 +102,7 @@ export function PostCard({
     const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked || false)
     const [isReposted, setIsReposted] = useState(post.isReposted || false)
     const [likesCount, setLikesCount] = useState(post.likesCount)
+    const [isExpanded, setIsExpanded] = useState(false)
 
     const isOwner = currentUserId === post.author.id
 
@@ -245,11 +246,33 @@ export function PostCard({
                     )}
 
                     {/* Content Text with Mentions */}
-                    <Link href={`/post/${post.id}`}>
-                        <p className="mt-1 text-[15px] whitespace-pre-wrap break-words">
-                            {renderContentWithMentions(post.content)}
-                        </p>
-                    </Link>
+                    <div onClick={() => !isExpanded && !post.content.length && null}>
+                        <Link href={`/post/${post.id}`} onClick={(e) => {
+                            // If clicking "Reading more", don't navigate
+                            // (Handled by the span's onClick, but just in case)
+                        }}>
+                            <p className="mt-1 text-[15px] whitespace-pre-wrap break-words">
+                                {isExpanded || post.content.length <= 280
+                                    ? renderContentWithMentions(post.content)
+                                    : (
+                                        <>
+                                            {renderContentWithMentions(post.content.slice(0, 280) + "...")}
+                                            <span
+                                                className="text-primary font-medium hover:underline cursor-pointer ml-1"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setIsExpanded(true)
+                                                }}
+                                            >
+                                                Leer más
+                                            </span>
+                                        </>
+                                    )
+                                }
+                            </p>
+                        </Link>
+                    </div>
 
                     {/* Voice Note (WhatsApp Style) */}
                     {post.metadata?.audioUrl && (
