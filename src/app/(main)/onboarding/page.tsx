@@ -96,6 +96,7 @@ export default function OnboardingPage() {
                 variant: "success",
             })
 
+            await update()
             router.push("/")
         } catch (error) {
             console.error("Onboarding error:", error)
@@ -117,6 +118,7 @@ export default function OnboardingPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ onboardingCompleted: true }),
             })
+            await update()
             router.push("/")
         } catch {
             router.push("/")
