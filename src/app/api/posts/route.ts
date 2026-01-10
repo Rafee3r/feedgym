@@ -26,8 +26,8 @@ async function generateIronReply(postId: string, postContent: string, userId: st
                     email: "iron@feedgym.bot",
                     username: "IRON",
                     displayName: "IRON",
-                    bio: "Soy IRON. No busco caerte bien. Busco que progreses.",
-                    avatarUrl: null,
+                    bio: "Soy IRON. No busco caerte bien. Busco que progreses. 🤖 Bot AI Coach.",
+                    avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000",
                     goal: "MAINTAIN",
                     onboardingCompleted: true,
                 }

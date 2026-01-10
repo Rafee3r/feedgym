@@ -35,6 +35,11 @@ export default function NotificationsPage() {
                     const data = await response.json()
                     setNotifications(data.notifications)
                     setUnreadCount(data.unreadCount)
+
+                    // Auto-mark as read when notifications panel opens
+                    if (data.unreadCount > 0) {
+                        fetch("/api/notifications", { method: "PATCH" }).catch(console.error)
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching notifications:", err)

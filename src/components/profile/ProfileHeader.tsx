@@ -63,6 +63,9 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
     const [isFollowing, setIsFollowing] = useState(profile.isFollowing)
     const [isLoading, setIsLoading] = useState(false)
 
+    // Detect if this is a bot profile (IRON)
+    const isBot = profile.username.toUpperCase() === "IRON"
+
     const handleFollow = async () => {
         setIsLoading(true)
         try {
@@ -136,7 +139,7 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                             >
                                 Editar perfil
                             </Button>
-                        ) : (
+                        ) : !isBot && (
                             <Button
                                 variant={isFollowing ? "outline" : "default"}
                                 className="rounded-full min-w-[100px]"
@@ -161,6 +164,11 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                         {profile.role === "ADMIN" && (
                             <span className="bg-red-500/10 text-red-500 p-1 rounded-full" title="Admin">
                                 <ShieldAlert className="w-4 h-4" />
+                            </span>
+                        )}
+                        {isBot && (
+                            <span className="bg-cyan-500/10 text-cyan-500 px-2 py-0.5 rounded-full text-xs font-medium">
+                                🤖 AI Bot
                             </span>
                         )}
                         {/* Pronouns */}
@@ -208,48 +216,52 @@ export function ProfileHeader({ profile }: ProfileHeaderProps) {
                     </span>
                 </div>
 
-                {/* Fitness Info */}
-                <div className="flex flex-wrap gap-3 mb-3">
-                    {profile.gymSplit && (
+                {/* Fitness Info - Hide for bots */}
+                {!isBot && (
+                    <div className="flex flex-wrap gap-3 mb-3">
+                        {profile.gymSplit && (
+                            <span className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
+                                <Dumbbell className="w-3.5 h-3.5" />
+                                {profile.gymSplit}
+                            </span>
+                        )}
                         <span className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
-                            <Dumbbell className="w-3.5 h-3.5" />
-                            {profile.gymSplit}
+                            <Target className="w-3.5 h-3.5" />
+                            {goalLabels[profile.goal]}
                         </span>
-                    )}
-                    <span className="flex items-center gap-1 text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
-                        <Target className="w-3.5 h-3.5" />
-                        {goalLabels[profile.goal]}
-                    </span>
-                </div>
+                    </div>
+                )}
 
-                {/* Stats */}
-                <div className="flex gap-4 text-sm">
-                    <Link
-                        href={`/${profile.username}/following`}
-                        className="hover:underline"
-                    >
-                        <span className="font-bold">
-                            {profile.followingCount !== null
-                                ? formatNumber(profile.followingCount)
-                                : "—"}
-                        </span>{" "}
-                        <span className="text-muted-foreground">Siguiendo</span>
-                    </Link>
-                    <Link
-                        href={`/${profile.username}/followers`}
-                        className="hover:underline"
-                    >
-                        <span className="font-bold">
-                            {profile.followersCount !== null
-                                ? formatNumber(profile.followersCount)
-                                : "—"}
-                        </span>{" "}
-                        <span className="text-muted-foreground">Seguidores</span>
-                    </Link>
-                </div>
+                {/* Stats - Hide for bots */}
+                {!isBot && (
+                    <div className="flex gap-4 text-sm">
+                        <Link
+                            href={`/${profile.username}/following`}
+                            className="hover:underline"
+                        >
+                            <span className="font-bold">
+                                {profile.followingCount !== null
+                                    ? formatNumber(profile.followingCount)
+                                    : "—"}
+                            </span>{" "}
+                            <span className="text-muted-foreground">Siguiendo</span>
+                        </Link>
+                        <Link
+                            href={`/${profile.username}/followers`}
+                            className="hover:underline"
+                        >
+                            <span className="font-bold">
+                                {profile.followersCount !== null
+                                    ? formatNumber(profile.followersCount)
+                                    : "—"}
+                            </span>{" "}
+                            <span className="text-muted-foreground">Seguidores</span>
+                        </Link>
+                    </div>
+                )}
 
-                {/* PRs */}
-                {profile.personalRecords.length > 0 && (
+                {/* PRs - Hide for bots */}
+                {!isBot && profile.personalRecords.length > 0 && (
                     <div className="mt-4 p-3 bg-muted rounded-xl">
                         <h3 className="font-semibold text-sm mb-2">🏆 Records Personales</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
