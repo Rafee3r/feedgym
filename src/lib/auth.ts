@@ -123,7 +123,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 try {
                     const freshUser = await prisma.user.findUnique({
                         where: { id: token.id as string },
-                        select: { isBanned: true, isShadowbanned: true, isFrozen: true, mutedUntil: true }
+                        select: { isBanned: true, isShadowbanned: true, isFrozen: true, mutedUntil: true, onboardingCompleted: true }
                     }) as any;
 
                     if (freshUser) {
@@ -131,17 +131,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         session.user.isShadowbanned = freshUser.isShadowbanned ?? false;
                         session.user.isFrozen = freshUser.isFrozen ?? false;
                         session.user.mutedUntil = freshUser.mutedUntil?.toISOString() ?? null;
+                        session.user.onboardingCompleted = freshUser.onboardingCompleted ?? false;
                     } else {
                         session.user.isBanned = token.isBanned as boolean;
                         session.user.isShadowbanned = token.isShadowbanned as boolean;
                         session.user.isFrozen = token.isFrozen as boolean;
                         session.user.mutedUntil = token.mutedUntil as string | null;
+                        session.user.onboardingCompleted = token.onboardingCompleted as boolean ?? false;
                     }
                 } catch (error) {
                     session.user.isBanned = token.isBanned as boolean;
                     session.user.isShadowbanned = token.isShadowbanned as boolean;
                     session.user.isFrozen = token.isFrozen as boolean;
                     session.user.mutedUntil = token.mutedUntil as string | null;
+                    // Default to true if fetch fails to avoid locking valid users, or false to be safe? 
+                    // Let's default to false if we can't confirm.
+                    session.user.onboardingCompleted = false;
                 }
             }
             return session;
@@ -163,6 +168,7 @@ declare module "next-auth" {
             isShadowbanned: boolean;
             isFrozen: boolean;
             mutedUntil: string | null;
+            onboardingCompleted: boolean;
         };
     }
 

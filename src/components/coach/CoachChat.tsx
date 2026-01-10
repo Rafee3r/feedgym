@@ -288,7 +288,7 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                                             <img
                                                 src={msg.image}
                                                 alt="Imagen adjunta"
-                                                className="max-w-xs rounded-lg mb-2"
+                                                className="max-w-xs max-h-64 object-contain rounded-lg mb-2 bg-black/20"
                                             />
                                         )}
                                         <p className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -307,7 +307,13 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                                     <div className="flex flex-col gap-1 pt-1">
                                         <p className="text-xs font-medium text-muted-foreground">IRON</p>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm text-muted-foreground animate-pulse">Analizando tus datos...</span>
+                                            <span className="text-sm text-muted-foreground animate-pulse">
+                                                {messages[messages.length - 1]?.image
+                                                    ? "Procesando imagen..."
+                                                    : messages[messages.length - 1]?.content.toLowerCase().match(/(crea|genera|dibuja|imagen|foto|pintura)/)
+                                                        ? "Creando imagen..."
+                                                        : "Analizando tus datos..."}
+                                            </span>
                                             <div className="flex gap-1">
                                                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
                                                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />

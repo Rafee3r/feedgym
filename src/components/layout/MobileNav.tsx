@@ -31,8 +31,8 @@ export function MobileNav() {
 
     return (
         <>
-            {/* Floating Action Button - Hide on coach page to avoid blocking input */}
-            {pathname !== "/coach" && (
+            {/* Floating Action Button - Hide on coach page and if onboarding not completed */}
+            {pathname !== "/coach" && session?.user?.onboardingCompleted && (
                 <button
                     className="fab"
                     onClick={() => setIsComposerOpen(true)}
