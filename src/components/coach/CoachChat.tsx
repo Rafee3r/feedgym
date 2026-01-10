@@ -5,6 +5,61 @@ import { Send, Loader2, X, ImagePlus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
+// Parse basic markdown: **bold**, [text](link), `code`
+function renderMarkdown(content: string): React.ReactNode {
+    // Split by markdown patterns
+    const parts: React.ReactNode[] = []
+    let remaining = content
+    let key = 0
+
+    // Pattern for: **bold**, [link](url), `code`
+    const pattern = /(\*\*(.+?)\*\*)|(\[([^\]]+)\]\(([^)]+)\))|(`([^`]+)`)/g
+
+    let lastIndex = 0
+    let match
+
+    while ((match = pattern.exec(content)) !== null) {
+        // Add text before match
+        if (match.index > lastIndex) {
+            parts.push(content.slice(lastIndex, match.index))
+        }
+
+        if (match[1]) {
+            // Bold: **text**
+            parts.push(<strong key={key++} className="font-bold">{match[2]}</strong>)
+        } else if (match[3]) {
+            // Link: [text](url)
+            parts.push(
+                <a
+                    key={key++}
+                    href={match[5]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-500 hover:text-cyan-400 hover:underline"
+                >
+                    {match[4]}
+                </a>
+            )
+        } else if (match[6]) {
+            // Code: `text`
+            parts.push(
+                <code key={key++} className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">
+                    {match[7]}
+                </code>
+            )
+        }
+
+        lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+        parts.push(content.slice(lastIndex))
+    }
+
+    return parts.length > 0 ? parts : content
+}
+
 interface Message {
     id?: string
     role: "user" | "assistant"
@@ -292,7 +347,7 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                                             />
                                         )}
                                         <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                                            {msg.content}
+                                            {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
                                         </p>
                                     </div>
                                 </div>
