@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Send, Loader2, X, ImagePlus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn, getInitials } from "@/lib/utils"
 
 // Parse basic markdown: **bold**, [text](link), `code`
 function renderMarkdown(content: string): React.ReactNode {
@@ -73,14 +75,30 @@ interface CoachChatProps {
 }
 
 export function CoachChat({ onClose, className }: CoachChatProps) {
+    const { data: session } = useSession()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+    const [userAvatarUrl, setUserAvatarUrl] = useState<string | undefined>(session?.user?.image || undefined)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Fetch avatar if missing from session
+    useEffect(() => {
+        if (session?.user) {
+            fetch("/api/users/me")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.avatarUrl) {
+                        setUserAvatarUrl(data.avatarUrl)
+                    }
+                })
+                .catch(console.error)
+        }
+    }, [session])
 
     // Load messages from database on mount
     useEffect(() => {
@@ -325,14 +343,18 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                             >
                                 <div className="max-w-2xl mx-auto flex gap-4">
                                     {/* Avatar */}
-                                    <div className={cn(
-                                        "w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold",
-                                        msg.role === "assistant"
-                                            ? "bg-white text-black"
-                                            : "bg-primary text-primary-foreground"
-                                    )}>
-                                        {msg.role === "assistant" ? "I" : "Tú"}
-                                    </div>
+                                    {msg.role === "assistant" ? (
+                                        <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold bg-white text-black">
+                                            I
+                                        </div>
+                                    ) : (
+                                        <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
+                                            <AvatarImage src={userAvatarUrl} />
+                                            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold rounded-lg">
+                                                {getInitials(session?.user?.name || "Tú")}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    )}
 
                                     {/* Content */}
                                     <div className="flex-1 min-w-0">
