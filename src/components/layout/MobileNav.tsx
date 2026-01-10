@@ -106,21 +106,11 @@ export function MobileNav() {
             {/* IRON glow animation styles */}
             <style jsx global>{`
                 @keyframes iron-glow {
-                    0%, 100% {
+                    0%, 75%, 100% {
                         filter: drop-shadow(0 0 0 transparent);
-                        opacity: 0.7;
                     }
-                    75% {
-                        filter: drop-shadow(0 0 0 transparent);
-                        opacity: 0.7;
-                    }
-                    85% {
-                        filter: drop-shadow(0 0 8px hsl(var(--primary)));
-                        opacity: 1;
-                    }
-                    95% {
-                        filter: drop-shadow(0 0 4px hsl(var(--primary)));
-                        opacity: 1;
+                    80%, 90% {
+                        filter: drop-shadow(0 0 6px hsl(var(--primary)));
                     }
                 }
                 .animate-iron-glow {
