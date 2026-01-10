@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { PostCard } from "@/components/post/PostCard"
 import { FeedSkeleton } from "@/components/post/PostSkeleton"
@@ -16,6 +16,16 @@ export function Feed() {
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // Pull-to-refresh state
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const [pullProgress, setPullProgress] = useState(0)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const touchStartY = useRef(0)
+    const isPulling = useRef(false)
+
+    // Infinite scroll sentinel
+    const loadMoreRef = useRef<HTMLDivElement>(null)
 
     const fetchPosts = useCallback(async (cursor?: string) => {
         try {
@@ -56,6 +66,77 @@ export function Feed() {
         window.addEventListener("feed-refresh", handleRefreshEvent)
         return () => window.removeEventListener("feed-refresh", handleRefreshEvent)
     }, [fetchPosts])
+
+    // Infinite scroll with IntersectionObserver
+    useEffect(() => {
+        if (!loadMoreRef.current || !hasMore || isLoadingMore) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore && nextCursor) {
+                    handleLoadMore()
+                }
+            },
+            { threshold: 0.1, rootMargin: "100px" }
+        )
+
+        observer.observe(loadMoreRef.current)
+        return () => observer.disconnect()
+    }, [hasMore, isLoadingMore, nextCursor])
+
+    // Pull-to-refresh touch handlers
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
+
+        const handleTouchStart = (e: TouchEvent) => {
+            if (window.scrollY === 0) {
+                touchStartY.current = e.touches[0].clientY
+                isPulling.current = true
+            }
+        }
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (!isPulling.current || window.scrollY > 0) {
+                isPulling.current = false
+                setPullProgress(0)
+                return
+            }
+
+            const touchY = e.touches[0].clientY
+            const pullDistance = touchY - touchStartY.current
+
+            if (pullDistance > 0 && pullDistance < 150) {
+                const progress = Math.min(pullDistance / 100, 1)
+                setPullProgress(progress)
+
+                // Prevent default scroll when pulling
+                if (progress > 0.1) {
+                    e.preventDefault()
+                }
+            }
+        }
+
+        const handleTouchEnd = async () => {
+            if (pullProgress >= 1 && !isRefreshing) {
+                setIsRefreshing(true)
+                await fetchPosts()
+                setIsRefreshing(false)
+            }
+            isPulling.current = false
+            setPullProgress(0)
+        }
+
+        container.addEventListener("touchstart", handleTouchStart, { passive: true })
+        container.addEventListener("touchmove", handleTouchMove, { passive: false })
+        container.addEventListener("touchend", handleTouchEnd, { passive: true })
+
+        return () => {
+            container.removeEventListener("touchstart", handleTouchStart)
+            container.removeEventListener("touchmove", handleTouchMove)
+            container.removeEventListener("touchend", handleTouchEnd)
+        }
+    }, [pullProgress, isRefreshing, fetchPosts])
 
     const handleLoadMore = async () => {
         if (!nextCursor || isLoadingMore) return
@@ -100,14 +181,7 @@ export function Feed() {
 
     const handleRepost = async (postId: string) => {
         try {
-            const response = await fetch(`/api/posts/${postId}/repost`, { method: "POST" })
-            if (response.ok) {
-                const data = await response.json()
-                // Ideally we refresh or update local state
-                // For now, let's just refresh to see the change or rely on optimistic UI in PostCard if implemented
-                // PostCard has local state for "isReposted".
-                // But if we return "reposted: boolean", we could update context.
-            }
+            await fetch(`/api/posts/${postId}/repost`, { method: "POST" })
         } catch (err) {
             console.error("Repost error:", err)
         }
@@ -158,7 +232,48 @@ export function Feed() {
     }
 
     return (
-        <div>
+        <div ref={containerRef} className="relative">
+            {/* Pull-to-refresh indicator */}
+            {(pullProgress > 0 || isRefreshing) && (
+                <div
+                    className="absolute left-0 right-0 flex justify-center z-10 transition-transform"
+                    style={{
+                        top: -50 + (pullProgress * 60),
+                        opacity: pullProgress > 0.3 ? 1 : pullProgress * 3
+                    }}
+                >
+                    <div className="bg-background border border-border rounded-full p-2 shadow-lg">
+                        <svg
+                            className={`w-6 h-6 text-primary ${isRefreshing ? "animate-spin" : ""}`}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        >
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                className="opacity-20"
+                            />
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                strokeDasharray={`${pullProgress * 62.8} 62.8`}
+                                strokeLinecap="round"
+                                className="origin-center -rotate-90"
+                                style={{
+                                    transform: isRefreshing ? undefined : "rotate(-90deg)",
+                                    transformOrigin: "center"
+                                }}
+                            />
+                        </svg>
+                    </div>
+                </div>
+            )}
+
+            {/* Posts */}
             {posts.map((post, index) => (
                 <PostCard
                     key={post.id}
@@ -173,22 +288,24 @@ export function Feed() {
                 />
             ))}
 
+            {/* Infinite scroll sentinel */}
             {hasMore && (
+                <div ref={loadMoreRef} className="py-8 flex justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+            )}
+
+            {/* Loading more indicator */}
+            {isLoadingMore && (
                 <div className="py-4 flex justify-center">
-                    <Button
-                        onClick={handleLoadMore}
-                        disabled={isLoadingMore}
-                        variant="ghost"
-                    >
-                        {isLoadingMore ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Cargando...
-                            </>
-                        ) : (
-                            "Cargar más"
-                        )}
-                    </Button>
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+            )}
+
+            {/* End of feed */}
+            {!hasMore && posts.length > 0 && (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                    Has llegado al final 🏋️
                 </div>
             )}
         </div>
