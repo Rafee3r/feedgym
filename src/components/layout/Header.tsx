@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
@@ -19,6 +20,21 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
     const { data: session } = useSession()
     const router = useRouter()
     const { resolvedTheme } = useTheme()
+
+    // Fetch avatar if missing from session (base64 images are stripped)
+    const [avatarUrl, setAvatarUrl] = useState<string | undefined>(session?.user?.image || undefined)
+    useEffect(() => {
+        if (session?.user) {
+            fetch("/api/users/me")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.avatarUrl) {
+                        setAvatarUrl(data.avatarUrl)
+                    }
+                })
+                .catch(console.error)
+        }
+    }, [session])
 
     const logoSrc = resolvedTheme === "light" ? "/logo-light.png" : "/logo-dark.png"
 
@@ -64,7 +80,7 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
                     {session?.user && (
                         <Link href={`/${session.user.username}`} className="md:hidden">
                             <Avatar className="w-8 h-8 border border-border">
-                                <AvatarImage src={session.user.image || undefined} />
+                                <AvatarImage src={avatarUrl} />
                                 <AvatarFallback className="text-xs">
                                     {getInitials(session.user.name || "U")}
                                 </AvatarFallback>
