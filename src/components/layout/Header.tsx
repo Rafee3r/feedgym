@@ -3,9 +3,11 @@
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useTheme } from "next-themes"
-import { Dumbbell, ArrowLeft } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
+import { getInitials } from "@/lib/utils"
 
 interface HeaderProps {
     title?: string
@@ -25,31 +27,50 @@ export function Header({ title, showBack = false, sticky = true }: HeaderProps) 
             className={`${sticky ? "sticky top-0" : ""
                 } z-40 bg-background/95 backdrop-blur-xl border-b border-border supports-[backdrop-filter]:bg-background/85 pt-[env(safe-area-inset-top,0px)] md:pt-0`}
         >
-            <div className="flex items-center justify-center gap-4 px-4 h-14 relative">
-                {showBack && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.back()}
-                        className="rounded-full absolute left-4"
-                        aria-label="Volver"
-                    >
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                )}
+            <div className="flex items-center justify-between gap-4 px-4 h-14">
+                {/* Left side - Back button or spacer */}
+                <div className="w-10 flex-shrink-0">
+                    {showBack && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => router.back()}
+                            className="rounded-full"
+                            aria-label="Volver"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                    )}
+                </div>
 
-                {/* Desktop/Tablet Title */}
-                {title && (
-                    <h1 className="text-xl font-bold hidden md:block">{title}</h1>
-                )}
+                {/* Center - Title or Logo */}
+                <div className="flex-1 flex justify-center">
+                    {title ? (
+                        <h1 className="text-xl font-bold truncate">{title}</h1>
+                    ) : (
+                        <>
+                            {/* Desktop */}
+                            <h1 className="text-xl font-bold hidden md:block">FeedGym</h1>
+                            {/* Mobile Logo */}
+                            <div className="md:hidden">
+                                <img src={logoSrc} alt="FeedGym" className="h-10 w-auto object-contain" />
+                            </div>
+                        </>
+                    )}
+                </div>
 
-                {!title && !showBack && (
-                    <h1 className="text-xl font-bold hidden md:block">FeedGym</h1>
-                )}
-
-                {/* Mobile Centered Logo */}
-                <div className="md:hidden flex items-center">
-                    <img src={logoSrc} alt="FeedGym" className="h-10 w-auto object-contain" />
+                {/* Right side - Profile avatar (mobile only) */}
+                <div className="w-10 flex-shrink-0 flex justify-end">
+                    {session?.user && (
+                        <Link href={`/${session.user.username}`} className="md:hidden">
+                            <Avatar className="w-8 h-8 border border-border">
+                                <AvatarImage src={session.user.image || undefined} />
+                                <AvatarFallback className="text-xs">
+                                    {getInitials(session.user.name || "U")}
+                                </AvatarFallback>
+                            </Avatar>
+                        </Link>
+                    )}
                 </div>
             </div>
         </header>
