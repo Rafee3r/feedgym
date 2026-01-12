@@ -113,7 +113,7 @@ export async function GET(request: Request) {
             success: true,
             day: todayDayName,
             notified: sentCount,
-            timestamp: now.toISOString()
+            timestamp: santiagoNow.toISOString()
         })
     } catch (error) {
         console.error("Training reminder error:", error)
