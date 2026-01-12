@@ -71,11 +71,11 @@ export function ConsistencyCard({
                             </div>
 
                             <div className="flex justify-between px-1">
-                                {activityData.weekDays.map((day) => {
+                                {activityData.weekDays.map((day, index) => {
                                     const date = new Date(day.date)
-                                    // Custom day labels for display: L M M J V S D
-                                    const dayLabels = ["D", "L", "M", "M", "J", "V", "S"]
-                                    const dayLabel = dayLabels[date.getDay()]
+                                    // Day labels in Monday-first order: L M M J V S D
+                                    const dayLabels = ["L", "M", "M", "J", "V", "S", "D"]
+                                    const dayLabel = dayLabels[index] // Use index since data comes Monday-first
                                     // Day names for matching trainingDays (which stores "Monday", "Tuesday", etc.)
                                     const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
                                     const dayName = dayNames[date.getDay()]
