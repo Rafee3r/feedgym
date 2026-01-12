@@ -73,16 +73,18 @@ export function ConsistencyCard({
                             <div className="flex justify-between px-1">
                                 {activityData.weekDays.map((day) => {
                                     const date = new Date(day.date)
-                                    // Custom day names: L M M J V S D (starting Monday)
-                                    const dayNames = ["D", "L", "M", "M", "J", "V", "S"]
+                                    // Custom day labels for display: L M M J V S D
+                                    const dayLabels = ["D", "L", "M", "M", "J", "V", "S"]
+                                    const dayLabel = dayLabels[date.getDay()]
+                                    // Day names for matching trainingDays (which stores "Monday", "Tuesday", etc.)
+                                    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
                                     const dayName = dayNames[date.getDay()]
-                                    const dayIndex = date.getDay().toString()
-                                    const isScheduled = activityData.trainingDays.includes(dayIndex)
+                                    const isScheduled = activityData.trainingDays.includes(dayName)
 
                                     return (
                                         <div key={day.date} className="flex flex-col items-center gap-2">
                                             <span className={`text-[10px] font-medium ${isScheduled ? "text-foreground" : "text-muted-foreground/30"}`}>
-                                                {dayName}
+                                                {dayLabel}
                                             </span>
                                             <div
                                                 className={`w-3 h-3 rounded-full transition-all ${(isScheduled && day.hasPost)

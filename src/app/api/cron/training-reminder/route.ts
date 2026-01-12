@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { sendPushNotification } from "@/lib/push"
 
-// Map day number to English day name (as stored in trainingDays)
+// Map day index to English day name (as stored in trainingDays)
 const DAY_NAMES = [
     "Sunday",
     "Monday",
@@ -37,6 +37,14 @@ const TRAINING_MESSAGES = [
     },
 ]
 
+// Get current date in Santiago, Chile timezone
+function getSantiagoDate(): Date {
+    const now = new Date()
+    // Get the date string in Santiago timezone
+    const santiagoString = now.toLocaleString("en-US", { timeZone: "America/Santiago" })
+    return new Date(santiagoString)
+}
+
 /**
  * GET /api/cron/training-reminder
  * Called daily at morning (configure in vercel.json or cron service)
@@ -52,16 +60,14 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
-        const now = new Date()
-        const todayDayName = DAY_NAMES[now.getDay()]
+        // Use Santiago timezone for determining current day
+        const santiagoNow = getSantiagoDate()
+        const todayDayName = DAY_NAMES[santiagoNow.getDay()]
 
-        console.log(`Training reminder check for: ${todayDayName}`)
+        console.log(`Training reminder check for: ${todayDayName} (Santiago time: ${santiagoNow.toISOString()})`)
 
-        // Find users who:
-        // 1. Have push subscriptions
-        // 2. Have today in their trainingDays array
-        // 3. Haven't posted today (haven't already trained)
-        const startOfDay = new Date(now)
+        // Start of day in Santiago timezone
+        const startOfDay = new Date(santiagoNow)
         startOfDay.setHours(0, 0, 0, 0)
 
         const usersToNotify = await (prisma.user as any).findMany({

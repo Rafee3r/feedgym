@@ -4,6 +4,24 @@ import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
 import { startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
 
+// Map day index to English day name (matching trainingDays format)
+const DAY_NAMES = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+]
+
+// Get current date in Santiago, Chile timezone
+function getSantiagoDate(): Date {
+    const now = new Date()
+    const santiagoString = now.toLocaleString("en-US", { timeZone: "America/Santiago" })
+    return new Date(santiagoString)
+}
+
 export async function GET(request: NextRequest) {
     try {
         const session = await auth()
@@ -26,10 +44,12 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
         }
 
-        const now = new Date()
+        // Use Santiago timezone for determining current date and week
+        const santiagoNow = getSantiagoDate()
+
         // Get start and end of current week (starting Monday)
-        const weekStart = startOfWeek(now, { weekStartsOn: 1 })
-        const weekEnd = endOfWeek(now, { weekStartsOn: 1 })
+        const weekStart = startOfWeek(santiagoNow, { weekStartsOn: 1 })
+        const weekEnd = endOfWeek(santiagoNow, { weekStartsOn: 1 })
 
         // Get all days in the week
         const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
@@ -49,7 +69,9 @@ export async function GET(request: NextRequest) {
             },
         })
 
-        // Map days to status
+        // Map days to status - use day NAMES to match trainingDays format
+        const trainingDays = user?.trainingDays || []
+
         const activity = days.map((day) => {
             const hasPost = posts.some(
                 (post) =>
@@ -57,30 +79,32 @@ export async function GET(request: NextRequest) {
                     post.createdAt.getMonth() === day.getMonth() &&
                     post.createdAt.getFullYear() === day.getFullYear()
             )
+
+            // Get day name to match against trainingDays (which stores names like "Monday")
+            const dayName = DAY_NAMES[day.getDay()]
+
             return {
                 date: day.toISOString(),
                 hasPost,
                 isToday:
-                    day.getDate() === now.getDate() &&
-                    day.getMonth() === now.getMonth() &&
-                    day.getFullYear() === now.getFullYear(),
-                isPast: day < now,
+                    day.getDate() === santiagoNow.getDate() &&
+                    day.getMonth() === santiagoNow.getMonth() &&
+                    day.getFullYear() === santiagoNow.getFullYear(),
+                isPast: day < santiagoNow,
+                dayName, // Include dayName for frontend debugging
             }
         })
 
-        const trainingDays = user?.trainingDays || []
-
         // Count only scheduled training days that have a post (true consistency!)
         const daysPosted = activity.filter(d => {
-            const dayDate = new Date(d.date)
-            const dayIndex = dayDate.getDay().toString()
-            const isScheduled = trainingDays.includes(dayIndex)
+            const dayName = DAY_NAMES[new Date(d.date).getDay()]
+            const isScheduled = trainingDays.includes(dayName)
             return isScheduled && d.hasPost
         }).length
 
         // Check if today is a scheduled training day
-        const todayIndex = now.getDay().toString()
-        const isScheduledToday = trainingDays.includes(todayIndex)
+        const todayDayName = DAY_NAMES[santiagoNow.getDay()]
+        const isScheduledToday = trainingDays.includes(todayDayName)
 
         const missedToday = activity.find(d => d.isToday && !d.hasPost) && isScheduledToday
 
