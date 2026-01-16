@@ -1,6 +1,16 @@
-import { Plus, Wand2, Check, MoreHorizontal, Utensils, Egg, Beef, Carrot, Coffee, Wheat, Milk } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { Plus, Wand2, Check, MoreHorizontal, Utensils, Egg, Beef, Carrot, Coffee, Wheat, Milk, Trash2, RefreshCw, Pencil, Loader2 } from "lucide-react"
 import { MealType } from "@/types"
 import { cn } from "@/lib/utils"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { toast } from "@/hooks/use-toast"
 
 interface MealCardProps {
     type: string | MealType
@@ -8,17 +18,19 @@ interface MealCardProps {
     items?: any[]
     onAddFood: () => void
     onRecommend?: () => void
+    onDeleteEntry?: (entryId: string) => void
+    onRepeatEntry?: (entry: any) => void
     className?: string
 }
 
 const getFoodIcon = (name: string) => {
     const n = name.toLowerCase()
     if (n.includes("huevo")) return <Egg className="w-4 h-4 text-yellow-500" />
-    if (n.includes("pollo") || n.includes("carne") || n.includes("atún") || n.includes("pescado")) return <Beef className="w-4 h-4 text-red-500" />
-    if (n.includes("arroz") || n.includes("avena") || n.includes("pan") || n.includes("pasta")) return <Wheat className="w-4 h-4 text-amber-500" />
-    if (n.includes("leche") || n.includes("yogur") || n.includes("queso")) return <Milk className="w-4 h-4 text-blue-400" />
+    if (n.includes("pollo") || n.includes("carne") || n.includes("atún") || n.includes("pescado") || n.includes("salmon")) return <Beef className="w-4 h-4 text-red-500" />
+    if (n.includes("arroz") || n.includes("avena") || n.includes("pan") || n.includes("pasta") || n.includes("tallar")) return <Wheat className="w-4 h-4 text-amber-500" />
+    if (n.includes("leche") || n.includes("yogur") || n.includes("queso") || n.includes("cottage")) return <Milk className="w-4 h-4 text-blue-400" />
     if (n.includes("café")) return <Coffee className="w-4 h-4 text-amber-800" />
-    if (n.includes("manzana") || n.includes("plátano") || n.includes("fruta") || n.includes("ensalada")) return <Carrot className="w-4 h-4 text-green-500" />
+    if (n.includes("manzana") || n.includes("plátano") || n.includes("fruta") || n.includes("ensalada") || n.includes("verdura") || n.includes("espinaca")) return <Carrot className="w-4 h-4 text-green-500" />
     return <Utensils className="w-4 h-4 text-muted-foreground" />
 }
 
@@ -28,8 +40,12 @@ export function MealCard({
     items = [],
     onAddFood,
     onRecommend,
+    onDeleteEntry,
+    onRepeatEntry,
     className
 }: MealCardProps) {
+    const [deletingId, setDeletingId] = useState<string | null>(null)
+    const [repeatingId, setRepeatingId] = useState<string | null>(null)
 
     const getMealLabel = (type: string) => {
         switch (type) {
@@ -42,6 +58,28 @@ export function MealCard({
             case "SNACK":
             case MealType.SNACK: return "Snack"
             default: return type
+        }
+    }
+
+    const handleDelete = async (entryId: string) => {
+        if (!onDeleteEntry) return
+        setDeletingId(entryId)
+        try {
+            await onDeleteEntry(entryId)
+            toast({ title: "Eliminado", description: "Comida eliminada del registro" })
+        } finally {
+            setDeletingId(null)
+        }
+    }
+
+    const handleRepeat = async (entry: any) => {
+        if (!onRepeatEntry) return
+        setRepeatingId(entry.id)
+        try {
+            await onRepeatEntry(entry)
+            toast({ title: "¡Repetido!", description: `${entry.name} agregado para mañana` })
+        } finally {
+            setRepeatingId(null)
         }
     }
 
@@ -62,7 +100,7 @@ export function MealCard({
                             <p className="text-sm text-muted-foreground italic mt-1">Sin registrar</p>
                         )}
                     </div>
-                    {/* Calories Circle if items exist, or empty state */}
+                    {/* Calories Circle if items exist */}
                     {calories > 0 && (
                         <div className="flex flex-col items-end">
                             <span className="font-bold text-lg text-primary">{calories}</span>
@@ -96,7 +134,7 @@ export function MealCard({
             {items.length > 0 && (
                 <div className="bg-muted/10 px-2 pb-2 space-y-1">
                     {items.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 rounded-xl hover:bg-background/80 transition-colors group">
+                        <div key={item.id || idx} className="flex items-center gap-3 p-3 rounded-xl hover:bg-background/80 transition-colors group">
                             {/* Checkbox-like visual */}
                             <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 text-green-600">
                                 <Check className="w-3.5 h-3.5" />
@@ -113,10 +151,44 @@ export function MealCard({
                                 </p>
                             </div>
 
-                            {/* Actions (puntukos) */}
-                            <button className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-foreground transition-all">
-                                <MoreHorizontal className="w-4 h-4" />
-                            </button>
+                            {/* Actions Menu (three dots) */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all">
+                                        {deletingId === item.id || repeatingId === item.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <MoreHorizontal className="w-4 h-4" />
+                                        )}
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem
+                                        onClick={() => handleRepeat(item)}
+                                        disabled={repeatingId === item.id}
+                                    >
+                                        <RefreshCw className="w-4 h-4 mr-2" />
+                                        Repetir mañana
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            // For now, just show a toast. Edit functionality can be expanded
+                                            toast({ title: "Próximamente", description: "Edición de porciones en desarrollo" })
+                                        }}
+                                    >
+                                        <Pencil className="w-4 h-4 mr-2" />
+                                        Cambiar porción
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => handleDelete(item.id)}
+                                        disabled={deletingId === item.id}
+                                        className="text-destructive focus:text-destructive"
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     ))}
                 </div>

@@ -108,6 +108,44 @@ export default function CuerpoPage() {
         await handleFoodAdded(item)
     }
 
+    const handleDeleteEntry = async (entryId: string) => {
+        try {
+            const res = await fetch(`/api/nutrition/entry/${entryId}`, {
+                method: "DELETE",
+            })
+            if (res.ok) {
+                await refresh()
+            }
+        } catch (error) {
+            console.error("Failed to delete entry", error)
+        }
+    }
+
+    const handleRepeatEntry = async (entry: any) => {
+        // Add entry to tomorrow's log
+        const tomorrow = new Date()
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        try {
+            await fetch("/api/nutrition/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    date: tomorrow,
+                    mealType: activeMealType || entry.mealType || MealType.BREAKFAST,
+                    foodItem: {
+                        name: entry.name,
+                        calories: entry.calories,
+                        protein: entry.protein,
+                        carbs: entry.carbs,
+                        fat: entry.fat,
+                    }
+                })
+            })
+        } catch (error) {
+            console.error("Failed to repeat entry", error)
+        }
+    }
+
     const getMealData = (type: string) => {
         if (!dailyLog?.meals) return { calories: 0, items: [] }
         const meal = dailyLog.meals.find((m: any) => m.type === type)
@@ -216,6 +254,8 @@ export default function CuerpoPage() {
                                 items={data.items}
                                 onAddFood={() => handleAddFood(type)}
                                 onRecommend={() => handleRecommend(type)}
+                                onDeleteEntry={handleDeleteEntry}
+                                onRepeatEntry={handleRepeatEntry}
                             />
                         )
                     })}
