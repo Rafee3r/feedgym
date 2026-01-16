@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useState } from "react"
-import { Home, Search, Bell, Sparkles, Settings, Plus, Dumbbell } from "lucide-react"
+import { Home, Bell, Sparkles, Settings, Plus, Dumbbell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Composer } from "@/components/post/Composer"
 import {

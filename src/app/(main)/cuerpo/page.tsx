@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { ChevronLeft, ChevronRight, Calculator, Flame } from "lucide-react"
+import { Calculator, Flame } from "lucide-react"
 import { MacroCircle } from "@/components/cuerpo/MacroCircle"
 
 import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
