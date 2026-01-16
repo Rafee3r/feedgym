@@ -27,6 +27,7 @@ import {
 import { FitnessMetadata } from "./FitnessMetadata"
 import { PostTypeBadge } from "./PostTypeBadge"
 import type { PostData } from "@/types"
+import { ImageViewer } from "@/components/shared/ImageViewer"
 
 function WhatsAppAudioPlayer({ src }: { src: string }) {
     const [isPlaying, setIsPlaying] = useState(false)
@@ -103,6 +104,7 @@ export function PostCard({
     const [isReposted, setIsReposted] = useState(post.isReposted || false)
     const [likesCount, setLikesCount] = useState(post.likesCount)
     const [isExpanded, setIsExpanded] = useState(false)
+    const [viewerImage, setViewerImage] = useState<string | null>(null)
 
     const isOwner = currentUserId === post.author.id
 
@@ -356,12 +358,20 @@ export function PostCard({
                                 }
 
                                 return (
-                                    <div key={i} className={cn("relative w-full h-full", spanClass)}>
+                                    <div
+                                        key={i}
+                                        className={cn("relative w-full h-full cursor-pointer", spanClass)}
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            setViewerImage(url)
+                                        }}
+                                    >
                                         <Image
                                             src={url}
                                             alt={`Post image ${i + 1}`}
                                             fill
-                                            className="object-cover"
+                                            className="object-cover hover:opacity-90 transition-opacity"
                                             priority={priority}
                                         />
                                     </div>
@@ -369,12 +379,19 @@ export function PostCard({
                             })}
                         </div>
                     ) : post.imageUrl && (
-                        <div className="mt-3 rounded-2xl overflow-hidden border border-border relative aspect-video bg-muted">
+                        <div
+                            className="mt-3 rounded-2xl overflow-hidden border border-border relative aspect-video bg-muted cursor-pointer"
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setViewerImage(post.imageUrl!)
+                            }}
+                        >
                             <Image
                                 src={post.imageUrl}
                                 alt="Post content"
                                 fill
-                                className="object-cover"
+                                className="object-cover hover:opacity-90 transition-opacity"
                                 priority={priority}
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />
@@ -515,6 +532,13 @@ export function PostCard({
                     </Link>
                 </div>
             )}
+
+            {/* Image Viewer Modal */}
+            <ImageViewer
+                src={viewerImage || ""}
+                isOpen={!!viewerImage}
+                onClose={() => setViewerImage(null)}
+            />
         </article>
     )
 }

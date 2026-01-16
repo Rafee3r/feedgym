@@ -26,6 +26,7 @@ const postTypes: { value: PostType; label: string; emoji: string }[] = [
 interface ComposerProps {
     placeholder?: string
     parentId?: string
+    replyToUsername?: string  // Username to auto-@ when replying
     onSuccess?: () => void
     compact?: boolean
     autoFocus?: boolean
@@ -48,6 +49,7 @@ const placeholders = [
 export function Composer({
     placeholder: customPlaceholder,
     parentId,
+    replyToUsername,
     onSuccess,
     compact = false,
     autoFocus = false,
@@ -97,6 +99,13 @@ export function Composer({
         }
     }, [autoFocus])
 
+    // Auto-prefill @username when replying
+    useEffect(() => {
+        if (replyToUsername && !content) {
+            setContent(`@${replyToUsername} `)
+        }
+    }, [replyToUsername])
+
     const currentPlaceholder = customPlaceholder || placeholders[placeholderIndex]
 
 
@@ -112,9 +121,10 @@ export function Composer({
     const timerRef = useRef<NodeJS.Timeout | null>(null)
     const chunksRef = useRef<Blob[]>([])
 
-    const maxLength = 500
+    // No character limit for posts
+    const maxLength = 10000
     const remaining = maxLength - content.length
-    const isOverLimit = remaining < 0
+    const isOverLimit = false
 
     // Mention autocomplete state
     const [mentionQuery, setMentionQuery] = useState<string | null>(null)

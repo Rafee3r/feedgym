@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Send, Loader2, X, ImagePlus, Trash2 } from "lucide-react"
+import { Send, Loader2, X, ImagePlus, Trash2, Bookmark, Copy, Settings, Star, Download, Upload, Check, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn, getInitials } from "@/lib/utils"
+import { toast } from "@/hooks/use-toast"
 
 // Parse basic markdown: **bold**, [text](link), `code`
 function renderMarkdown(content: string): React.ReactNode {
@@ -86,6 +87,21 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // Favorites and Settings state
+    const [savedMessageIds, setSavedMessageIds] = useState<Set<string>>(new Set())
+    const [showFavorites, setShowFavorites] = useState(false)
+    const [showSettings, setShowSettings] = useState(false)
+    const [compactMode, setCompactMode] = useState(false)
+    const [copiedId, setCopiedId] = useState<string | null>(null)
+
+    // Load saved messages and settings from localStorage
+    useEffect(() => {
+        const saved = localStorage.getItem("iron-saved-messages")
+        if (saved) setSavedMessageIds(new Set(JSON.parse(saved)))
+        const compact = localStorage.getItem("iron-compact-mode")
+        if (compact) setCompactMode(JSON.parse(compact))
+    }, [])
+
     // Fetch avatar if missing from session
     useEffect(() => {
         if (session?.user) {
@@ -118,9 +134,9 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
         loadHistory()
     }, [])
 
-    // Scroll to bottom on new messages
+    // Scroll to bottom on new messages (instant, no animation)
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
     }, [messages])
 
     // Auto-resize textarea
@@ -255,6 +271,85 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
         }
     }
 
+    // Toggle save message
+    const toggleSaveMessage = (msgId: string) => {
+        const newSaved = new Set(savedMessageIds)
+        if (newSaved.has(msgId)) {
+            newSaved.delete(msgId)
+        } else {
+            newSaved.add(msgId)
+        }
+        setSavedMessageIds(newSaved)
+        localStorage.setItem("iron-saved-messages", JSON.stringify([...newSaved]))
+    }
+
+    // Copy message content
+    const copyMessage = async (content: string, msgId: string) => {
+        try {
+            await navigator.clipboard.writeText(content)
+            setCopiedId(msgId)
+            setTimeout(() => setCopiedId(null), 2000)
+        } catch {
+            toast({ title: "Error al copiar", variant: "destructive" })
+        }
+    }
+
+    // Export chat
+    const exportChat = () => {
+        const exportData = {
+            exportedAt: new Date().toISOString(),
+            messages: messages.map(m => ({
+                role: m.role,
+                content: m.content,
+                id: m.id
+            })),
+            savedMessageIds: [...savedMessageIds]
+        }
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `iron-chat-${new Date().toISOString().split("T")[0]}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        toast({ title: "Chat exportado" })
+    }
+
+    // Import chat
+    const importChat = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target?.result as string)
+                if (data.messages) {
+                    // Note: This only loads to local state, doesn't persist to server
+                    toast({ title: "Chat importado (solo lectura)", description: "Los mensajes importados no se guardan en el servidor" })
+                }
+                if (data.savedMessageIds) {
+                    setSavedMessageIds(new Set(data.savedMessageIds))
+                    localStorage.setItem("iron-saved-messages", JSON.stringify(data.savedMessageIds))
+                }
+            } catch {
+                toast({ title: "Error al importar", variant: "destructive" })
+            }
+        }
+        reader.readAsText(file)
+    }
+
+    // Toggle compact mode
+    const toggleCompactMode = () => {
+        const newValue = !compactMode
+        setCompactMode(newValue)
+        localStorage.setItem("iron-compact-mode", JSON.stringify(newValue))
+    }
+
+    // Get saved messages
+    const savedMessages = messages.filter(m => m.id && savedMessageIds.has(m.id))
+
     if (isLoadingHistory) {
         return (
             <div className={cn("flex flex-col h-full bg-background items-center justify-center", className)}>
@@ -281,6 +376,35 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
+                    {/* Favorites button */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowFavorites(!showFavorites); setShowSettings(false) }}
+                        className={cn(
+                            "text-xs text-zinc-500 hover:text-white hover:bg-zinc-800",
+                            showFavorites && "text-yellow-500 bg-zinc-800"
+                        )}
+                    >
+                        <Star className={cn("w-3.5 h-3.5", showFavorites && "fill-current")} />
+                        {savedMessageIds.size > 0 && (
+                            <span className="ml-1 text-[10px]">{savedMessageIds.size}</span>
+                        )}
+                    </Button>
+
+                    {/* Settings button */}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowSettings(!showSettings); setShowFavorites(false) }}
+                        className={cn(
+                            "text-xs text-zinc-500 hover:text-white hover:bg-zinc-800",
+                            showSettings && "text-primary bg-zinc-800"
+                        )}
+                    >
+                        <Settings className="w-3.5 h-3.5" />
+                    </Button>
+
                     {messages.length > 0 && (
                         <Button
                             variant="ghost"
@@ -303,6 +427,114 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                     )}
                 </div>
             </div>
+
+            {/* Favorites Panel */}
+            {showFavorites && (
+                <div className="border-b border-border bg-zinc-900/50 max-h-[40vh] overflow-y-auto">
+                    <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-yellow-500 flex items-center gap-2">
+                                <Star className="w-4 h-4 fill-current" /> Guardados
+                            </h3>
+                            <Button variant="ghost" size="sm" onClick={() => setShowFavorites(false)}>
+                                <X className="w-3.5 h-3.5" />
+                            </Button>
+                        </div>
+                        {savedMessages.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">No hay mensajes guardados. Usa el icono de bookmark para guardar respuestas de IRON.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {savedMessages.map((msg) => (
+                                    <div key={msg.id} className="bg-zinc-800/50 rounded-lg p-3 text-sm">
+                                        <p className="text-muted-foreground line-clamp-3">{msg.content}</p>
+                                        <div className="flex gap-2 mt-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs"
+                                                onClick={() => {
+                                                    setShowFavorites(false)
+                                                    // Find message in DOM and scroll to it
+                                                    const el = document.getElementById(`msg-${msg.id}`)
+                                                    el?.scrollIntoView({ behavior: "smooth", block: "center" })
+                                                }}
+                                            >
+                                                Ir al mensaje
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 text-xs"
+                                                onClick={() => copyMessage(msg.content, msg.id!)}
+                                            >
+                                                {copiedId === msg.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Settings Panel */}
+            {showSettings && (
+                <div className="border-b border-border bg-zinc-900/50 p-4">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-sm font-semibold flex items-center gap-2">
+                            <Settings className="w-4 h-4" /> Configuración
+                        </h3>
+                        <Button variant="ghost" size="sm" onClick={() => setShowSettings(false)}>
+                            <X className="w-3.5 h-3.5" />
+                        </Button>
+                    </div>
+                    <div className="space-y-4">
+                        {/* Compact mode toggle */}
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium">Modo compacto</p>
+                                <p className="text-xs text-muted-foreground">Ocultar avatares para más espacio</p>
+                            </div>
+                            <button
+                                onClick={toggleCompactMode}
+                                className={cn(
+                                    "w-10 h-5 rounded-full transition-colors relative",
+                                    compactMode ? "bg-primary" : "bg-zinc-600"
+                                )}
+                            >
+                                <div className={cn(
+                                    "absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all",
+                                    compactMode ? "left-5" : "left-0.5"
+                                )} />
+                            </button>
+                        </div>
+
+                        {/* Export/Import */}
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={exportChat}
+                            >
+                                <Download className="w-3.5 h-3.5 mr-1" /> Exportar
+                            </Button>
+                            <label className="flex-1">
+                                <input
+                                    type="file"
+                                    accept=".json"
+                                    className="hidden"
+                                    onChange={importChat}
+                                />
+                                <Button variant="outline" size="sm" className="w-full" asChild>
+                                    <span><Upload className="w-3.5 h-3.5 mr-1" /> Importar</span>
+                                </Button>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Messages - ChatGPT style */}
             <div className="flex-1 overflow-y-auto">
@@ -336,24 +568,27 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                         {messages.map((msg, i) => (
                             <div
                                 key={msg.id || i}
+                                id={msg.id ? `msg-${msg.id}` : undefined}
                                 className={cn(
-                                    "px-4 py-4",
+                                    "px-4 py-4 group",
                                     msg.role === "assistant" && "bg-muted/30"
                                 )}
                             >
                                 <div className="max-w-2xl mx-auto flex gap-4">
-                                    {/* Avatar */}
-                                    {msg.role === "assistant" ? (
-                                        <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold bg-white text-black">
-                                            I
-                                        </div>
-                                    ) : (
-                                        <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
-                                            <AvatarImage src={userAvatarUrl} />
-                                            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold rounded-lg">
-                                                {getInitials(session?.user?.name || "Tú")}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                    {/* Avatar - hide in compact mode */}
+                                    {!compactMode && (
+                                        msg.role === "assistant" ? (
+                                            <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold bg-white text-black">
+                                                I
+                                            </div>
+                                        ) : (
+                                            <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
+                                                <AvatarImage src={userAvatarUrl} />
+                                                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold rounded-lg">
+                                                    {getInitials(session?.user?.name || "Tú")}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        )
                                     )}
 
                                     {/* Content */}
@@ -371,6 +606,33 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                                         <p className="text-sm whitespace-pre-wrap leading-relaxed">
                                             {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
                                         </p>
+
+                                        {/* Action icons for assistant messages */}
+                                        {msg.role === "assistant" && msg.id && (
+                                            <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => toggleSaveMessage(msg.id!)}
+                                                    className={cn(
+                                                        "p-1.5 rounded hover:bg-zinc-700 transition-colors",
+                                                        savedMessageIds.has(msg.id) ? "text-yellow-500" : "text-muted-foreground"
+                                                    )}
+                                                    title={savedMessageIds.has(msg.id) ? "Quitar de guardados" : "Guardar mensaje"}
+                                                >
+                                                    <Bookmark className={cn("w-3.5 h-3.5", savedMessageIds.has(msg.id) && "fill-current")} />
+                                                </button>
+                                                <button
+                                                    onClick={() => copyMessage(msg.content, msg.id!)}
+                                                    className="p-1.5 rounded hover:bg-zinc-700 text-muted-foreground transition-colors"
+                                                    title="Copiar mensaje"
+                                                >
+                                                    {copiedId === msg.id ? (
+                                                        <Check className="w-3.5 h-3.5 text-green-500" />
+                                                    ) : (
+                                                        <Copy className="w-3.5 h-3.5" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

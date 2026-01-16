@@ -23,10 +23,10 @@ export async function GET(request: NextRequest) {
             take: limit,
         })
 
-        // Get user's goal for color logic
+        // Get user's goal and targetWeight for display
         const targetUser = await prisma.user.findUnique({
             where: { id: targetUserId },
-            select: { goal: true }
+            select: { goal: true, targetWeight: true }
         })
 
         // Format for chart (reverse for chronological order)
@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
                 count: logs.length,
             },
             goal: targetUser?.goal || "MAINTAIN",
+            targetWeight: targetUser?.targetWeight || null,
         })
     } catch (error) {
         console.error("Get weight logs error:", error)
@@ -112,6 +113,40 @@ export async function POST(request: NextRequest) {
         console.error("Create weight log error:", error)
         return NextResponse.json(
             { error: "Error al registrar peso" },
+            { status: 500 }
+        )
+    }
+}
+
+// PATCH /api/weight - Update target weight
+export async function PATCH(request: NextRequest) {
+    try {
+        const session = await auth()
+
+        if (!session) {
+            return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const { targetWeight } = body
+
+        if (targetWeight !== null && (typeof targetWeight !== "number" || targetWeight <= 0 || targetWeight > 500)) {
+            return NextResponse.json(
+                { error: "Peso meta inválido" },
+                { status: 400 }
+            )
+        }
+
+        await (prisma.user as any).update({
+            where: { id: session.user.id },
+            data: { targetWeight },
+        })
+
+        return NextResponse.json({ success: true, targetWeight })
+    } catch (error) {
+        console.error("Update target weight error:", error)
+        return NextResponse.json(
+            { error: "Error al actualizar peso meta" },
             { status: 500 }
         )
     }

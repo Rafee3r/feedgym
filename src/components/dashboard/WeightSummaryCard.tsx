@@ -51,6 +51,9 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
     const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0])
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [userGoal, setUserGoal] = useState<"CUT" | "BULK" | "MAINTAIN" | "RECOMP">("MAINTAIN")
+    const [targetWeight, setTargetWeight] = useState<number | null>(null)
+    const [newTargetWeight, setNewTargetWeight] = useState("")
+    const [isSettingTarget, setIsSettingTarget] = useState(false)
 
     const isOwnProfile = !userId || userId === session?.user?.id
 
@@ -65,6 +68,9 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                 setWeightStats(data.stats)
                 if (data.goal) {
                     setUserGoal(data.goal)
+                }
+                if (data.targetWeight !== undefined) {
+                    setTargetWeight(data.targetWeight)
                 }
             }
         } catch (error) {
@@ -222,6 +228,50 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Target Weight Section */}
+                                    <div className="border-t pt-4 mt-4">
+                                        <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                                            Peso Meta (opcional)
+                                        </label>
+                                        <Input
+                                            type="number"
+                                            step="0.1"
+                                            placeholder={targetWeight ? `Actual: ${targetWeight} kg` : "Ej: 75 kg"}
+                                            value={newTargetWeight}
+                                            onChange={(e) => setNewTargetWeight(e.target.value)}
+                                        />
+                                        {newTargetWeight && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full mt-2"
+                                                disabled={isSettingTarget}
+                                                onClick={async () => {
+                                                    const tw = parseFloat(newTargetWeight)
+                                                    if (isNaN(tw) || tw <= 0) return
+                                                    setIsSettingTarget(true)
+                                                    try {
+                                                        await fetch("/api/weight", {
+                                                            method: "PATCH",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ targetWeight: tw }),
+                                                        })
+                                                        setTargetWeight(tw)
+                                                        setNewTargetWeight("")
+                                                        toast({ title: "Meta actualizada" })
+                                                    } catch {
+                                                        toast({ title: "Error", variant: "destructive" })
+                                                    } finally {
+                                                        setIsSettingTarget(false)
+                                                    }
+                                                }}
+                                            >
+                                                {isSettingTarget ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Meta"}
+                                            </Button>
+                                        )}
+                                    </div>
+
                                     <Button
                                         onClick={handleAddWeight}
                                         disabled={isSubmitting}
@@ -230,7 +280,7 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                                         {isSubmitting ? (
                                             <Loader2 className="w-4 h-4 animate-spin" />
                                         ) : (
-                                            "Guardar"
+                                            "Guardar Peso"
                                         )}
                                     </Button>
                                 </div>
@@ -288,6 +338,26 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                                 )
                             })()}
                         </div>
+
+                        {/* Target Weight Display */}
+                        {targetWeight && weightStats?.latest && (
+                            <div className="mb-3 p-2 bg-muted/30 rounded-lg">
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="text-muted-foreground">Meta: {targetWeight} kg</span>
+                                    <span className="text-primary font-medium">
+                                        {Math.abs(weightStats.latest - targetWeight).toFixed(1)} kg {weightStats.latest > targetWeight ? "por perder" : "por ganar"}
+                                    </span>
+                                </div>
+                                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-primary rounded-full transition-all"
+                                        style={{
+                                            width: `${Math.min(100, Math.max(0, 100 - Math.abs(weightStats.latest - targetWeight) / targetWeight * 100))}%`
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Chart - Multicolor based on goal */}
                         <div className="h-[200px] w-full mt-4">

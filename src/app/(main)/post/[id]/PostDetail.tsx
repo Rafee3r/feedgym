@@ -73,6 +73,7 @@ export function PostDetail({ postId }: PostDetailProps) {
                     <Composer
                         placeholder={`Responder a @${post.author.username}...`}
                         parentId={postId}
+                        replyToUsername={post.author.username}
                         onSuccess={fetchPost}
                         compact
                     />

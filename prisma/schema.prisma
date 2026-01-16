@@ -35,6 +35,7 @@ model User {
   gymSplit       String?   // e.g., "PPL", "Upper/Lower", "Bro Split"
   trainingDays   String[]  // e.g., ["Monday", "Wednesday", "Friday"]
   goal           GoalType  @default(MAINTAIN)
+  targetWeight   Float?    // User's goal weight in kg
   
   // Privacy settings
   accountPrivacy AccountPrivacy @default(PUBLIC)
