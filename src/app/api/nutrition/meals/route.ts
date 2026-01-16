@@ -93,9 +93,9 @@ export async function GET(request: Request) {
         if (!userGoal) {
             const user = await prisma.user.findUnique({
                 where: { id: session.user.id },
-                select: { fitnessGoal: true },
+                select: { goal: true },
             })
-            userGoal = user?.fitnessGoal || "MAINTAIN"
+            userGoal = user?.goal || "MAINTAIN"
         }
 
         // Map fitness goal to meal tags
