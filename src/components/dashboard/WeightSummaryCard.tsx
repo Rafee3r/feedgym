@@ -163,6 +163,60 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
         }
     }
 
+    // IRON-style motivational messages
+    const getMotivationalMessage = (): string | null => {
+        if (!weightStats?.latest || !targetWeight) return null
+
+        const diff = weightStats.latest - targetWeight
+        const absDiff = Math.abs(diff)
+
+        // Messages for when you're on track (within 1kg of goal)
+        const onTrackMessages = [
+            "🔥 ¡Estás en la zona! Sigue así, máquina.",
+            "💪 Tu disciplina está dando frutos. ¡No aflojes!",
+            "🎯 Casi en tu meta. El último tramo es el más importante.",
+            "⚡ La constancia es tu superpoder. ¡Sigue adelante!",
+        ]
+
+        // Messages for when you need to lose more (CUT goal, weight > target)
+        const needToLoseMessages = [
+            `🎯 Te faltan ${absDiff.toFixed(1)}kg. Cada día cuenta, ¡tú puedes!`,
+            `💪 ${absDiff.toFixed(1)}kg para tu meta. El déficit es tu aliado.`,
+            `🔥 Quedan ${absDiff.toFixed(1)}kg. Recuerda: el cardio no negocia.`,
+            `⚡ A ${absDiff.toFixed(1)}kg de la gloria. ¡Vamos con todo!`,
+        ]
+
+        // Messages for when you need to gain more (BULK goal, weight < target)
+        const needToGainMessages = [
+            `🎯 Te faltan ${absDiff.toFixed(1)}kg. ¡A comer y entrenar duro!`,
+            `💪 ${absDiff.toFixed(1)}kg para tu meta. El superávit te espera.`,
+            `🔥 Quedan ${absDiff.toFixed(1)}kg. Más proteína, más hierro.`,
+            `⚡ A ${absDiff.toFixed(1)}kg de tu objetivo. ¡Dale con todo!`,
+        ]
+
+        let messages: string[]
+
+        if (absDiff <= 1) {
+            messages = onTrackMessages
+        } else if (userGoal === "CUT" && diff > 0) {
+            messages = needToLoseMessages
+        } else if (userGoal === "BULK" && diff < 0) {
+            messages = needToGainMessages
+        } else if (diff > 0) {
+            // Default: weight above target
+            messages = needToLoseMessages
+        } else {
+            // Default: weight below target
+            messages = needToGainMessages
+        }
+
+        // Return a random message (seeded by day for consistency)
+        const dayOfYear = Math.floor(Date.now() / (1000 * 60 * 60 * 24))
+        return messages[dayOfYear % messages.length]
+    }
+
+    const motivationalMessage = getMotivationalMessage()
+
     const getTrendIcon = () => {
         if (!weightStats?.change) return <Minus className="w-3 h-3" />
 
@@ -344,6 +398,13 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                                 </span>
                             )}
                         </div>
+
+                        {/* Motivational message */}
+                        {motivationalMessage && (
+                            <div className="text-sm text-primary/90 bg-primary/5 border border-primary/20 rounded-lg px-3 py-2 mb-3">
+                                {motivationalMessage}
+                            </div>
+                        )}
 
                         {/* Chart - Multicolor based on goal */}
                         <div className="h-[200px] w-full mt-4">
