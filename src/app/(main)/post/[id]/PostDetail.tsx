@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { PostCard } from "@/components/post/PostCard"
 import { Composer } from "@/components/post/Composer"
+import { ThreadedReply } from "@/components/post/ThreadedReply"
 import { Separator } from "@/components/ui/separator"
 import { Loader2 } from "lucide-react"
 import type { PostData } from "@/types"
@@ -88,7 +89,7 @@ export function PostDetail({ postId }: PostDetailProps) {
                         Respuestas ({replies.length})
                     </h3>
                     {replies.map((reply) => (
-                        <PostCard
+                        <ThreadedReply
                             key={reply.id}
                             post={reply}
                             currentUserId={session?.user.id}

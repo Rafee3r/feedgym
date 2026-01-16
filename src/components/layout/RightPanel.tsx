@@ -223,13 +223,13 @@ export function RightPanel() {
     }
 
     const daysOfWeek = [
-        { id: "1", label: "Lunes" },
-        { id: "2", label: "Martes" },
-        { id: "3", label: "Miércoles" },
-        { id: "4", label: "Jueves" },
-        { id: "5", label: "Viernes" },
-        { id: "6", label: "Sábado" },
-        { id: "0", label: "Domingo" },
+        { id: "Monday", label: "Lunes" },
+        { id: "Tuesday", label: "Martes" },
+        { id: "Wednesday", label: "Miércoles" },
+        { id: "Thursday", label: "Jueves" },
+        { id: "Friday", label: "Viernes" },
+        { id: "Saturday", label: "Sábado" },
+        { id: "Sunday", label: "Domingo" },
     ]
 
     // Filter weight data by period

@@ -87,6 +87,7 @@ interface PostCardProps {
     onDelete?: (postId: string) => void
     showThread?: boolean
     priority?: boolean
+    className?: string
 }
 
 export function PostCard({
@@ -98,6 +99,7 @@ export function PostCard({
     onDelete,
     showThread = false,
     priority = false, // Add priority prop
+    className,
 }: PostCardProps) {
     const [isLiked, setIsLiked] = useState(post.isLiked || false)
     const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked || false)
@@ -171,7 +173,7 @@ export function PostCard({
     }
 
     return (
-        <article className="post-card border-b border-border px-4 py-3">
+        <article className={cn("post-card border-b border-border px-4 py-3", className)}>
             <div className="flex gap-3">
                 {/* Avatar */}
                 <Link href={`/${post.author.username}`} className="shrink-0">

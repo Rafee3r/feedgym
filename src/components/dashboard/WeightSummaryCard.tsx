@@ -316,8 +316,8 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                     </div>
                 ) : (
                     <>
-                        {/* Current stats */}
-                        <div className="flex items-baseline gap-2 mb-2">
+                        {/* Current stats with target weight inline */}
+                        <div className="flex items-baseline gap-2 mb-2 flex-wrap">
                             <span className="text-2xl font-bold">
                                 {weightStats?.latest ?? "—"} kg
                             </span>
@@ -337,27 +337,13 @@ export function WeightSummaryCard({ className, userId, userName, showAddButton =
                                     </span>
                                 )
                             })()}
+                            {/* Target weight inline */}
+                            {targetWeight && (
+                                <span className="text-sm text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
+                                    🎯 {targetWeight} kg
+                                </span>
+                            )}
                         </div>
-
-                        {/* Target Weight Display */}
-                        {targetWeight && weightStats?.latest && (
-                            <div className="mb-3 p-2 bg-muted/30 rounded-lg">
-                                <div className="flex justify-between text-xs mb-1">
-                                    <span className="text-muted-foreground">Meta: {targetWeight} kg</span>
-                                    <span className="text-primary font-medium">
-                                        {Math.abs(weightStats.latest - targetWeight).toFixed(1)} kg {weightStats.latest > targetWeight ? "por perder" : "por ganar"}
-                                    </span>
-                                </div>
-                                <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-primary rounded-full transition-all"
-                                        style={{
-                                            width: `${Math.min(100, Math.max(0, 100 - Math.abs(weightStats.latest - targetWeight) / targetWeight * 100))}%`
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
 
                         {/* Chart - Multicolor based on goal */}
                         <div className="h-[200px] w-full mt-4">

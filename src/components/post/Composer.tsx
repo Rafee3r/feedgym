@@ -126,6 +126,29 @@ export function Composer({
     const remaining = maxLength - content.length
     const isOverLimit = false
 
+    // Draft save/restore from localStorage
+    const draftKey = parentId ? `draft-reply-${parentId}` : "draft-post"
+
+    // Restore draft on mount
+    useEffect(() => {
+        const savedDraft = localStorage.getItem(draftKey)
+        if (savedDraft && !content && !replyToUsername) {
+            setContent(savedDraft)
+        }
+    }, [draftKey])
+
+    // Save draft when content changes (debounced)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (content.trim()) {
+                localStorage.setItem(draftKey, content)
+            } else {
+                localStorage.removeItem(draftKey)
+            }
+        }, 500)
+        return () => clearTimeout(timer)
+    }, [content, draftKey])
+
     // Mention autocomplete state
     const [mentionQuery, setMentionQuery] = useState<string | null>(null)
     const [mentionSuggestions, setMentionSuggestions] = useState<Array<{ id: string, username: string, displayName: string, avatarUrl: string | null, isBot?: boolean }>>([])
@@ -279,6 +302,9 @@ export function Composer({
                     description: parentId ? "Tu respuesta ha sido publicada" : "Tu post ha sido publicado",
                     variant: "success",
                 })
+
+                // Clear draft after successful post
+                localStorage.removeItem(draftKey)
 
                 onSuccess?.()
 
@@ -549,11 +575,7 @@ export function Composer({
                             </div>
 
                             <div className="flex items-center gap-3">
-                                {content.length > 0 && (
-                                    <div className={cn("text-sm", remaining <= 20 && "text-yellow-500", isOverLimit && "text-destructive")}>
-                                        {remaining}
-                                    </div>
-                                )}
+                                {/* Character counter hidden - no limit */}
                                 <Button
                                     onClick={handleSubmit}
                                     disabled={(!content.trim() && !audioBlob) || isOverLimit || isPending}

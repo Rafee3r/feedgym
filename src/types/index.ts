@@ -96,6 +96,7 @@ export interface PostData {
         likesCount: number;
         createdAt: Date;
     } | null;
+    replies?: PostData[];
     canDelete?: boolean;
 }
 

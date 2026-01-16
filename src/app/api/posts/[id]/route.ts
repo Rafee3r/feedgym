@@ -63,7 +63,7 @@ export async function GET(
             return NextResponse.json({ error: "Post no encontrado" }, { status: 404 })
         }
 
-        // Get replies
+        // Get replies (Level 1) causing recursion for Level 2
         const replies = await prisma.post.findMany({
             where: { parentId: id, deletedAt: null },
             orderBy: { createdAt: "asc" },
@@ -75,6 +75,31 @@ export async function GET(
                         displayName: true,
                         avatarUrl: true,
                     },
+                },
+                // Include Level 2 replies
+                replies: {
+                    where: { deletedAt: null },
+                    orderBy: { createdAt: "asc" },
+                    include: {
+                        author: {
+                            select: {
+                                id: true,
+                                username: true,
+                                displayName: true,
+                                avatarUrl: true,
+                            },
+                        },
+                        ...(session && {
+                            likes: {
+                                where: { userId: session.user.id },
+                                select: { id: true },
+                            },
+                            bookmarks: {
+                                where: { userId: session.user.id },
+                                select: { id: true },
+                            },
+                        }),
+                    }
                 },
                 ...(session && {
                     likes: {
@@ -89,20 +114,25 @@ export async function GET(
             },
         })
 
-        const formattedReplies = replies.map((reply) => ({
-            id: reply.id,
-            content: reply.content,
-            imageUrl: reply.imageUrl,
-            mediaUrls: (reply as any).mediaUrls,
-            type: reply.type,
-            metadata: reply.metadata,
-            likesCount: reply.likesCount,
-            repliesCount: reply.repliesCount,
-            author: reply.author,
-            createdAt: reply.createdAt,
-            isLiked: session ? ((reply as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
-            isBookmarked: session ? ((reply as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
-        }))
+        // Helper to format post/reply
+        const formatPost = (p: any) => ({
+            id: p.id,
+            content: p.content,
+            imageUrl: p.imageUrl,
+            mediaUrls: p.mediaUrls,
+            type: p.type,
+            metadata: p.metadata,
+            likesCount: p.likesCount,
+            repliesCount: p.repliesCount,
+            author: p.author,
+            createdAt: p.createdAt,
+            isLiked: session ? (p.likes?.length ?? 0) > 0 : false,
+            isBookmarked: session ? (p.bookmarks?.length ?? 0) > 0 : false,
+            // Recursively format nested replies if they exist
+            replies: p.replies ? p.replies.map(formatPost) : []
+        })
+
+        const formattedReplies = replies.map(formatPost)
 
         return NextResponse.json({
             post: {
@@ -131,6 +161,10 @@ export async function GET(
             replies: formattedReplies.map(reply => ({
                 ...reply,
                 canDelete: session ? (session.user.id === reply.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
+                replies: reply.replies.map((nested: any) => ({
+                    ...nested,
+                    canDelete: session ? (session.user.id === nested.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
+                }))
             })),
         })
     } catch (error) {
