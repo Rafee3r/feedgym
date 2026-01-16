@@ -46,19 +46,14 @@ export async function DELETE(
                 calories: acc.calories + e.calories,
                 protein: acc.protein + e.protein,
                 carbs: acc.carbs + e.carbs,
-                fat: acc.fat + e.fats,
+                fats: acc.fats + e.fats,
             }),
-            { calories: 0, protein: 0, carbs: 0, fat: 0 }
+            { calories: 0, protein: 0, carbs: 0, fats: 0 }
         )
 
         await prisma.meal.update({
             where: { id: entry.mealId },
-            data: {
-                calories: mealTotals.calories,
-                protein: mealTotals.protein,
-                carbs: mealTotals.carbs,
-                fats: mealTotals.fat,
-            },
+            data: mealTotals,
         })
 
         // Recalculate daily log totals

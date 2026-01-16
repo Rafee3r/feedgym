@@ -16,8 +16,7 @@ import {
 
 const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
-    { href: "/search", icon: Search, label: "Buscar" },
-    { href: "/cuerpo", icon: Dumbbell, label: "Cuerpo" }, // Added Cuerpo
+    { href: "/cuerpo", icon: Dumbbell, label: "Cuerpo" },
     { href: "/coach", icon: Sparkles, label: "IRON", hasGlow: true },
     { href: "/notifications", icon: Bell, label: "Notificaciones" },
 ]

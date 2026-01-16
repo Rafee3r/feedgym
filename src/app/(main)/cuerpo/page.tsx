@@ -137,7 +137,7 @@ export default function CuerpoPage() {
                         calories: entry.calories,
                         protein: entry.protein,
                         carbs: entry.carbs,
-                        fat: entry.fat,
+                        fats: entry.fats,
                     }
                 })
             })
@@ -169,7 +169,7 @@ export default function CuerpoPage() {
     } : { calories: 0, protein: 0, carbs: 0, fats: 0 }
 
     return (
-        <div className="max-w-2xl mx-auto pb-20">
+        <div className="max-w-2xl mx-auto pb-24 px-0 sm:px-0">
             {/* Date Selector */}
             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
@@ -194,7 +194,7 @@ export default function CuerpoPage() {
                 />
             </div>
 
-            <div className="p-4 space-y-6">
+            <div className="px-3 sm:p-4 space-y-4">
                 {/* Hero Card - Macro Circle */}
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
