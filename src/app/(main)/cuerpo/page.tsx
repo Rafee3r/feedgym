@@ -1,22 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { format } from "date-fns"
-import { es } from "date-fns/locale"
-import { Calculator, Flame } from "lucide-react"
+import { Calculator, Flame, Camera, Settings2, Target } from "lucide-react"
 import { MacroCircle } from "@/components/cuerpo/MacroCircle"
-
 import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
 import { RecommendationsCarousel } from "@/components/cuerpo/RecommendationsCarousel"
 import { ShoppingListModal } from "@/components/cuerpo/ShoppingListModal"
 import { MealType } from "@/types"
 import { ShoppingCart } from "lucide-react"
-
 import { AddFoodModal } from "@/components/cuerpo/AddFoodModal"
 import { useNutrition } from "@/hooks/useNutrition"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function CuerpoPage() {
     const { data: session } = useSession()
@@ -24,9 +27,21 @@ export default function CuerpoPage() {
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [isAddFoodOpen, setIsAddFoodOpen] = useState(false)
     const [isShoppingListOpen, setIsShoppingListOpen] = useState(false)
+    const [isMacroSettingsOpen, setIsMacroSettingsOpen] = useState(false)
     const [activeMealType, setActiveMealType] = useState<string>(MealType.BREAKFAST)
 
     const { dailyLog, isLoading, refresh } = useNutrition(selectedDate)
+
+    // Streak state (would be from API in production)
+    const [streak, setStreak] = useState(3)
+
+    // User targets (would be from API/user settings)
+    const [targets, setTargets] = useState({
+        calories: 2400,
+        protein: 160,
+        carbs: 280,
+        fats: 70
+    })
 
     const handleAddFood = (type: string) => {
         setActiveMealType(type)
@@ -48,7 +63,7 @@ export default function CuerpoPage() {
             if (res.ok) {
                 await refresh()
                 toast({
-                    title: "Alimento agregado",
+                    title: "✓ Agregado",
                     description: `${foodItem.name} (${foodItem.calories} kcal)`,
                 })
             }
@@ -57,10 +72,28 @@ export default function CuerpoPage() {
         }
     }
 
+    const handleQuickAdd = async (item: any) => {
+        // Determine meal type based on time
+        const hour = new Date().getHours()
+        let mealType = MealType.BREAKFAST
+        if (hour >= 11 && hour < 15) mealType = MealType.LUNCH
+        else if (hour >= 15 && hour < 18) mealType = MealType.SNACK
+        else if (hour >= 18) mealType = MealType.DINNER
+
+        setActiveMealType(mealType)
+        await handleFoodAdded({
+            name: item.name,
+            calories: item.calories,
+            protein: item.protein,
+            carbs: item.carbs,
+            fats: item.fats,
+        })
+    }
+
     const handleRecommend = async (type: string) => {
         toast({
             title: "IRON está pensando...",
-            description: "Analizando tu cocina y metas...",
+            description: "Armando tu comida ideal...",
         })
 
         try {
@@ -72,40 +105,19 @@ export default function CuerpoPage() {
 
             if (res.ok) {
                 const suggestion = await res.json()
-
-                // Automatically add the suggestion
-                const addRes = await fetch("/api/nutrition/log", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        date: selectedDate,
-                        mealType: type,
-                        foodItem: suggestion
-                    })
+                await handleFoodAdded(suggestion)
+                toast({
+                    title: "✨ Comida armada",
+                    description: suggestion.name,
                 })
-
-                if (addRes.ok) {
-                    await refresh()
-                    toast({
-                        title: "✨ Recomendación agregada",
-                        description: `IRON sugirió: ${suggestion.name}`,
-                        className: "bg-indigo-500 text-white border-none"
-                    })
-                }
             }
         } catch (error) {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "No se pudo generar una recomendación.",
+                description: "No se pudo generar recomendación",
             })
         }
-    }
-
-    const handleQuickAdd = async (item: any) => {
-        // Reuse handleFoodAdded but set type appropriately if needed, or default to Breakfast for this mock
-        setActiveMealType(MealType.BREAKFAST)
-        await handleFoodAdded(item)
     }
 
     const handleDeleteEntry = async (entryId: string) => {
@@ -122,7 +134,6 @@ export default function CuerpoPage() {
     }
 
     const handleRepeatEntry = async (entry: any) => {
-        // Add entry to tomorrow's log
         const tomorrow = new Date()
         tomorrow.setDate(tomorrow.getDate() + 1)
         try {
@@ -131,7 +142,7 @@ export default function CuerpoPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     date: tomorrow,
-                    mealType: activeMealType || entry.mealType || MealType.BREAKFAST,
+                    mealType: entry.mealType || MealType.BREAKFAST,
                     foodItem: {
                         name: entry.name,
                         calories: entry.calories,
@@ -146,21 +157,26 @@ export default function CuerpoPage() {
         }
     }
 
+    const handleScanFood = () => {
+        // Open camera/scan modal
+        setActiveMealType(MealType.BREAKFAST) // Default
+        setIsAddFoodOpen(true)
+        // Could navigate to camera tab directly
+    }
+
+    const handleSaveMacros = (newTargets: typeof targets) => {
+        setTargets(newTargets)
+        setIsMacroSettingsOpen(false)
+        toast({ title: "Metas actualizadas" })
+        // In production: save to API
+    }
+
     const getMealData = (type: string) => {
         if (!dailyLog?.meals) return { calories: 0, items: [] }
         const meal = dailyLog.meals.find((m: any) => m.type === type)
         return meal ? { calories: meal.calories, items: meal.items } : { calories: 0, items: [] }
     }
 
-    // Default targets (could be fetched from user settings later)
-    const targets = {
-        calories: 2400,
-        protein: 160,
-        carbs: 280,
-        fats: 70
-    }
-
-    // Use real stats if available, otherwise 0
     const stats = dailyLog ? {
         calories: dailyLog.calories,
         protein: dailyLog.protein,
@@ -169,81 +185,101 @@ export default function CuerpoPage() {
     } : { calories: 0, protein: 0, carbs: 0, fats: 0 }
 
     return (
-        <div className="max-w-2xl mx-auto pb-24 px-0 sm:px-0">
-            {/* Date Selector */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
-                    <div className="flex items-center gap-3">
-                        <h1 className="font-bold text-lg">Diario</h1>
+        <div className="min-h-screen bg-background pb-24">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-20 bg-background border-b border-border">
+                {/* Top Bar */}
+                <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center gap-2">
+                        <h1 className="font-bold text-xl">Nutrición</h1>
+                        {streak > 0 && (
+                            <div className="flex items-center gap-1 text-xs text-orange-500 font-semibold bg-orange-500/10 px-2 py-1 rounded-full">
+                                <Flame className="w-3 h-3 fill-current" />
+                                <span>{streak} días</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={handleScanFood}
+                            className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="Escanear comida"
+                        >
+                            <Camera className="w-5 h-5" />
+                        </button>
                         <button
                             onClick={() => setIsShoppingListOpen(true)}
-                            className="p-1.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            title="Lista de Compras"
+                            className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="Lista de compras"
                         >
                             <ShoppingCart className="w-5 h-5" />
                         </button>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-orange-500 font-medium bg-orange-500/10 px-2 py-1 rounded-full">
-                        <Flame className="w-3 h-3 fill-current" />
-                        <span>Racha: 3 días</span>
-                    </div>
                 </div>
+
+                {/* Calendar Strip */}
                 <CalendarStrip
                     selectedDate={selectedDate}
                     onSelectDate={setSelectedDate}
                 />
             </div>
 
-            <div className="px-3 sm:p-4 space-y-4">
-                {/* Hero Card - Macro Circle */}
-                <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-bold text-lg">Resumen Diario</h2>
-                        <button className="text-sm text-primary flex items-center gap-1 hover:underline">
-                            <Calculator className="w-4 h-4" />
-                            Ajustar Metas
+            {/* Main Content */}
+            <div className="max-w-2xl mx-auto px-4 py-4 space-y-5">
+                {/* Macro Summary Card - Minimalist */}
+                <div className="bg-card border border-border rounded-2xl p-5">
+                    <div className="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 className="font-semibold text-sm text-muted-foreground">Resumen del día</h2>
+                            <p className="text-3xl font-bold">
+                                {stats.calories}
+                                <span className="text-lg text-muted-foreground font-normal"> / {targets.calories}</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground">calorías</p>
+                        </div>
+                        <button
+                            onClick={() => setIsMacroSettingsOpen(true)}
+                            className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="Ajustar metas"
+                        >
+                            <Settings2 className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="flex justify-center py-4">
-                        <MacroCircle
-                            currentCalories={stats.calories}
-                            targetCalories={targets.calories}
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mt-6 text-center">
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Proteína</p>
-                            <p className="font-bold text-lg">{stats.protein} / {targets.protein}g</p>
-                            <div className="h-1.5 w-full bg-muted rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (stats.protein / targets.protein) * 100)}%` }} />
+                    {/* Macro Bars - Clean Style */}
+                    <div className="space-y-3">
+                        {[
+                            { label: "Proteína", current: stats.protein, target: targets.protein, color: "bg-blue-500", unit: "g" },
+                            { label: "Carbohidratos", current: stats.carbs, target: targets.carbs, color: "bg-amber-500", unit: "g" },
+                            { label: "Grasas", current: stats.fats, target: targets.fats, color: "bg-rose-500", unit: "g" },
+                        ].map((macro) => (
+                            <div key={macro.label} className="space-y-1">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-muted-foreground">{macro.label}</span>
+                                    <span className="font-medium">
+                                        {macro.current} <span className="text-muted-foreground">/ {macro.target}{macro.unit}</span>
+                                    </span>
+                                </div>
+                                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                                    <div
+                                        className={cn("h-full rounded-full transition-all", macro.color)}
+                                        style={{ width: `${Math.min(100, (macro.current / macro.target) * 100)}%` }}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Carbs</p>
-                            <p className="font-bold text-lg">{stats.carbs} / {targets.carbs}g</p>
-                            <div className="h-1.5 w-full bg-muted rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${Math.min(100, (stats.carbs / targets.carbs) * 100)}%` }} />
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Grasas</p>
-                            <p className="font-bold text-lg">{stats.fats} / {targets.fats}g</p>
-                            <div className="h-1.5 w-full bg-muted rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-red-500 rounded-full" style={{ width: `${Math.min(100, (stats.fats / targets.fats) * 100)}%` }} />
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
 
-                {/* Recommendations Carousel (New) */}
+                {/* Time-based Recommendations */}
                 <RecommendationsCarousel
                     onSelect={handleQuickAdd}
+                    onScanFood={handleScanFood}
                 />
 
-                {/* Meal Sections */}
-                <div className="space-y-4">
+                {/* Meal Cards */}
+                <div className="space-y-3">
+                    <h3 className="font-semibold text-sm text-muted-foreground px-1">Tus comidas</h3>
                     {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((type) => {
                         const data = getMealData(type)
                         return (
@@ -262,6 +298,7 @@ export default function CuerpoPage() {
                 </div>
             </div>
 
+            {/* Modals */}
             <ShoppingListModal
                 isOpen={isShoppingListOpen}
                 onClose={() => setIsShoppingListOpen(false)}
@@ -273,6 +310,75 @@ export default function CuerpoPage() {
                 mealType={activeMealType}
                 onAddFood={handleFoodAdded}
             />
-        </div >
+
+            {/* Macro Settings Modal */}
+            <Dialog open={isMacroSettingsOpen} onOpenChange={setIsMacroSettingsOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Target className="w-5 h-5 text-primary" />
+                            Ajustar metas
+                        </DialogTitle>
+                    </DialogHeader>
+                    <MacroSettingsForm
+                        targets={targets}
+                        onSave={handleSaveMacros}
+                        onCancel={() => setIsMacroSettingsOpen(false)}
+                    />
+                </DialogContent>
+            </Dialog>
+        </div>
+    )
+}
+
+// Macro Settings Form Component
+function MacroSettingsForm({
+    targets,
+    onSave,
+    onCancel
+}: {
+    targets: { calories: number; protein: number; carbs: number; fats: number }
+    onSave: (targets: typeof targets) => void
+    onCancel: () => void
+}) {
+    const [values, setValues] = useState(targets)
+
+    return (
+        <div className="space-y-4 pt-2">
+            {[
+                { key: "calories", label: "Calorías", unit: "kcal", step: 50 },
+                { key: "protein", label: "Proteína", unit: "g", step: 5 },
+                { key: "carbs", label: "Carbohidratos", unit: "g", step: 10 },
+                { key: "fats", label: "Grasas", unit: "g", step: 5 },
+            ].map((field) => (
+                <div key={field.key} className="space-y-1">
+                    <label className="text-sm font-medium">{field.label}</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="number"
+                            step={field.step}
+                            value={values[field.key as keyof typeof values]}
+                            onChange={(e) => setValues(v => ({ ...v, [field.key]: parseInt(e.target.value) || 0 }))}
+                            className="flex-1 px-3 py-2 bg-muted border border-border rounded-lg text-sm"
+                        />
+                        <span className="text-sm text-muted-foreground w-10">{field.unit}</span>
+                    </div>
+                </div>
+            ))}
+            <div className="flex gap-2 pt-2">
+                <button
+                    onClick={onCancel}
+                    className="flex-1 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button
+                    onClick={() => onSave(values)}
+                    className="flex-1 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                    Guardar
+                </button>
+            </div>
+        </div>
     )
 }

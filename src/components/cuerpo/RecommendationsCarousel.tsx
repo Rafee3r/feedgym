@@ -1,111 +1,215 @@
-
 "use client"
 
-import { Plus, ArrowRight, Clock, Flame } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Plus, ArrowRight, Clock, Flame, Camera } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 
-interface Recommendation {
+interface Meal {
     id: string
     name: string
     calories: number
-    timeMins: number
-    image: string
+    protein: number
+    carbs: number
+    fats: number
+    prepTime: number
     tags: string[]
 }
 
-const MOCK_RECOMMENDATIONS: Recommendation[] = [
-    {
-        id: "1",
-        name: "Omelette de Espinaca y Tomate",
-        calories: 280,
-        timeMins: 10,
-        image: "https://images.unsplash.com/photo-1494390248081-4e521a5940db?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-        tags: ["Proteína", "Keto"]
-    },
-    {
-        id: "2",
-        name: "Avena con Frutos Rojos",
-        calories: 320,
-        timeMins: 5,
-        image: "https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-        tags: ["Energía", "Fibra"]
-    },
-    {
-        id: "3",
-        name: "Tostadas de Aguacate y Huevo",
-        calories: 350,
-        timeMins: 8,
-        image: "https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-        tags: ["Grasas G.", "Veggie"]
-    }
-]
-
 interface RecommendationsCarouselProps {
-    title?: string
-    onSelect?: (item: Recommendation) => void
+    onSelect?: (item: Meal) => void
+    onScanFood?: () => void
     className?: string
 }
 
+// Get meal category based on current hour
+function getMealCategory(hour: number): { category: string; title: string; subtitle: string } {
+    if (hour >= 5 && hour < 11) {
+        return { category: "desayuno", title: "Desayunos para hoy", subtitle: "Comienza tu día con energía" }
+    } else if (hour >= 11 && hour < 15) {
+        return { category: "almuerzo", title: "Almuerzos para hoy", subtitle: "Mantén tu rendimiento" }
+    } else if (hour >= 15 && hour < 18) {
+        return { category: "snack", title: "Snacks para la tarde", subtitle: "Recarga energías" }
+    } else {
+        return { category: "cena", title: "Cenas para esta noche", subtitle: "Cierra el día bien" }
+    }
+}
+
 export function RecommendationsCarousel({
-    title = "Desayunos Para Ti",
     onSelect,
+    onScanFood,
     className
 }: RecommendationsCarouselProps) {
+    const [meals, setMeals] = useState<Meal[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [showAllDialog, setShowAllDialog] = useState(false)
+    const [addingId, setAddingId] = useState<string | null>(null)
+
+    // Get time-based category
+    const currentHour = new Date().getHours()
+    const { category, title, subtitle } = useMemo(() => getMealCategory(currentHour), [currentHour])
+
+    useEffect(() => {
+        const fetchMeals = async () => {
+            try {
+                const res = await fetch(`/api/nutrition/meals?category=${category}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setMeals(data.meals || [])
+                }
+            } catch (error) {
+                console.error("Failed to fetch meals", error)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchMeals()
+    }, [category])
+
+    const handleAdd = async (meal: Meal) => {
+        setAddingId(meal.id)
+        try {
+            await onSelect?.(meal)
+        } finally {
+            setAddingId(null)
+        }
+    }
+
+    // Show first 4 meals in carousel
+    const displayMeals = meals.slice(0, 4)
+
+    if (isLoading) {
+        return (
+            <div className={cn("space-y-3", className)}>
+                <div className="h-6 w-48 bg-muted animate-pulse rounded" />
+                <div className="flex gap-3 overflow-hidden">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="w-40 h-32 bg-muted animate-pulse rounded-xl shrink-0" />
+                    ))}
+                </div>
+            </div>
+        )
+    }
+
     return (
-        <div className={cn("space-y-3", className)}>
-            <div className="flex items-center justify-between px-1">
-                <h3 className="font-bold text-lg">{title}</h3>
-                <button className="text-primary text-sm font-medium flex items-center gap-1 hover:underline">
-                    Ver todos <ArrowRight className="w-4 h-4" />
-                </button>
-            </div>
-
-            <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide snap-x">
-                {MOCK_RECOMMENDATIONS.map((item) => (
-                    <div
-                        key={item.id}
-                        className="snap-start shrink-0 w-64 bg-card border border-border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer"
-                        onClick={() => onSelect?.(item)}
-                    >
-                        {/* Image Header */}
-                        <div className="h-32 w-full relative overflow-hidden">
-                            <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                            />
-                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> {item.timeMins} min
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-3">
-                            <h4 className="font-semibold text-sm line-clamp-1 mb-1">{item.name}</h4>
-
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="flex items-center gap-1 text-xs text-orange-500 font-medium">
-                                    <Flame className="w-3 h-3 fill-current" />
-                                    {item.calories} kcal
-                                </div>
-                                <span className="text-muted-foreground/30">•</span>
-                                <div className="flex gap-1">
-                                    {item.tags.map(tag => (
-                                        <span key={tag} className="text-[10px] bg-accent text-accent-foreground px-1.5 py-0.5 rounded-md">
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button className="w-full flex items-center justify-center gap-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground text-xs font-bold py-2 rounded-lg transition-colors">
-                                <Plus className="w-3.5 h-3.5" />
-                                Agregar
-                            </button>
-                        </div>
+        <>
+            <div className={cn("space-y-3", className)}>
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h3 className="font-bold text-base">{title}</h3>
+                        <p className="text-xs text-muted-foreground">{subtitle}</p>
                     </div>
-                ))}
+                    <button
+                        onClick={() => setShowAllDialog(true)}
+                        className="text-primary text-xs font-medium flex items-center gap-1 hover:underline"
+                    >
+                        Ver todos <ArrowRight className="w-3 h-3" />
+                    </button>
+                </div>
+
+                {/* Quick Actions Row */}
+                <div className="flex gap-2">
+                    {onScanFood && (
+                        <button
+                            onClick={onScanFood}
+                            className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-medium rounded-xl shadow-sm hover:shadow-md transition-all"
+                        >
+                            <Camera className="w-4 h-4" />
+                            Escanear comida
+                        </button>
+                    )}
+                </div>
+
+                {/* Compact Meal Cards */}
+                <div className="grid grid-cols-2 gap-2">
+                    {displayMeals.map((meal) => (
+                        <button
+                            key={meal.id}
+                            onClick={() => handleAdd(meal)}
+                            disabled={addingId === meal.id}
+                            className={cn(
+                                "text-left p-3 bg-card border border-border rounded-xl",
+                                "hover:border-primary/50 hover:bg-accent/30 transition-all",
+                                "flex flex-col gap-1",
+                                addingId === meal.id && "opacity-50"
+                            )}
+                        >
+                            <span className="font-medium text-sm line-clamp-1">{meal.name}</span>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                                    <Flame className="w-3 h-3" />
+                                    {meal.calories}
+                                </span>
+                                <span>•</span>
+                                <span>{meal.protein}g prot</span>
+                                <span>•</span>
+                                <span className="flex items-center gap-0.5">
+                                    <Clock className="w-3 h-3" />
+                                    {meal.prepTime}m
+                                </span>
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                                {meal.tags.slice(0, 2).map(tag => (
+                                    <span key={tag} className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md capitalize">
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                        </button>
+                    ))}
+                </div>
             </div>
-        </div>
+
+            {/* Ver Todos Dialog */}
+            <Dialog open={showAllDialog} onOpenChange={setShowAllDialog}>
+                <DialogContent className="sm:max-w-md max-h-[80vh] flex flex-col p-0 gap-0">
+                    <DialogHeader className="p-4 pb-2 border-b border-border">
+                        <DialogTitle>{title}</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                        {meals.map((meal) => (
+                            <button
+                                key={meal.id}
+                                onClick={() => {
+                                    handleAdd(meal)
+                                    setShowAllDialog(false)
+                                }}
+                                disabled={addingId === meal.id}
+                                className={cn(
+                                    "w-full text-left p-3 bg-card border border-border rounded-xl",
+                                    "hover:border-primary/50 hover:bg-accent/30 transition-all",
+                                    "flex items-center justify-between gap-3"
+                                )}
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm">{meal.name}</p>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                        <span className="text-orange-500 font-medium">{meal.calories} kcal</span>
+                                        <span>•</span>
+                                        <span>{meal.protein}g prot</span>
+                                        <span>•</span>
+                                        <span>{meal.prepTime}m</span>
+                                    </div>
+                                    <div className="flex gap-1 mt-1">
+                                        {meal.tags.slice(0, 2).map(tag => (
+                                            <span key={tag} className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md capitalize">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <Plus className="w-5 h-5 text-primary shrink-0" />
+                            </button>
+                        ))}
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }

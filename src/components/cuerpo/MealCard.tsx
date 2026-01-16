@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Wand2, Check, MoreHorizontal, Utensils, Egg, Beef, Carrot, Coffee, Wheat, Milk, Trash2, RefreshCw, Pencil, Loader2 } from "lucide-react"
+import { Plus, Wand2, Check, MoreHorizontal, Trash2, RefreshCw, Pencil, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { MealType } from "@/types"
 import { cn } from "@/lib/utils"
 import {
@@ -23,15 +23,32 @@ interface MealCardProps {
     className?: string
 }
 
-const getFoodIcon = (name: string) => {
-    const n = name.toLowerCase()
-    if (n.includes("huevo")) return <Egg className="w-4 h-4 text-yellow-500" />
-    if (n.includes("pollo") || n.includes("carne") || n.includes("atún") || n.includes("pescado") || n.includes("salmon")) return <Beef className="w-4 h-4 text-red-500" />
-    if (n.includes("arroz") || n.includes("avena") || n.includes("pan") || n.includes("pasta") || n.includes("tallar")) return <Wheat className="w-4 h-4 text-amber-500" />
-    if (n.includes("leche") || n.includes("yogur") || n.includes("queso") || n.includes("cottage")) return <Milk className="w-4 h-4 text-blue-400" />
-    if (n.includes("café")) return <Coffee className="w-4 h-4 text-amber-800" />
-    if (n.includes("manzana") || n.includes("plátano") || n.includes("fruta") || n.includes("ensalada") || n.includes("verdura") || n.includes("espinaca")) return <Carrot className="w-4 h-4 text-green-500" />
-    return <Utensils className="w-4 h-4 text-muted-foreground" />
+const getMealLabel = (type: string) => {
+    switch (type) {
+        case "BREAKFAST":
+        case MealType.BREAKFAST: return "Desayuno"
+        case "LUNCH":
+        case MealType.LUNCH: return "Almuerzo"
+        case "DINNER":
+        case MealType.DINNER: return "Cena"
+        case "SNACK":
+        case MealType.SNACK: return "Snack"
+        default: return type
+    }
+}
+
+const getMealEmoji = (type: string) => {
+    switch (type) {
+        case "BREAKFAST":
+        case MealType.BREAKFAST: return "🌅"
+        case "LUNCH":
+        case MealType.LUNCH: return "☀️"
+        case "DINNER":
+        case MealType.DINNER: return "🌙"
+        case "SNACK":
+        case MealType.SNACK: return "🍎"
+        default: return "🍽️"
+    }
 }
 
 export function MealCard({
@@ -44,29 +61,19 @@ export function MealCard({
     onRepeatEntry,
     className
 }: MealCardProps) {
+    const [isExpanded, setIsExpanded] = useState(items.length > 0)
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const [repeatingId, setRepeatingId] = useState<string | null>(null)
 
-    const getMealLabel = (type: string) => {
-        switch (type) {
-            case "BREAKFAST":
-            case MealType.BREAKFAST: return "Desayuno"
-            case "LUNCH":
-            case MealType.LUNCH: return "Almuerzo"
-            case "DINNER":
-            case MealType.DINNER: return "Cena"
-            case "SNACK":
-            case MealType.SNACK: return "Snack"
-            default: return type
-        }
-    }
+    const label = getMealLabel(type as string)
+    const emoji = getMealEmoji(type as string)
 
     const handleDelete = async (entryId: string) => {
         if (!onDeleteEntry) return
         setDeletingId(entryId)
         try {
             await onDeleteEntry(entryId)
-            toast({ title: "Eliminado", description: "Comida eliminada del registro" })
+            toast({ title: "Eliminado" })
         } finally {
             setDeletingId(null)
         }
@@ -77,120 +84,119 @@ export function MealCard({
         setRepeatingId(entry.id)
         try {
             await onRepeatEntry(entry)
-            toast({ title: "¡Repetido!", description: `${entry.name} agregado para mañana` })
+            toast({ title: "Repetido para mañana" })
         } finally {
             setRepeatingId(null)
         }
     }
 
-    const label = getMealLabel(type as string)
-
     return (
-        <div className={cn("bg-card border border-border rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md", className)}>
-            {/* Header */}
-            <div className="p-5 flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h3 className="font-bold text-xl">{label}</h3>
+        <div className={cn(
+            "bg-card border border-border rounded-xl overflow-hidden transition-all",
+            className
+        )}>
+            {/* Compact Header */}
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="w-full flex items-center justify-between p-4 hover:bg-accent/30 transition-colors"
+            >
+                <div className="flex items-center gap-3">
+                    <span className="text-lg">{emoji}</span>
+                    <div className="text-left">
+                        <h3 className="font-semibold text-sm">{label}</h3>
                         {items.length > 0 ? (
-                            <p className="text-sm text-muted-foreground font-medium mt-1">
-                                {calories} kcal <span className="text-xs opacity-70">• {items.length} alimentos</span>
+                            <p className="text-xs text-muted-foreground">
+                                {calories} kcal • {items.length} {items.length === 1 ? "alimento" : "alimentos"}
                             </p>
                         ) : (
-                            <p className="text-sm text-muted-foreground italic mt-1">Sin registrar</p>
+                            <p className="text-xs text-muted-foreground italic">Sin registrar</p>
                         )}
                     </div>
-                    {/* Calories Circle if items exist */}
+                </div>
+                <div className="flex items-center gap-2">
                     {calories > 0 && (
-                        <div className="flex flex-col items-end">
-                            <span className="font-bold text-lg text-primary">{calories}</span>
-                            <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Kcal</span>
-                        </div>
+                        <span className="text-sm font-bold text-primary">{calories}</span>
+                    )}
+                    {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     )}
                 </div>
+            </button>
 
-                {/* Main Actions */}
-                <div className="flex gap-3">
-                    <button
-                        onClick={onAddFood}
-                        className="flex-1 flex items-center justify-center gap-2 bg-accent/50 hover:bg-accent text-foreground font-medium py-2.5 px-4 rounded-xl transition-colors text-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Registrar Alimento
-                    </button>
-                    {onRecommend && (
-                        <button
-                            onClick={onRecommend}
-                            className="flex items-center justify-center gap-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-500 font-medium py-2.5 px-4 rounded-xl transition-colors text-sm"
-                        >
-                            <Wand2 className="w-4 h-4" />
-                            Armar Comida
-                        </button>
-                    )}
-                </div>
-            </div>
+            {/* Expandable Content */}
+            {isExpanded && (
+                <div className="border-t border-border">
+                    {/* Food Items List */}
+                    {items.length > 0 && (
+                        <div className="divide-y divide-border">
+                            {items.map((item, idx) => (
+                                <div
+                                    key={item.id || idx}
+                                    className="flex items-center justify-between px-4 py-3 hover:bg-accent/20 transition-colors group"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                                        <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                                            <Check className="w-3 h-3 text-green-600" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium truncate">{item.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {item.calories} kcal
+                                            </p>
+                                        </div>
+                                    </div>
 
-            {/* Food Items List */}
-            {items.length > 0 && (
-                <div className="bg-muted/10 px-2 pb-2 space-y-1">
-                    {items.map((item, idx) => (
-                        <div key={item.id || idx} className="flex items-center gap-3 p-3 rounded-xl hover:bg-background/80 transition-colors group">
-                            {/* Checkbox-like visual */}
-                            <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center shrink-0 text-green-600">
-                                <Check className="w-3.5 h-3.5" />
-                            </div>
-
-                            {/* Icon & Name */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    {getFoodIcon(item.name)}
-                                    <p className="font-medium text-sm truncate text-foreground/90">{item.name}</p>
+                                    {/* Actions Menu */}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all">
+                                                {deletingId === item.id || repeatingId === item.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <MoreHorizontal className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-44">
+                                            <DropdownMenuItem onClick={() => handleRepeat(item)}>
+                                                <RefreshCw className="w-4 h-4 mr-2" />
+                                                Repetir mañana
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => handleDelete(item.id)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
-                                <p className="text-xs text-muted-foreground pl-6">
-                                    {item.portion || 1} {item.unit || "porción"} • {item.calories} kcal
-                                </p>
-                            </div>
-
-                            {/* Actions Menu (three dots) */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button className="opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all">
-                                        {deletingId === item.id || repeatingId === item.id ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <MoreHorizontal className="w-4 h-4" />
-                                        )}
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
-                                    <DropdownMenuItem
-                                        onClick={() => handleRepeat(item)}
-                                        disabled={repeatingId === item.id}
-                                    >
-                                        <RefreshCw className="w-4 h-4 mr-2" />
-                                        Repetir mañana
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            // For now, just show a toast. Edit functionality can be expanded
-                                            toast({ title: "Próximamente", description: "Edición de porciones en desarrollo" })
-                                        }}
-                                    >
-                                        <Pencil className="w-4 h-4 mr-2" />
-                                        Cambiar porción
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onClick={() => handleDelete(item.id)}
-                                        disabled={deletingId === item.id}
-                                        className="text-destructive focus:text-destructive"
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Eliminar
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            ))}
                         </div>
-                    ))}
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 p-3 bg-muted/30">
+                        <button
+                            onClick={onAddFood}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-background border border-border hover:border-primary/50 hover:bg-accent/50 text-sm font-medium rounded-lg transition-all"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Agregar
+                        </button>
+                        {onRecommend && (
+                            <button
+                                onClick={onRecommend}
+                                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 hover:from-indigo-500/20 hover:to-purple-500/20 text-indigo-500 text-sm font-medium rounded-lg transition-all"
+                            >
+                                <Wand2 className="w-4 h-4" />
+                                IA
+                            </button>
+                        )}
+                    </div>
                 </div>
             )}
         </div>
