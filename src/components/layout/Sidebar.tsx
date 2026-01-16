@@ -41,6 +41,7 @@ import { useUnreadNotifications } from "@/hooks/use-unread-notifications"
 
 const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
+    { href: "/cuerpo", icon: Dumbbell, label: "Cuerpo" },
     { href: "/coach", icon: Sparkles, label: "IRON" },
     { href: "/search", icon: Search, label: "Buscar" },
     { href: "/notifications", icon: Bell, label: "Notificaciones" },

@@ -18,16 +18,16 @@ export async function POST(req: NextRequest) {
         const openai = getOpenAI();
 
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [
                 {
                     role: "system",
-                    content: "You are a nutritional expert AI. Your task is to analyze food images and provide nutritional estimates. Return ONLY a valid JSON object with no markdown formatting."
+                    content: "Eres un experto en nutrición. Tu tarea es analizar imágenes de comida y estimar valores nutricionales. RESPONDE SOLO UN JSON VÁLIDO. RESPONDE SIEMPRE EN ESPAÑOL."
                 },
                 {
                     role: "user",
                     content: [
-                        { type: "text", text: "Analyze this food image. Identify the main dish or components. Estimate the calories, protein, carbs, and fats for the visible portion. Return a JSON with: { name: string, calories: number, protein: number, carbs: number, fats: number, unit: string (e.g. 'plate', 'bowl', 'serving'), quantity: number }. If multiple items, aggregate them into one main entry or pick the most prominent one." },
+                        { type: "text", text: "Analiza esta imagen de comida. Identifica el plato principal o componentes. Estima calorías, proteínas, carbohidratos y grasas para la porción visible. Devuelve un JSON con: { name: string, calories: number, protein: number, carbs: number, fats: number, unit: string (ej. 'plato', 'tazón', 'porción'), quantity: number }. Si hay múltiples items, agrúpalos o elige el principal." },
                         {
                             type: "image_url",
                             image_url: {

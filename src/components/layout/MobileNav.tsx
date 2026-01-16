@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useState } from "react"
-import { Home, Search, Bell, Sparkles, Settings, Plus } from "lucide-react"
+import { Home, Search, Bell, Sparkles, Settings, Plus, Dumbbell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Composer } from "@/components/post/Composer"
 import {
@@ -17,6 +17,7 @@ import {
 const navItems = [
     { href: "/", icon: Home, label: "Inicio" },
     { href: "/search", icon: Search, label: "Buscar" },
+    { href: "/cuerpo", icon: Dumbbell, label: "Cuerpo" }, // Added Cuerpo
     { href: "/coach", icon: Sparkles, label: "IRON", hasGlow: true },
     { href: "/notifications", icon: Bell, label: "Notificaciones" },
 ]

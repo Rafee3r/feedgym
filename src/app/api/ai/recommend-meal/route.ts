@@ -23,18 +23,18 @@ export async function POST(req: NextRequest) {
         const openai = getOpenAI();
 
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-4o-mini",
             messages: [
                 {
                     role: "system",
-                    content: "You are IRON, an elite fitness and nutrition coach. Suggest a meal based on available ingredients."
+                    content: "Eres IRON, un entrenador de élite y experto en nutrición. Sugiere una comida basada en los ingredientes disponibles. RESPONDE SIEMPRE EN ESPAÑOL."
                 },
                 {
                     role: "user",
-                    content: `Suggest a healthy ${mealType} using some of these ingredients: [${ingredients}]. 
-                    If the list is empty, suggest a generic healthy ${mealType}. 
-                    Return a JSON object: { name: string, description: string, calories: number, protein: number, carbs: number, fats: number, unit: "serving", quantity: 1 }. 
-                    Keep it simple and realistic.`
+                    content: `Sugiere una receta saludable de tipo ${mealType} usando algunos de estos ingredientes: [${ingredients}]. 
+                    Si la lista está vacía, sugiere una receta genérica saludable para ${mealType}. 
+                    Devuelve un objeto JSON: { name: string, description: string, calories: number, protein: number, carbs: number, fats: number, unit: "porción", quantity: 1 }. 
+                    Manténlo simple y realista. Responde en Español.`
                 },
             ],
             response_format: { type: "json_object" },

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Camera, ChefHat, Plus } from "lucide-react"
+import { Search, Camera, ChefHat, Plus, Sparkles } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -147,6 +147,45 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {/* Zero Friction: Show suggestions when search is empty */}
+                            {!searchTerm && !isLoading && (
+                                <div className="space-y-4">
+                                    {kitchenItems.length > 0 && (
+                                        <div className="space-y-2">
+                                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                                <ChefHat className="w-3 h-3" />
+                                                De tu cocina
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {kitchenItems.slice(0, 6).map(item => (
+                                                    <button
+                                                        key={item.id}
+                                                        onClick={() => useKitchenItem(item.name)}
+                                                        className="text-xs bg-muted hover:bg-primary/10 hover:text-primary px-3 py-1.5 rounded-full transition-colors border border-border"
+                                                    >
+                                                        {item.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-4 rounded-xl border border-indigo-500/20">
+                                        <h4 className="font-bold text-indigo-500 text-sm mb-1 flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3" /> ¿No sabes qué comer?
+                                        </h4>
+                                        <p className="text-xs text-muted-foreground mb-3">Deja que IRON te arme un plato con lo que tienes.</p>
+                                        <Button
+                                            size="sm"
+                                            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white border-0 shadow-lg shadow-indigo-500/20"
+                                            onClick={() => { onClose(); /* Trigger recommend logic via parent or new callback */ }}
+                                        >
+                                            ✨ Sorpréndeme
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
                             {isLoading && (
                                 <div className="text-center py-4 text-muted-foreground text-sm">
                                     Buscando...

@@ -9,7 +9,10 @@ import { MacroCircle } from "@/components/cuerpo/MacroCircle"
 
 import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
+import { RecommendationsCarousel } from "@/components/cuerpo/RecommendationsCarousel"
+import { ShoppingListModal } from "@/components/cuerpo/ShoppingListModal"
 import { MealType } from "@/types"
+import { ShoppingCart } from "lucide-react"
 
 import { AddFoodModal } from "@/components/cuerpo/AddFoodModal"
 import { useNutrition } from "@/hooks/useNutrition"
@@ -20,6 +23,7 @@ export default function CuerpoPage() {
     const { toast } = useToast()
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [isAddFoodOpen, setIsAddFoodOpen] = useState(false)
+    const [isShoppingListOpen, setIsShoppingListOpen] = useState(false)
     const [activeMealType, setActiveMealType] = useState<string>(MealType.BREAKFAST)
 
     const { dailyLog, isLoading, refresh } = useNutrition(selectedDate)
@@ -98,6 +102,12 @@ export default function CuerpoPage() {
         }
     }
 
+    const handleQuickAdd = async (item: any) => {
+        // Reuse handleFoodAdded but set type appropriately if needed, or default to Breakfast for this mock
+        setActiveMealType(MealType.BREAKFAST)
+        await handleFoodAdded(item)
+    }
+
     const getMealData = (type: string) => {
         if (!dailyLog?.meals) return { calories: 0, items: [] }
         const meal = dailyLog.meals.find((m: any) => m.type === type)
@@ -125,7 +135,16 @@ export default function CuerpoPage() {
             {/* Date Selector */}
             <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
-                    <h1 className="font-bold text-lg">Diario</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="font-bold text-lg">Diario</h1>
+                        <button
+                            onClick={() => setIsShoppingListOpen(true)}
+                            className="p-1.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="Lista de Compras"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                        </button>
+                    </div>
                     <div className="flex items-center gap-1 text-xs text-orange-500 font-medium bg-orange-500/10 px-2 py-1 rounded-full">
                         <Flame className="w-3 h-3 fill-current" />
                         <span>Racha: 3 días</span>
@@ -180,6 +199,11 @@ export default function CuerpoPage() {
                     </div>
                 </div>
 
+                {/* Recommendations Carousel (New) */}
+                <RecommendationsCarousel
+                    onSelect={handleQuickAdd}
+                />
+
                 {/* Meal Sections */}
                 <div className="space-y-4">
                     {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((type) => {
@@ -198,12 +222,17 @@ export default function CuerpoPage() {
                 </div>
             </div>
 
+            <ShoppingListModal
+                isOpen={isShoppingListOpen}
+                onClose={() => setIsShoppingListOpen(false)}
+            />
+
             <AddFoodModal
                 isOpen={isAddFoodOpen}
                 onClose={() => setIsAddFoodOpen(false)}
                 mealType={activeMealType}
                 onAddFood={handleFoodAdded}
             />
-        </div>
+        </div >
     )
 }
