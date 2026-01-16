@@ -433,6 +433,8 @@ model Meal {
   protein     Int       @default(0)
   carbs       Int       @default(0)
   fats        Int       @default(0)
+  
+  createdAt   DateTime  @default(now())
 }
 
 model FoodEntry {
@@ -451,6 +453,8 @@ model FoodEntry {
   
   // Reference to original food DB item if we implement that later
   foodId      String? 
+  
+  createdAt   DateTime @default(now())
 }
 
 model KitchenItem {

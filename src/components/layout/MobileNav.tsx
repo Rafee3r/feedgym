@@ -31,8 +31,8 @@ export function MobileNav() {
 
     return (
         <>
-            {/* Floating Action Button - Hide on coach page */}
-            {pathname !== "/coach" && session?.user && (
+            {/* Floating Action Button - Only on Feed */}
+            {(pathname === "/" || pathname === "/following") && session?.user && (
                 <button
                     className="fab"
                     onClick={() => setIsComposerOpen(true)}

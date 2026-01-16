@@ -11,22 +11,114 @@ import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
 import { MealType } from "@/types"
 
+import { AddFoodModal } from "@/components/cuerpo/AddFoodModal"
+import { useNutrition } from "@/hooks/useNutrition"
+import { useToast } from "@/hooks/use-toast"
+
 export default function CuerpoPage() {
     const { data: session } = useSession()
+    const { toast } = useToast()
     const [selectedDate, setSelectedDate] = useState(new Date())
+    const [isAddFoodOpen, setIsAddFoodOpen] = useState(false)
+    const [activeMealType, setActiveMealType] = useState<string>(MealType.BREAKFAST)
+
+    const { dailyLog, isLoading, refresh } = useNutrition(selectedDate)
 
     const handleAddFood = (type: string) => {
-        // TODO: Open food search modal
-        console.log("Add food to", type)
+        setActiveMealType(type)
+        setIsAddFoodOpen(true)
     }
 
-    // Mock data for now until API is ready
-    const dailyStats = {
-        calories: { current: 1250, target: 2400 },
-        protein: { current: 85, target: 160 },
-        carbs: { current: 120, target: 280 },
-        fats: { current: 40, target: 70 },
+    const handleFoodAdded = async (foodItem: any) => {
+        try {
+            const res = await fetch("/api/nutrition/log", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    date: selectedDate,
+                    mealType: activeMealType,
+                    foodItem
+                })
+            })
+
+            if (res.ok) {
+                await refresh()
+                toast({
+                    title: "Alimento agregado",
+                    description: `${foodItem.name} (${foodItem.calories} kcal)`,
+                })
+            }
+        } catch (error) {
+            console.error("Failed to add food", error)
+        }
     }
+
+    const handleRecommend = async (type: string) => {
+        toast({
+            title: "IRON está pensando...",
+            description: "Analizando tu cocina y metas...",
+        })
+
+        try {
+            const res = await fetch("/api/ai/recommend-meal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ mealType: type })
+            })
+
+            if (res.ok) {
+                const suggestion = await res.json()
+
+                // Automatically add the suggestion
+                const addRes = await fetch("/api/nutrition/log", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        date: selectedDate,
+                        mealType: type,
+                        foodItem: suggestion
+                    })
+                })
+
+                if (addRes.ok) {
+                    await refresh()
+                    toast({
+                        title: "✨ Recomendación agregada",
+                        description: `IRON sugirió: ${suggestion.name}`,
+                        className: "bg-indigo-500 text-white border-none"
+                    })
+                }
+            }
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo generar una recomendación.",
+            })
+        }
+    }
+
+    const getMealData = (type: string) => {
+        if (!dailyLog?.meals) return { calories: 0, items: [] }
+        const meal = dailyLog.meals.find((m: any) => m.type === type)
+        return meal ? { calories: meal.calories, items: meal.items } : { calories: 0, items: [] }
+    }
+
+    // Default targets (could be fetched from user settings later)
+    const targets = {
+        calories: 2400,
+        protein: 160,
+        carbs: 280,
+        fats: 70
+    }
+
+    // Use real stats if available, otherwise 0
+    const stats = dailyLog ? {
+        calories: dailyLog.calories,
+        protein: dailyLog.protein,
+        carbs: dailyLog.carbs,
+        fats: dailyLog.fats
+    } : { calories: 0, protein: 0, carbs: 0, fats: 0 }
 
     return (
         <div className="max-w-2xl mx-auto pb-20">
@@ -46,11 +138,11 @@ export default function CuerpoPage() {
             </div>
 
             <div className="p-4 space-y-6">
-                {/* Hero Card - Macro Circle Placeholder */}
+                {/* Hero Card - Macro Circle */}
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="font-bold text-lg">Resumen Diario</h2>
-                        <button className="text-sm text-primary flex items-center gap-1">
+                        <button className="text-sm text-primary flex items-center gap-1 hover:underline">
                             <Calculator className="w-4 h-4" />
                             Ajustar Metas
                         </button>
@@ -58,31 +150,31 @@ export default function CuerpoPage() {
 
                     <div className="flex justify-center py-4">
                         <MacroCircle
-                            currentCalories={dailyStats.calories.current}
-                            targetCalories={dailyStats.calories.target}
+                            currentCalories={stats.calories}
+                            targetCalories={targets.calories}
                         />
                     </div>
 
                     <div className="grid grid-cols-3 gap-4 mt-6 text-center">
                         <div>
                             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Proteína</p>
-                            <p className="font-bold text-lg">{dailyStats.protein.current} / {dailyStats.protein.target}g</p>
+                            <p className="font-bold text-lg">{stats.protein} / {targets.protein}g</p>
                             <div className="h-1.5 w-full bg-muted rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(dailyStats.protein.current / dailyStats.protein.target) * 100}%` }} />
+                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(100, (stats.protein / targets.protein) * 100)}%` }} />
                             </div>
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Carbs</p>
-                            <p className="font-bold text-lg">{dailyStats.carbs.current} / {dailyStats.carbs.target}g</p>
+                            <p className="font-bold text-lg">{stats.carbs} / {targets.carbs}g</p>
                             <div className="h-1.5 w-full bg-muted rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${(dailyStats.carbs.current / dailyStats.carbs.target) * 100}%` }} />
+                                <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${Math.min(100, (stats.carbs / targets.carbs) * 100)}%` }} />
                             </div>
                         </div>
                         <div>
                             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Grasas</p>
-                            <p className="font-bold text-lg">{dailyStats.fats.current} / {dailyStats.fats.target}g</p>
+                            <p className="font-bold text-lg">{stats.fats} / {targets.fats}g</p>
                             <div className="h-1.5 w-full bg-muted rounded-full mt-1 overflow-hidden">
-                                <div className="h-full bg-red-500 rounded-full" style={{ width: `${(dailyStats.fats.current / dailyStats.fats.target) * 100}%` }} />
+                                <div className="h-full bg-red-500 rounded-full" style={{ width: `${Math.min(100, (stats.fats / targets.fats) * 100)}%` }} />
                             </div>
                         </div>
                     </div>
@@ -90,28 +182,28 @@ export default function CuerpoPage() {
 
                 {/* Meal Sections */}
                 <div className="space-y-4">
-                    <MealCard
-                        type={MealType.BREAKFAST}
-                        calories={450}
-                        onAddFood={() => handleAddFood(MealType.BREAKFAST)}
-                    />
-                    <MealCard
-                        type={MealType.LUNCH}
-                        calories={600}
-                        onAddFood={() => handleAddFood(MealType.LUNCH)}
-                    />
-                    <MealCard
-                        type={MealType.DINNER}
-                        calories={0}
-                        onAddFood={() => handleAddFood(MealType.DINNER)}
-                    />
-                    <MealCard
-                        type={MealType.SNACK}
-                        calories={200}
-                        onAddFood={() => handleAddFood(MealType.SNACK)}
-                    />
+                    {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((type) => {
+                        const data = getMealData(type)
+                        return (
+                            <MealCard
+                                key={type}
+                                type={type}
+                                calories={data.calories}
+                                items={data.items}
+                                onAddFood={() => handleAddFood(type)}
+                                onRecommend={() => handleRecommend(type)}
+                            />
+                        )
+                    })}
                 </div>
             </div>
+
+            <AddFoodModal
+                isOpen={isAddFoodOpen}
+                onClose={() => setIsAddFoodOpen(false)}
+                mealType={activeMealType}
+                onAddFood={handleFoodAdded}
+            />
         </div>
     )
 }

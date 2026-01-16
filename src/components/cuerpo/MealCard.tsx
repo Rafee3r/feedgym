@@ -1,6 +1,7 @@
+
 "use client"
 
-import { Plus } from "lucide-react"
+import { Plus, Wand2 } from "lucide-react"
 import { MealType } from "@/types"
 import { cn } from "@/lib/utils"
 
@@ -9,6 +10,7 @@ interface MealCardProps {
     calories: number
     items?: any[]
     onAddFood: () => void
+    onRecommend?: () => void
     className?: string
 }
 
@@ -17,15 +19,20 @@ export function MealCard({
     calories,
     items = [],
     onAddFood,
+    onRecommend,
     className
 }: MealCardProps) {
 
     const getMealLabel = (type: string) => {
         switch (type) {
-            case "BREAKFAST": return "Desayuno"
-            case "LUNCH": return "Almuerzo"
-            case "DINNER": return "Cena"
-            case "SNACK": return "Snack"
+            case "BREAKFAST":
+            case MealType.BREAKFAST: return "Desayuno"
+            case "LUNCH":
+            case MealType.LUNCH: return "Almuerzo"
+            case "DINNER":
+            case MealType.DINNER: return "Cena"
+            case "SNACK":
+            case MealType.SNACK: return "Snack"
             default: return type
         }
     }
@@ -35,17 +42,24 @@ export function MealCard({
             <div className="p-4 flex items-center justify-between">
                 <div>
                     <h3 className="font-semibold text-lg">{getMealLabel(type as string)}</h3>
-                    <p className="text-sm text-muted-foreground font-medium">
-                        {calories} <span className="text-xs">kcal</span>
-                    </p>
+                    <p className="text-sm text-muted-foreground font-medium">{calories} <span className="text-xs">kcal</span></p>
                 </div>
-
-                <button
-                    onClick={onAddFood}
-                    className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
-                >
-                    <Plus className="w-5 h-5" />
-                </button>
+                <div className="flex gap-2">
+                    {onRecommend && (
+                        <button
+                            onClick={onRecommend}
+                            className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center hover:bg-indigo-500 hover:text-white transition-all active:scale-95"
+                            title="Recomendación IA (IRON)"
+                        >
+                            <Wand2 className="w-4 h-4" />
+                        </button>
+                    )}
+                    <button
+                        onClick={onAddFood}
+                        className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all active:scale-95">
+                        <Plus className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
 
             {/* Food Items List (hidden if empty) */}
