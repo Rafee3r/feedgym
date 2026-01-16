@@ -121,13 +121,13 @@ export async function GET(request: Request) {
             },
             include: {
                 meals: {
-                    include: { foodEntries: true },
+                    include: { items: true },
                 },
             },
         })
 
         const yesterdayMeals = yesterdayLog?.meals?.flatMap((m) =>
-            m.foodEntries.map((f) => ({
+            m.items.map((f) => ({
                 name: f.name,
                 mealType: m.type,
                 calories: f.calories,
