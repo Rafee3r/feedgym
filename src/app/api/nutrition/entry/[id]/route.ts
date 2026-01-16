@@ -5,15 +5,14 @@ import { prisma } from "@/lib/prisma"
 // DELETE: Remove a food entry
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id: entryId } = await params
         const session = await auth()
         if (!session?.user?.id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
-
-        const entryId = params.id
 
         // Verify ownership via meal -> dailyLog -> user
         const entry = await prisma.foodEntry.findUnique({
