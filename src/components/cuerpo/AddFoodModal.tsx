@@ -12,7 +12,7 @@ interface Meal {
     calories: number
     protein: number
     carbs: number
-    fat: number
+    fats: number
     tags: string[]
     prepTime: number
 }
@@ -23,7 +23,7 @@ interface YesterdayMeal {
     calories: number
     protein: number
     carbs: number
-    fat: number
+    fats: number
 }
 
 interface AddFoodModalProps {
@@ -77,7 +77,7 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                 calories: meal.calories,
                 protein: meal.protein,
                 carbs: meal.carbs,
-                fat: meal.fat,
+                fats: meal.fats,
                 mealType,
             })
             onClose()
