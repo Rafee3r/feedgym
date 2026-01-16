@@ -83,6 +83,10 @@ model User {
   notificationsSent Notification[] @relation("actor")
   coachMessages  CoachMessage[]
   
+  // Nutrition (Cuerpo)
+  dailyLogs      DailyLog[]
+  kitchenItems   KitchenItem[]
+  
   @@index([username])
   @@index([email])
   @@index([createdAt])
@@ -381,4 +385,84 @@ model CoachMessage {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// ============================================
+// NUTRITION MODELS (PROYECTO CUERPO)
+// ============================================
+
+model DailyLog {
+  id        String   @id @default(cuid())
+  date      DateTime // normalized to midnight
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Metrics for that specific day
+  calories  Int      @default(0)
+  protein   Int      @default(0)
+  carbs     Int      @default(0)
+  fats      Int      @default(0)
+  water     Int      @default(0) // in ml
+
+  meals     Meal[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+model Meal {
+  id          String    @id @default(cuid())
+  type        MealType
+  dailyLogId  String
+  dailyLog    DailyLog  @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  
+  items       FoodEntry[]
+  
+  // Computed totals for the meal
+  calories    Int       @default(0)
+  protein     Int       @default(0)
+  carbs       Int       @default(0)
+  fats        Int       @default(0)
+}
+
+model FoodEntry {
+  id          String   @id @default(cuid())
+  mealId      String
+  meal        Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  
+  name        String
+  calories    Int
+  protein     Int
+  carbs       Int
+  fats        Int
+  
+  portion     Float    // e.g. 1.5
+  unit        String   // e.g. "cup", "g", "serving"
+  
+  // Reference to original food DB item if we implement that later
+  foodId      String? 
+}
+
+model KitchenItem {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name        String
+  category    String?  // "Protein", "Carb", "Veggie", etc.
+  quantity    String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
 }

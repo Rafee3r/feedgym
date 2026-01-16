@@ -6,6 +6,7 @@ import {
     GoalType,
     WeightUnit,
     NotificationType,
+    MealType,
 } from "@prisma/client";
 
 // Re-export enums for client use
@@ -17,6 +18,7 @@ export {
     GoalType,
     WeightUnit,
     NotificationType,
+    MealType,
 };
 
 // User types
