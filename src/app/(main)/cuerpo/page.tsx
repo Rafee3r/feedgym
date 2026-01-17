@@ -35,13 +35,68 @@ export default function CuerpoPage() {
     // Streak state (would be from API in production)
     const [streak, setStreak] = useState(3)
 
-    // User targets (would be from API/user settings)
+    // User targets - calculated based on weight and goal
     const [targets, setTargets] = useState({
-        calories: 2400,
-        protein: 160,
-        carbs: 280,
-        fats: 70
+        calories: 2000,
+        protein: 140,
+        carbs: 250,
+        fats: 65
     })
+
+    // Fetch user profile and calculate personalized targets
+    useEffect(() => {
+        const fetchUserAndCalculateTargets = async () => {
+            try {
+                const res = await fetch('/api/user/profile')
+                if (!res.ok) return
+
+                const user = await res.json()
+                const weight = user.weight || 70 // kg
+                const goal = user.goal || 'MAINTAIN'
+
+                // Calculate BMR using Mifflin-St Jeor (simplified, assuming moderate activity)
+                // Men: BMR = 10 × weight + 6.25 × height − 5 × age + 5
+                // Simplified: ~24 kcal per kg bodyweight × activity factor (1.5)
+                const baseTDEE = weight * 24 * 1.5
+
+                let targetCalories: number
+                let proteinPerKg: number
+
+                switch (goal) {
+                    case 'CUT':
+                        // Deficit: -500 kcal, high protein to preserve muscle
+                        targetCalories = Math.round(baseTDEE - 500)
+                        proteinPerKg = 2.2 // Higher protein during cut
+                        break
+                    case 'BULK':
+                        // Surplus: +300-500 kcal for lean gains
+                        targetCalories = Math.round(baseTDEE + 400)
+                        proteinPerKg = 1.8
+                        break
+                    default: // MAINTAIN
+                        targetCalories = Math.round(baseTDEE)
+                        proteinPerKg = 2.0
+                }
+
+                const protein = Math.round(weight * proteinPerKg)
+                // Fats: ~25-30% of calories
+                const fats = Math.round((targetCalories * 0.25) / 9)
+                // Carbs: remaining calories
+                const carbs = Math.round((targetCalories - (protein * 4) - (fats * 9)) / 4)
+
+                setTargets({
+                    calories: targetCalories,
+                    protein: Math.max(protein, 100), // minimum 100g
+                    carbs: Math.max(carbs, 100), // minimum 100g
+                    fats: Math.max(fats, 40) // minimum 40g
+                })
+            } catch (error) {
+                console.error('Failed to fetch user profile:', error)
+            }
+        }
+
+        fetchUserAndCalculateTargets()
+    }, [])
 
     const handleAddFood = (type: string) => {
         setActiveMealType(type)
