@@ -332,13 +332,20 @@ export default function CuerpoPage() {
 }
 
 // Macro Settings Form Component
+interface MacroTargets {
+    calories: number
+    protein: number
+    carbs: number
+    fats: number
+}
+
 function MacroSettingsForm({
     targets,
     onSave,
     onCancel
 }: {
-    targets: { calories: number; protein: number; carbs: number; fats: number }
-    onSave: (targets: typeof targets) => void
+    targets: MacroTargets
+    onSave: (newTargets: MacroTargets) => void
     onCancel: () => void
 }) {
     const [values, setValues] = useState(targets)
