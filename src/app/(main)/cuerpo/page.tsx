@@ -75,7 +75,7 @@ export default function CuerpoPage() {
     const handleQuickAdd = async (item: any) => {
         // Determine meal type based on time
         const hour = new Date().getHours()
-        let mealType = MealType.BREAKFAST
+        let mealType: MealType = MealType.BREAKFAST
         if (hour >= 11 && hour < 15) mealType = MealType.LUNCH
         else if (hour >= 15 && hour < 18) mealType = MealType.SNACK
         else if (hour >= 18) mealType = MealType.DINNER
