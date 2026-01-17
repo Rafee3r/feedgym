@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Calculator, Flame, Camera, Settings2, Target } from "lucide-react"
-import { MacroCircle } from "@/components/cuerpo/MacroCircle"
+import { Flame, Camera, Settings2, ShoppingCart, Heart, Clock, ChefHat, X, BookmarkPlus } from "lucide-react"
 import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
 import { RecommendationsCarousel } from "@/components/cuerpo/RecommendationsCarousel"
 import { ShoppingListModal } from "@/components/cuerpo/ShoppingListModal"
 import { MealType } from "@/types"
-import { ShoppingCart } from "lucide-react"
 import { AddFoodModal } from "@/components/cuerpo/AddFoodModal"
 import { useNutrition } from "@/hooks/useNutrition"
 import { useToast } from "@/hooks/use-toast"
@@ -21,6 +19,20 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
+// Recipe detail type
+interface RecipeDetail {
+    id: string
+    name: string
+    calories: number
+    protein: number
+    carbs: number
+    fats: number
+    prepTime: number
+    ingredients: string[]
+    instructions: string[]
+    tags: string[]
+}
+
 export default function CuerpoPage() {
     const { data: session } = useSession()
     const { toast } = useToast()
@@ -28,12 +40,31 @@ export default function CuerpoPage() {
     const [isAddFoodOpen, setIsAddFoodOpen] = useState(false)
     const [isShoppingListOpen, setIsShoppingListOpen] = useState(false)
     const [isMacroSettingsOpen, setIsMacroSettingsOpen] = useState(false)
-    const [activeMealType, setActiveMealType] = useState<string>(MealType.BREAKFAST)
+    const [activeMealType, setActiveMealType] = useState<MealType>(MealType.BREAKFAST)
+
+    // Recipe detail modal
+    const [selectedRecipe, setSelectedRecipe] = useState<RecipeDetail | null>(null)
+    const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false)
 
     const { dailyLog, isLoading, refresh } = useNutrition(selectedDate)
 
-    // Streak state (would be from API in production)
-    const [streak, setStreak] = useState(3)
+    // Nutrition streak - fetch from API
+    const [streak, setStreak] = useState(0)
+
+    useEffect(() => {
+        const fetchStreak = async () => {
+            try {
+                const res = await fetch('/api/nutrition/streak')
+                if (res.ok) {
+                    const data = await res.json()
+                    setStreak(data.streak || 0)
+                }
+            } catch (error) {
+                console.error('Failed to fetch streak:', error)
+            }
+        }
+        fetchStreak()
+    }, [selectedDate])
 
     // User targets - calculated based on weight and goal
     const [targets, setTargets] = useState({
@@ -51,12 +82,9 @@ export default function CuerpoPage() {
                 if (!res.ok) return
 
                 const user = await res.json()
-                const weight = user.weight || 70 // kg
+                const weight = user.weight || 70
                 const goal = user.goal || 'MAINTAIN'
 
-                // Calculate BMR using Mifflin-St Jeor (simplified, assuming moderate activity)
-                // Men: BMR = 10 × weight + 6.25 × height − 5 × age + 5
-                // Simplified: ~24 kcal per kg bodyweight × activity factor (1.5)
                 const baseTDEE = weight * 24 * 1.5
 
                 let targetCalories: number
@@ -64,31 +92,27 @@ export default function CuerpoPage() {
 
                 switch (goal) {
                     case 'CUT':
-                        // Deficit: -500 kcal, high protein to preserve muscle
                         targetCalories = Math.round(baseTDEE - 500)
-                        proteinPerKg = 2.2 // Higher protein during cut
+                        proteinPerKg = 2.2
                         break
                     case 'BULK':
-                        // Surplus: +300-500 kcal for lean gains
                         targetCalories = Math.round(baseTDEE + 400)
                         proteinPerKg = 1.8
                         break
-                    default: // MAINTAIN
+                    default:
                         targetCalories = Math.round(baseTDEE)
                         proteinPerKg = 2.0
                 }
 
                 const protein = Math.round(weight * proteinPerKg)
-                // Fats: ~25-30% of calories
                 const fats = Math.round((targetCalories * 0.25) / 9)
-                // Carbs: remaining calories
                 const carbs = Math.round((targetCalories - (protein * 4) - (fats * 9)) / 4)
 
                 setTargets({
                     calories: targetCalories,
-                    protein: Math.max(protein, 100), // minimum 100g
-                    carbs: Math.max(carbs, 100), // minimum 100g
-                    fats: Math.max(fats, 40) // minimum 40g
+                    protein: Math.max(protein, 100),
+                    carbs: Math.max(carbs, 100),
+                    fats: Math.max(fats, 40)
                 })
             } catch (error) {
                 console.error('Failed to fetch user profile:', error)
@@ -98,7 +122,7 @@ export default function CuerpoPage() {
         fetchUserAndCalculateTargets()
     }, [])
 
-    const handleAddFood = (type: string) => {
+    const handleAddFood = (type: MealType) => {
         setActiveMealType(type)
         setIsAddFoodOpen(true)
     }
@@ -127,8 +151,56 @@ export default function CuerpoPage() {
         }
     }
 
+    // Handle clicking on a recommended meal - show recipe details
+    const handleMealClick = async (meal: any) => {
+        // Generate recipe details (in production, fetch from API)
+        const recipeDetail: RecipeDetail = {
+            id: meal.id,
+            name: meal.name,
+            calories: meal.calories,
+            protein: meal.protein,
+            carbs: meal.carbs,
+            fats: meal.fats,
+            prepTime: meal.prepTime || 15,
+            ingredients: generateIngredients(meal.name),
+            instructions: generateInstructions(meal.name),
+            tags: meal.tags || []
+        }
+        setSelectedRecipe(recipeDetail)
+        setIsRecipeModalOpen(true)
+    }
+
+    // Add recipe to log
+    const handleAddRecipeToLog = async () => {
+        if (!selectedRecipe) return
+
+        await handleFoodAdded({
+            name: selectedRecipe.name,
+            calories: selectedRecipe.calories,
+            protein: selectedRecipe.protein,
+            carbs: selectedRecipe.carbs,
+            fats: selectedRecipe.fats,
+        })
+        setIsRecipeModalOpen(false)
+    }
+
+    // Save recipe to favorites
+    const handleSaveToFavorites = async () => {
+        if (!selectedRecipe) return
+
+        try {
+            await fetch('/api/nutrition/favorites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipeId: selectedRecipe.id, name: selectedRecipe.name })
+            })
+            toast({ title: "💜 Agregado a favoritos" })
+        } catch (error) {
+            console.error('Failed to save favorite:', error)
+        }
+    }
+
     const handleQuickAdd = async (item: any) => {
-        // Determine meal type based on time
         const hour = new Date().getHours()
         let mealType: MealType = MealType.BREAKFAST
         if (hour >= 11 && hour < 15) mealType = MealType.LUNCH
@@ -136,16 +208,12 @@ export default function CuerpoPage() {
         else if (hour >= 18) mealType = MealType.DINNER
 
         setActiveMealType(mealType)
-        await handleFoodAdded({
-            name: item.name,
-            calories: item.calories,
-            protein: item.protein,
-            carbs: item.carbs,
-            fats: item.fats,
-        })
+
+        // Show recipe detail instead of adding directly
+        handleMealClick(item)
     }
 
-    const handleRecommend = async (type: string) => {
+    const handleRecommend = async (type: MealType) => {
         toast({
             title: "IRON está pensando...",
             description: "Armando tu comida ideal...",
@@ -160,11 +228,7 @@ export default function CuerpoPage() {
 
             if (res.ok) {
                 const suggestion = await res.json()
-                await handleFoodAdded(suggestion)
-                toast({
-                    title: "✨ Comida armada",
-                    description: suggestion.name,
-                })
+                handleMealClick(suggestion)
             }
         } catch (error) {
             toast({
@@ -207,26 +271,24 @@ export default function CuerpoPage() {
                     }
                 })
             })
+            toast({ title: "Repetido para mañana" })
         } catch (error) {
             console.error("Failed to repeat entry", error)
         }
     }
 
     const handleScanFood = () => {
-        // Open camera/scan modal
-        setActiveMealType(MealType.BREAKFAST) // Default
+        setActiveMealType(MealType.BREAKFAST)
         setIsAddFoodOpen(true)
-        // Could navigate to camera tab directly
     }
 
-    const handleSaveMacros = (newTargets: typeof targets) => {
+    const handleSaveMacros = (newTargets: MacroTargets) => {
         setTargets(newTargets)
         setIsMacroSettingsOpen(false)
         toast({ title: "Metas actualizadas" })
-        // In production: save to API
     }
 
-    const getMealData = (type: string) => {
+    const getMealData = (type: MealType) => {
         if (!dailyLog?.meals) return { calories: 0, items: [] }
         const meal = dailyLog.meals.find((m: any) => m.type === type)
         return meal ? { calories: meal.calories, items: meal.items } : { calories: 0, items: [] }
@@ -240,9 +302,12 @@ export default function CuerpoPage() {
     } : { calories: 0, protein: 0, carbs: 0, fats: 0 }
 
     return (
-        <div className="min-h-screen bg-background pb-24">
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-20 bg-background border-b border-border">
+        <div className="min-h-screen bg-background">
+            {/* Sticky Header with PWA Safe Area */}
+            <div
+                className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border"
+                style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+            >
                 {/* Top Bar */}
                 <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -254,18 +319,18 @@ export default function CuerpoPage() {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                         <button
                             onClick={handleScanFood}
-                            className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            title="Escanear comida"
+                            className="p-2.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Escanear comida"
                         >
                             <Camera className="w-5 h-5" />
                         </button>
                         <button
                             onClick={() => setIsShoppingListOpen(true)}
-                            className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            title="Lista de compras"
+                            className="p-2.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            aria-label="Lista de compras"
                         >
                             <ShoppingCart className="w-5 h-5" />
                         </button>
@@ -279,14 +344,17 @@ export default function CuerpoPage() {
                 />
             </div>
 
-            {/* Main Content */}
-            <div className="max-w-2xl mx-auto px-4 py-4 space-y-5">
-                {/* Macro Summary Card - Minimalist */}
+            {/* Main Content with proper bottom padding for PWA */}
+            <div
+                className="max-w-lg mx-auto px-4 py-4 space-y-5"
+                style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
+            >
+                {/* Macro Summary Card */}
                 <div className="bg-card border border-border rounded-2xl p-5">
                     <div className="flex items-start justify-between mb-4">
                         <div>
                             <h2 className="font-semibold text-sm text-muted-foreground">Resumen del día</h2>
-                            <p className="text-3xl font-bold">
+                            <p className="text-3xl font-bold tabular-nums">
                                 {stats.calories}
                                 <span className="text-lg text-muted-foreground font-normal"> / {targets.calories}</span>
                             </p>
@@ -295,13 +363,13 @@ export default function CuerpoPage() {
                         <button
                             onClick={() => setIsMacroSettingsOpen(true)}
                             className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            title="Ajustar metas"
+                            aria-label="Ajustar metas"
                         >
                             <Settings2 className="w-5 h-5" />
                         </button>
                     </div>
 
-                    {/* Macro Bars - Clean Style */}
+                    {/* Macro Bars */}
                     <div className="space-y-3">
                         {[
                             { label: "Proteína", current: stats.protein, target: targets.protein, color: "bg-blue-500", unit: "g" },
@@ -311,13 +379,13 @@ export default function CuerpoPage() {
                             <div key={macro.label} className="space-y-1">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-muted-foreground">{macro.label}</span>
-                                    <span className="font-medium">
+                                    <span className="font-medium tabular-nums">
                                         {macro.current} <span className="text-muted-foreground">/ {macro.target}{macro.unit}</span>
                                     </span>
                                 </div>
                                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                                     <div
-                                        className={cn("h-full rounded-full transition-all", macro.color)}
+                                        className={cn("h-full rounded-full transition-all duration-500", macro.color)}
                                         style={{ width: `${Math.min(100, (macro.current / macro.target) * 100)}%` }}
                                     />
                                 </div>
@@ -371,7 +439,7 @@ export default function CuerpoPage() {
                 <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Target className="w-5 h-5 text-primary" />
+                            <Settings2 className="w-5 h-5 text-primary" />
                             Ajustar metas
                         </DialogTitle>
                     </DialogHeader>
@@ -382,8 +450,168 @@ export default function CuerpoPage() {
                     />
                 </DialogContent>
             </Dialog>
+
+            {/* Recipe Detail Modal */}
+            <Dialog open={isRecipeModalOpen} onOpenChange={setIsRecipeModalOpen}>
+                <DialogContent className="sm:max-w-md max-h-[85vh] p-0 gap-0 overflow-hidden">
+                    {selectedRecipe && (
+                        <>
+                            {/* Header */}
+                            <div className="p-4 border-b border-border">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                        <h2 className="font-bold text-lg">{selectedRecipe.name}</h2>
+                                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                                            <span className="flex items-center gap-1">
+                                                <Clock className="w-4 h-4" />
+                                                {selectedRecipe.prepTime} min
+                                            </span>
+                                            <span className="text-orange-500 font-medium">
+                                                {selectedRecipe.calories} kcal
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleSaveToFavorites}
+                                        className="p-2 hover:bg-accent rounded-lg transition-colors"
+                                    >
+                                        <Heart className="w-5 h-5 text-muted-foreground hover:text-red-500" />
+                                    </button>
+                                </div>
+
+                                {/* Macros Row */}
+                                <div className="flex gap-4 mt-3">
+                                    {[
+                                        { label: "Prot", value: selectedRecipe.protein, color: "text-blue-500" },
+                                        { label: "Carbs", value: selectedRecipe.carbs, color: "text-amber-500" },
+                                        { label: "Grasas", value: selectedRecipe.fats, color: "text-rose-500" },
+                                    ].map((m) => (
+                                        <div key={m.label} className="text-center">
+                                            <p className={cn("font-bold", m.color)}>{m.value}g</p>
+                                            <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[50vh]">
+                                {/* Ingredients */}
+                                <div>
+                                    <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                        <ShoppingCart className="w-4 h-4" />
+                                        Ingredientes
+                                    </h3>
+                                    <ul className="space-y-1.5">
+                                        {selectedRecipe.ingredients.map((ing, i) => (
+                                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                                                <span className="text-primary">•</span>
+                                                {ing}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {/* Instructions */}
+                                <div>
+                                    <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                        <ChefHat className="w-4 h-4" />
+                                        Preparación
+                                    </h3>
+                                    <ol className="space-y-2">
+                                        {selectedRecipe.instructions.map((step, i) => (
+                                            <li key={i} className="text-sm text-muted-foreground flex gap-3">
+                                                <span className="font-bold text-foreground shrink-0">{i + 1}.</span>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="p-4 border-t border-border flex gap-2">
+                                <button
+                                    onClick={handleSaveToFavorites}
+                                    className="flex-1 py-3 flex items-center justify-center gap-2 border border-border rounded-xl text-sm font-medium hover:bg-accent transition-colors"
+                                >
+                                    <BookmarkPlus className="w-4 h-4" />
+                                    Guardar receta
+                                </button>
+                                <button
+                                    onClick={handleAddRecipeToLog}
+                                    className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                                >
+                                    Agregar al diario
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
+}
+
+// Helper functions to generate recipe details
+function generateIngredients(mealName: string): string[] {
+    const commonIngredients: Record<string, string[]> = {
+        default: ["Ingredientes según preferencia", "Sal y pimienta al gusto", "Aceite de oliva"]
+    }
+
+    if (mealName.toLowerCase().includes("huevo")) {
+        return ["2 huevos", "1 cucharada de aceite", "Sal y pimienta", "Hierbas al gusto"]
+    }
+    if (mealName.toLowerCase().includes("avena")) {
+        return ["1/2 taza de avena", "1 taza de leche", "1 plátano", "Miel al gusto", "Canela"]
+    }
+    if (mealName.toLowerCase().includes("pollo")) {
+        return ["200g de pechuga de pollo", "Limón", "Ajo", "Especias al gusto", "Aceite de oliva"]
+    }
+    if (mealName.toLowerCase().includes("ensalada")) {
+        return ["Lechuga fresca", "Tomate", "Pepino", "Aceite de oliva", "Vinagre balsámico"]
+    }
+    if (mealName.toLowerCase().includes("batido") || mealName.toLowerCase().includes("proteína")) {
+        return ["1 scoop de proteína", "1 taza de leche", "1 plátano", "Hielo", "Mantequilla de maní (opcional)"]
+    }
+
+    return commonIngredients.default
+}
+
+function generateInstructions(mealName: string): string[] {
+    if (mealName.toLowerCase().includes("huevo")) {
+        return [
+            "Calienta el aceite en una sartén a fuego medio",
+            "Bate los huevos con sal y pimienta",
+            "Vierte en la sartén y revuelve suavemente",
+            "Cocina hasta obtener la textura deseada",
+            "Sirve inmediatamente"
+        ]
+    }
+    if (mealName.toLowerCase().includes("avena")) {
+        return [
+            "Calienta la leche en una olla",
+            "Agrega la avena y cocina a fuego medio 5 minutos",
+            "Revuelve ocasionalmente",
+            "Sirve con plátano en rodajas y miel",
+            "Espolvorea canela al gusto"
+        ]
+    }
+    if (mealName.toLowerCase().includes("batido") || mealName.toLowerCase().includes("proteína")) {
+        return [
+            "Agrega todos los ingredientes a la licuadora",
+            "Licúa por 30-45 segundos hasta que esté suave",
+            "Ajusta la consistencia con más leche si es necesario",
+            "Sirve inmediatamente"
+        ]
+    }
+
+    return [
+        "Prepara todos los ingredientes",
+        "Sigue las instrucciones del paquete o receta base",
+        "Cocina hasta que esté listo",
+        "Sirve y disfruta"
+    ]
 }
 
 // Macro Settings Form Component
@@ -419,7 +647,7 @@ function MacroSettingsForm({
                         <input
                             type="number"
                             step={field.step}
-                            value={values[field.key as keyof typeof values]}
+                            value={values[field.key as keyof MacroTargets]}
                             onChange={(e) => setValues(v => ({ ...v, [field.key]: parseInt(e.target.value) || 0 }))}
                             className="flex-1 px-3 py-2 bg-muted border border-border rounded-lg text-sm"
                         />

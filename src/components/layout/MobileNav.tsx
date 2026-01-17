@@ -58,8 +58,11 @@ export function MobileNav() {
                 </DialogContent>
             </Dialog>
 
-            {/* Bottom Navigation */}
-            <nav className="mobile-nav z-50">
+            {/* Bottom Navigation with PWA Safe Area */}
+            <nav
+                className="mobile-nav z-50"
+                style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            >
                 {navItems.map((item) => {
                     const isActive = pathname === item.href
                     return (
