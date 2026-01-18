@@ -14,9 +14,9 @@ const IRON_BOT_AVATAR = null // Will show "I" fallback
 // Generate IRON's reply to a post mentioning @IRON
 async function generateIronReply(postId: string, postContent: string, userId: string) {
     try {
-        // Get or create IRON bot user
+        // Get or create IRON bot user (case-insensitive search)
         let ironUser = await prisma.user.findFirst({
-            where: { username: "IRON" }
+            where: { username: { equals: "iron", mode: "insensitive" } }
         })
 
         if (!ironUser) {
@@ -24,10 +24,10 @@ async function generateIronReply(postId: string, postContent: string, userId: st
             ironUser = await prisma.user.create({
                 data: {
                     email: "iron@feedgym.bot",
-                    username: "IRON",
+                    username: "iron",
                     displayName: "IRON",
-                    bio: "Soy IRON. No busco caerte bien. Busco que progreses. 🤖 Bot AI Coach.",
-                    avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000",
+                    bio: "Tu coach virtual. Sin excusas. Solo resultados.",
+                    avatarUrl: null,
                     goal: "MAINTAIN",
                     onboardingCompleted: true,
                 }
