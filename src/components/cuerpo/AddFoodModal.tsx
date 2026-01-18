@@ -70,6 +70,7 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
     const [addingId, setAddingId] = useState<string | null>(null)
     const [isScanning, setIsScanning] = useState(false)
     const [isGeneratingAI, setIsGeneratingAI] = useState(false)
+    const [isAISuggestion, setIsAISuggestion] = useState(false)
 
     // Recipe detail view state
     const [selectedRecipe, setSelectedRecipe] = useState<RecipeDetail | null>(null)
@@ -336,25 +337,47 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
     }
 
     // AI Generate meal suggestion
-    const handleAIGenerate = async () => {
+    const handleAIGenerate = async (simpler = false) => {
         setIsGeneratingAI(true)
-        setViewMode('list')
         try {
             const res = await fetch('/api/ai/recommend-meal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mealType, goal: userGoal })
+                body: JSON.stringify({ mealType, goal: userGoal, simpler })
             })
 
             if (res.ok) {
                 const suggestion = await res.json()
-                handleShowDetails(suggestion)
+                const recipeDetail: RecipeDetail = {
+                    name: suggestion.name,
+                    calories: suggestion.calories,
+                    protein: suggestion.protein,
+                    carbs: suggestion.carbs,
+                    fats: suggestion.fats,
+                    prepTime: suggestion.prepTime || 15,
+                    ingredients: generateIngredients(suggestion.name),
+                    instructions: generateInstructions(suggestion.name),
+                    tags: suggestion.tags || []
+                }
+                setSelectedRecipe(recipeDetail)
+                setIsAISuggestion(true)
+                setViewMode('detail')
             }
         } catch (error) {
             console.error('AI generate failed:', error)
         } finally {
             setIsGeneratingAI(false)
         }
+    }
+
+    // Handle simpler option (quicker recipe)
+    const handleSimpler = () => {
+        handleAIGenerate(true)
+    }
+
+    // Handle regenerate (new suggestion)
+    const handleRegenerate = () => {
+        handleAIGenerate(false)
     }
 
     const getMealLabel = (type: string) => {
@@ -690,7 +713,7 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                                 </button>
 
                                 <button
-                                    onClick={handleAIGenerate}
+                                    onClick={() => handleAIGenerate()}
                                     disabled={isScanning || isGeneratingAI}
                                     className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                                 >
@@ -848,6 +871,40 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                                     </ol>
                                 </div>
                             </div>
+
+                            {/* AI Suggestion buttons - only show for AI generated recipes */}
+                            {isAISuggestion && (
+                                <div className="p-4 border-t border-border flex gap-2 shrink-0">
+                                    <button
+                                        onClick={handleSimpler}
+                                        disabled={isGeneratingAI}
+                                        className="flex-1 py-2.5 flex items-center justify-center gap-2 border border-amber-500/50 bg-amber-500/10 text-amber-500 rounded-xl text-sm font-medium hover:bg-amber-500/20 transition-colors disabled:opacity-50"
+                                    >
+                                        {isGeneratingAI ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Clock className="w-4 h-4" />
+                                                Algo más simple
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={handleRegenerate}
+                                        disabled={isGeneratingAI}
+                                        className="flex-1 py-2.5 flex items-center justify-center gap-2 border border-primary/50 bg-primary/10 text-primary rounded-xl text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
+                                    >
+                                        {isGeneratingAI ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <>
+                                                <RefreshCw className="w-4 h-4" />
+                                                Otra sugerencia
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Action Buttons */}
                             <div className="p-4 border-t border-border flex gap-2 shrink-0">
