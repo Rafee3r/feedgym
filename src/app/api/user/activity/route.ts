@@ -72,13 +72,24 @@ export async function GET(request: NextRequest) {
         // Map days to status - use day NAMES to match trainingDays format
         const trainingDays = user?.trainingDays || []
 
+        // Helper to convert UTC date to Santiago timezone date components
+        function getDateInSantiago(utcDate: Date): { date: number, month: number, year: number } {
+            const santiagoString = utcDate.toLocaleString("en-US", { timeZone: "America/Santiago" })
+            const d = new Date(santiagoString)
+            return { date: d.getDate(), month: d.getMonth(), year: d.getFullYear() }
+        }
+
         const activity = days.map((day) => {
-            const hasPost = posts.some(
-                (post) =>
-                    post.createdAt.getDate() === day.getDate() &&
-                    post.createdAt.getMonth() === day.getMonth() &&
-                    post.createdAt.getFullYear() === day.getFullYear()
-            )
+            const dayInSantiago = getDateInSantiago(day)
+
+            const hasPost = posts.some((post) => {
+                const postInSantiago = getDateInSantiago(post.createdAt)
+                return (
+                    postInSantiago.date === dayInSantiago.date &&
+                    postInSantiago.month === dayInSantiago.month &&
+                    postInSantiago.year === dayInSantiago.year
+                )
+            })
 
             // Get day name to match against trainingDays (which stores names like "Monday")
             const dayName = DAY_NAMES[day.getDay()]
@@ -87,9 +98,9 @@ export async function GET(request: NextRequest) {
                 date: day.toISOString(),
                 hasPost,
                 isToday:
-                    day.getDate() === santiagoNow.getDate() &&
-                    day.getMonth() === santiagoNow.getMonth() &&
-                    day.getFullYear() === santiagoNow.getFullYear(),
+                    dayInSantiago.date === santiagoNow.getDate() &&
+                    dayInSantiago.month === santiagoNow.getMonth() &&
+                    dayInSantiago.year === santiagoNow.getFullYear(),
                 isPast: day < santiagoNow,
                 dayName, // Include dayName for frontend debugging
             }
