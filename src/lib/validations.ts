@@ -58,6 +58,7 @@ export const updateProfileSchema = z.object({
     gymSplit: z.string().max(30).optional().nullable(),
     trainingDays: z.array(z.string()).optional(),
     goal: z.enum(["CUT", "BULK", "MAINTAIN", "RECOMP"]).optional(),
+    targetWeight: z.number().positive().optional().nullable(),
     onboardingCompleted: z.boolean().optional(),
     tutorialCompleted: z.boolean().optional(),
     timezone: z.string().max(50).optional(),

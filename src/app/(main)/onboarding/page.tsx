@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { toast } from "@/hooks/use-toast"
-import { ChevronRight, Dumbbell, Scale, Calendar, Users, Flame, Target, TrendingUp, TrendingDown, Loader2 } from "lucide-react"
+import { ChevronRight, Dumbbell, Scale, Calendar, Flame, Target, TrendingUp, TrendingDown, Loader2, Goal } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type GoalType = "CUT" | "BULK" | "MAINTAIN" | "RECOMP"
@@ -38,9 +37,10 @@ export default function OnboardingPage() {
     // Form data
     const [goal, setGoal] = useState<GoalType | null>(null)
     const [weight, setWeight] = useState("")
+    const [targetWeight, setTargetWeight] = useState("")
     const [trainingDays, setTrainingDays] = useState<string[]>([])
 
-    const totalSteps = 3
+    const totalSteps = 4
 
     const handleToggleDay = (day: string) => {
         if (trainingDays.includes(day)) {
@@ -69,6 +69,12 @@ export default function OnboardingPage() {
             const profileData: any = { onboardingCompleted: true }
             if (goal) profileData.goal = goal
             if (trainingDays.length > 0) profileData.trainingDays = trainingDays
+            if (targetWeight) {
+                const targetValue = parseFloat(targetWeight)
+                if (!isNaN(targetValue) && targetValue > 0) {
+                    profileData.targetWeight = targetValue
+                }
+            }
 
             const profileRes = await fetch("/api/users/me", {
                 method: "PATCH",
@@ -125,6 +131,19 @@ export default function OnboardingPage() {
         }
     }
 
+    // Helper to get weight difference label
+    const getWeightDiffLabel = () => {
+        if (!weight || !targetWeight) return null
+        const current = parseFloat(weight)
+        const target = parseFloat(targetWeight)
+        if (isNaN(current) || isNaN(target)) return null
+
+        const diff = target - current
+        if (Math.abs(diff) < 0.5) return "Mantener peso"
+        if (diff > 0) return `+${diff.toFixed(1)} kg para ganar`
+        return `${diff.toFixed(1)} kg para perder`
+    }
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-background">
             <div className="w-full max-w-md space-y-6 animate-in fade-in duration-500">
@@ -135,7 +154,7 @@ export default function OnboardingPage() {
                             <div
                                 key={i}
                                 className={cn(
-                                    "h-1.5 w-12 rounded-full transition-colors",
+                                    "h-1.5 w-10 rounded-full transition-colors",
                                     i + 1 <= step ? "bg-primary" : "bg-muted"
                                 )}
                             />
@@ -181,7 +200,7 @@ export default function OnboardingPage() {
                     </div>
                 )}
 
-                {/* Step 2: Weight */}
+                {/* Step 2: Current Weight */}
                 {step === 2 && (
                     <div className="space-y-6">
                         <div className="text-center">
@@ -210,8 +229,49 @@ export default function OnboardingPage() {
                     </div>
                 )}
 
-                {/* Step 3: Training Days */}
+                {/* Step 3: Weight Goal (Target Weight) */}
                 {step === 3 && (
+                    <div className="space-y-6">
+                        <div className="text-center">
+                            <Goal className="w-12 h-12 mx-auto text-primary mb-4" />
+                            <h1 className="text-2xl font-bold">Tu meta de peso</h1>
+                            <p className="text-muted-foreground mt-2">¿A qué peso quieres llegar?</p>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    step="0.1"
+                                    placeholder={weight || "70.0"}
+                                    value={targetWeight}
+                                    onChange={(e) => setTargetWeight(e.target.value)}
+                                    className="text-center text-2xl h-14 pr-12"
+                                />
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                                    kg
+                                </span>
+                            </div>
+                            {getWeightDiffLabel() && (
+                                <div className={cn(
+                                    "text-center py-2 px-4 rounded-lg text-sm font-medium",
+                                    getWeightDiffLabel()?.includes("perder")
+                                        ? "bg-green-500/10 text-green-500"
+                                        : getWeightDiffLabel()?.includes("ganar")
+                                            ? "bg-amber-500/10 text-amber-500"
+                                            : "bg-blue-500/10 text-blue-500"
+                                )}>
+                                    {getWeightDiffLabel()}
+                                </div>
+                            )}
+                            <p className="text-xs text-muted-foreground text-center">
+                                🎯 Define una meta realista y alcanzable
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Step 4: Training Days */}
+                {step === 4 && (
                     <div className="space-y-6">
                         <div className="text-center">
                             <Calendar className="w-12 h-12 mx-auto text-primary mb-4" />

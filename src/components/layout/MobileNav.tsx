@@ -31,8 +31,8 @@ export function MobileNav() {
 
     return (
         <>
-            {/* Floating Action Button - Only on Feed */}
-            {(pathname === "/" || pathname === "/following") && session?.user && (
+            {/* Floating Action Button - Only on Feed, not during onboarding */}
+            {(pathname === "/" || pathname === "/following") && !pathname.startsWith("/onboarding") && session?.user && (
                 <button
                     className="fab"
                     onClick={() => setIsComposerOpen(true)}

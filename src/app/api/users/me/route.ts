@@ -45,6 +45,7 @@ export async function PATCH(request: NextRequest) {
                 gymSplit: true,
                 trainingDays: true,
                 goal: true,
+                targetWeight: true,
                 accountPrivacy: true,
                 allowDMs: true,
                 showMetrics: true,
