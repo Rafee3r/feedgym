@@ -164,8 +164,40 @@ export async function buildUserContext(userId: string): Promise<string> {
                 const direction = weightChange > 0 ? "subió" : weightChange < 0 ? "bajó" : "se mantuvo"
                 lines.push(`- Cambio reciente: ${direction} ${Math.abs(weightChange).toFixed(1)} kg en ${weights.length} registros`)
             }
+            // Add weight history with dates
+            lines.push(`\nHISTORIAL DE PESO (con fechas):`)
+            weights.forEach((w, i) => {
+                const date = new Date(w.loggedAt).toLocaleDateString('es-CL')
+                lines.push(`  ${date}: ${w.weight} kg`)
+            })
         } else {
             lines.push(`- Peso: No registrado (no mide = no sabe = no progresa)`)
+        }
+
+        // Get recent nutrition data
+        const nutritionLogs = await prisma.dailyLog.findMany({
+            where: { userId },
+            orderBy: { date: "desc" },
+            take: 7,
+            select: { date: true, calories: true, protein: true, carbs: true, fats: true }
+        })
+
+        if (nutritionLogs.length > 0 && nutritionLogs.some(log => log.calories > 0)) {
+            lines.push(`\nNUTRICIÓN (últimos días registrados):`)
+            nutritionLogs.filter(log => log.calories > 0).forEach(log => {
+                const date = new Date(log.date).toLocaleDateString('es-CL')
+                lines.push(`  ${date}: ${log.calories} kcal | P:${log.protein}g | C:${log.carbs}g | G:${log.fats}g`)
+            })
+
+            // Calculate average intake
+            const validLogs = nutritionLogs.filter(log => log.calories > 0)
+            if (validLogs.length >= 3) {
+                const avgCals = Math.round(validLogs.reduce((sum, l) => sum + l.calories, 0) / validLogs.length)
+                const avgProtein = Math.round(validLogs.reduce((sum, l) => sum + l.protein, 0) / validLogs.length)
+                lines.push(`  Promedio: ${avgCals} kcal/día, ${avgProtein}g proteína`)
+            }
+        } else {
+            lines.push(`\nNUTRICIÓN: Sin registros. No trackea comida = no sabe si está en déficit o superávit.`)
         }
 
         lines.push(`- Racha actual: ${user.currentStreak || 0} días ${user.currentStreak === 0 ? "(racha muerta)" : ""}`)
