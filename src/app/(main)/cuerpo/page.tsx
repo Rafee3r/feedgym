@@ -471,83 +471,76 @@ export default function CuerpoPage() {
                                             </span>
                                         </div>
                                     </div>
+
+                                    {/* Macros Row */}
+                                    <div className="flex gap-4 mt-3">
+                                        {[
+                                            { label: "Prot", value: selectedRecipe.protein, color: "text-blue-500" },
+                                            { label: "Carbs", value: selectedRecipe.carbs, color: "text-amber-500" },
+                                            { label: "Grasas", value: selectedRecipe.fats, color: "text-rose-500" },
+                                        ].map((m) => (
+                                            <div key={m.label} className="text-center">
+                                                <p className={cn("font-bold", m.color)}>{m.value}g</p>
+                                                <p className="text-[10px] text-muted-foreground">{m.label}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[50vh]">
+                                    {/* Ingredients */}
+                                    <div>
+                                        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                            <ShoppingCart className="w-4 h-4" />
+                                            Ingredientes
+                                        </h3>
+                                        <ul className="space-y-1.5">
+                                            {selectedRecipe.ingredients.map((ing, i) => (
+                                                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                                                    <span className="text-primary">•</span>
+                                                    {ing}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+
+                                    {/* Instructions */}
+                                    <div>
+                                        <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                                            <ChefHat className="w-4 h-4" />
+                                            Preparación
+                                        </h3>
+                                        <ol className="space-y-2">
+                                            {selectedRecipe.instructions.map((step, i) => (
+                                                <li key={i} className="text-sm text-muted-foreground flex gap-3">
+                                                    <span className="font-bold text-foreground shrink-0">{i + 1}.</span>
+                                                    {step}
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="p-4 border-t border-border flex gap-2">
                                     <button
                                         onClick={handleSaveToFavorites}
-                                        className="p-2 hover:bg-accent rounded-lg transition-colors"
+                                        className="flex-1 py-3 flex items-center justify-center gap-2 border border-border rounded-xl text-sm font-medium hover:bg-accent transition-colors"
                                     >
-                                        <Heart className="w-5 h-5 text-muted-foreground hover:text-red-500" />
+                                        <BookmarkPlus className="w-4 h-4" />
+                                        Guardar receta
+                                    </button>
+                                    <button
+                                        onClick={handleAddRecipeToLog}
+                                        className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                                    >
+                                        Agregar al diario
                                     </button>
                                 </div>
-
-                                {/* Macros Row */}
-                                <div className="flex gap-4 mt-3">
-                                    {[
-                                        { label: "Prot", value: selectedRecipe.protein, color: "text-blue-500" },
-                                        { label: "Carbs", value: selectedRecipe.carbs, color: "text-amber-500" },
-                                        { label: "Grasas", value: selectedRecipe.fats, color: "text-rose-500" },
-                                    ].map((m) => (
-                                        <div key={m.label} className="text-center">
-                                            <p className={cn("font-bold", m.color)}>{m.value}g</p>
-                                            <p className="text-[10px] text-muted-foreground">{m.label}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[50vh]">
-                                {/* Ingredients */}
-                                <div>
-                                    <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                                        <ShoppingCart className="w-4 h-4" />
-                                        Ingredientes
-                                    </h3>
-                                    <ul className="space-y-1.5">
-                                        {selectedRecipe.ingredients.map((ing, i) => (
-                                            <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                                                <span className="text-primary">•</span>
-                                                {ing}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                {/* Instructions */}
-                                <div>
-                                    <h3 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                                        <ChefHat className="w-4 h-4" />
-                                        Preparación
-                                    </h3>
-                                    <ol className="space-y-2">
-                                        {selectedRecipe.instructions.map((step, i) => (
-                                            <li key={i} className="text-sm text-muted-foreground flex gap-3">
-                                                <span className="font-bold text-foreground shrink-0">{i + 1}.</span>
-                                                {step}
-                                            </li>
-                                        ))}
-                                    </ol>
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="p-4 border-t border-border flex gap-2">
-                                <button
-                                    onClick={handleSaveToFavorites}
-                                    className="flex-1 py-3 flex items-center justify-center gap-2 border border-border rounded-xl text-sm font-medium hover:bg-accent transition-colors"
-                                >
-                                    <BookmarkPlus className="w-4 h-4" />
-                                    Guardar receta
-                                </button>
-                                <button
-                                    onClick={handleAddRecipeToLog}
-                                    className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
-                                >
-                                    Agregar al diario
-                                </button>
-                            </div>
-                        </>
+                            </>
                     )}
-                </DialogContent>
+                        </DialogContent>
             </Dialog>
         </div>
     )

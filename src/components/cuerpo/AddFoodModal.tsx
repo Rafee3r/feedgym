@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Camera, Loader2, Clock, Flame, RefreshCw, Sparkles, Wand2, ChevronLeft, BookmarkPlus, ChefHat, ShoppingCart, X, Edit3, Check, Zap, ZapOff } from "lucide-react"
+import { Camera, Loader2, Clock, Flame, RefreshCw, Sparkles, Wand2, ChevronLeft, Heart, ChefHat, ShoppingCart, X, Edit3, Check, Zap, ZapOff } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
@@ -912,8 +912,8 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                                     onClick={handleSaveToFavorites}
                                     className="flex-1 py-3 flex items-center justify-center gap-2 border border-border rounded-xl text-sm font-medium hover:bg-accent transition-colors"
                                 >
-                                    <BookmarkPlus className="w-4 h-4" />
-                                    Guardar
+                                    <Heart className="w-4 h-4" />
+                                    Guardar receta
                                 </button>
                                 <button
                                     onClick={handleAddRecipe}
