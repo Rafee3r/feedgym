@@ -126,43 +126,99 @@ export function RecommendationsCarousel({
                     )}
                 </div>
 
-                {/* Compact Meal Cards */}
+                {/* Compact Meal Cards with Food Images */}
                 <div className="grid grid-cols-2 gap-2">
-                    {displayMeals.map((meal) => (
-                        <button
-                            key={meal.id}
-                            onClick={() => handleAdd(meal)}
-                            disabled={addingId === meal.id}
-                            className={cn(
-                                "text-left p-3 bg-card border border-border rounded-xl",
-                                "hover:border-primary/50 hover:bg-accent/30 transition-all",
-                                "flex flex-col gap-1",
-                                addingId === meal.id && "opacity-50"
-                            )}
-                        >
-                            <span className="font-medium text-sm line-clamp-1">{meal.name}</span>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <span className="text-orange-500 font-medium flex items-center gap-0.5">
-                                    <Flame className="w-3 h-3" />
-                                    {meal.calories}
-                                </span>
-                                <span>•</span>
-                                <span>{meal.protein}g prot</span>
-                                <span>•</span>
-                                <span className="flex items-center gap-0.5">
-                                    <Clock className="w-3 h-3" />
-                                    {meal.prepTime}m
-                                </span>
-                            </div>
-                            <div className="flex gap-1 mt-1">
-                                {meal.tags.slice(0, 2).map(tag => (
-                                    <span key={tag} className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md capitalize">
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </button>
-                    ))}
+                    {displayMeals.map((meal) => {
+                        // Generate food-themed gradient based on tags/name
+                        const getGradient = () => {
+                            const name = meal.name.toLowerCase()
+                            const tags = meal.tags.map(t => t.toLowerCase())
+
+                            if (name.includes("pollo") || name.includes("carne") || name.includes("atún") || name.includes("huevo") || tags.includes("proteína")) {
+                                return "from-rose-500/80 to-orange-400/80"
+                            }
+                            if (name.includes("avena") || name.includes("pan") || name.includes("arroz") || tags.includes("carbos")) {
+                                return "from-amber-500/80 to-yellow-400/80"
+                            }
+                            if (name.includes("ensalada") || name.includes("verdura") || name.includes("fruta")) {
+                                return "from-emerald-500/80 to-green-400/80"
+                            }
+                            if (name.includes("batido") || name.includes("yogurt") || name.includes("leche")) {
+                                return "from-blue-500/80 to-cyan-400/80"
+                            }
+                            if (name.includes("tostada") || name.includes("sandwich")) {
+                                return "from-orange-500/80 to-amber-400/80"
+                            }
+                            // Default gradient
+                            return "from-violet-500/80 to-purple-400/80"
+                        }
+
+                        // Get emoji for food
+                        const getEmoji = () => {
+                            const name = meal.name.toLowerCase()
+                            if (name.includes("huevo")) return "🍳"
+                            if (name.includes("pollo")) return "🍗"
+                            if (name.includes("carne")) return "🥩"
+                            if (name.includes("atún") || name.includes("pescado")) return "🐟"
+                            if (name.includes("avena")) return "🥣"
+                            if (name.includes("batido")) return "🥤"
+                            if (name.includes("ensalada")) return "🥗"
+                            if (name.includes("fruta") || name.includes("manzana")) return "🍎"
+                            if (name.includes("yogurt")) return "🥛"
+                            if (name.includes("tostada") || name.includes("pan")) return "🍞"
+                            if (name.includes("arroz")) return "🍚"
+                            if (name.includes("sandwich")) return "🥪"
+                            if (name.includes("granola")) return "🥜"
+                            return "🍽️"
+                        }
+
+                        return (
+                            <button
+                                key={meal.id}
+                                onClick={() => handleAdd(meal)}
+                                disabled={addingId === meal.id}
+                                className={cn(
+                                    "text-left bg-card border border-border rounded-xl overflow-hidden",
+                                    "hover:border-primary/50 hover:bg-accent/30 transition-all",
+                                    "flex flex-col",
+                                    addingId === meal.id && "opacity-50"
+                                )}
+                            >
+                                {/* Food Image Banner */}
+                                <div className={cn(
+                                    "h-12 bg-gradient-to-r flex items-center justify-center",
+                                    getGradient()
+                                )}>
+                                    <span className="text-2xl drop-shadow-md">{getEmoji()}</span>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-2.5 flex flex-col gap-1">
+                                    <span className="font-medium text-sm line-clamp-1">{meal.name}</span>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                                            <Flame className="w-3 h-3" />
+                                            {meal.calories}
+                                        </span>
+                                        <span>•</span>
+                                        <span>{meal.protein}g prot</span>
+                                        <span>•</span>
+                                        <span className="flex items-center gap-0.5">
+                                            <Clock className="w-3 h-3" />
+                                            {meal.prepTime}m
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-1 mt-0.5">
+                                        {meal.tags.slice(0, 2).map(tag => (
+                                            <span key={tag} className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md capitalize">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </button>
+                        )
+                    })}
                 </div>
             </div>
 
