@@ -72,26 +72,38 @@ export async function POST(req: NextRequest) {
             ? "IMPORTANTE: El usuario quiere algo MÁS SIMPLE y RÁPIDO. Sugiere una receta que tome máximo 10-15 minutos, pocos ingredientes, pero que sea sabrosa y satisfactoria."
             : "";
 
+        // Generate random seed for variety
+        const randomSeed = Math.floor(Math.random() * 10000);
+        const cuisineStyles = ["mediterránea", "asiática", "mexicana", "americana", "peruana", "chilena", "italiana", "francesa", "árabe", "japonesa"];
+        const randomCuisine = cuisineStyles[Math.floor(Math.random() * cuisineStyles.length)];
+
         const openai = getOpenAI();
 
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
+            temperature: 0.9, // Higher temperature for more variety
             messages: [
                 {
                     role: "system",
                     content: `Eres IRON, un entrenador de élite y experto en nutrición deportiva. 
                     ${goalContext}
                     ${simpleContext}
+                    IMPORTANTE: Sé CREATIVO y varía tus sugerencias. NO repitas platos comunes.
                     RESPONDE SIEMPRE EN ESPAÑOL.`
                 },
                 {
                     role: "user",
-                    content: `Sugiere una receta saludable para ${effectiveMealType} usando algunos de estos ingredientes si están disponibles: [${ingredients || "ingredientes básicos de cocina"}]. 
-                    ${simpler ? "Receta SIMPLE y RÁPIDA (máx 15 min, pocos pasos)." : "Puede ser una receta normal."}
+                    content: `[Seed: ${randomSeed}] Sugiere una receta DIFERENTE y CREATIVA para ${effectiveMealType}.
+                    
+                    Considera inspiración de cocina ${randomCuisine} para variar.
+                    Ingredientes disponibles (si aplica): [${ingredients || "ingredientes básicos de cocina"}]. 
+                    ${simpler ? "Receta SIMPLE y RÁPIDA (máx 15 min, pocos pasos)." : "Puede ser una receta elaborada."}
+                    
+                    IMPORTANTE: NO sugieras algo genérico como "Ensalada de pollo" o "Pollo con arroz". Sé específico y creativo con el nombre.
                     
                     Devuelve un objeto JSON con:
                     {
-                        "name": "nombre del plato",
+                        "name": "nombre creativo y específico del plato",
                         "description": "breve descripción apetitosa",
                         "calories": número,
                         "protein": número,
@@ -101,7 +113,7 @@ export async function POST(req: NextRequest) {
                         "tags": ["tag1", "tag2"]
                     }
                     
-                    Manténlo realista. Responde en Español.`
+                    Manténlo realista pero ÚNICO. Responde en Español.`
                 },
             ],
             response_format: { type: "json_object" },
