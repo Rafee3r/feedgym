@@ -20,9 +20,9 @@ export async function POST(req: NextRequest) {
 
         const openai = getOpenAI()
 
-        // Use GPT-4 Vision to analyze the food image
+        // Use GPT-5.1-mini (cost-effective vision model) to analyze the food image
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-5.1-mini",
             messages: [
                 {
                     role: "system",
