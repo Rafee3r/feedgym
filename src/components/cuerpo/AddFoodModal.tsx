@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Camera, Loader2, Clock, Flame, RefreshCw, Sparkles, Wand2, ChevronLeft, BookmarkPlus, ChefHat, ShoppingCart, X, Edit3, Check } from "lucide-react"
+import { Camera, Loader2, Clock, Flame, RefreshCw, Sparkles, Wand2, ChevronLeft, BookmarkPlus, ChefHat, ShoppingCart, X, Edit3, Check, Zap, ZapOff } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 
@@ -80,6 +80,8 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
     const [stream, setStream] = useState<MediaStream | null>(null)
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
     const [isAnalyzing, setIsAnalyzing] = useState(false)
+    const [flashEnabled, setFlashEnabled] = useState(false)
+    const [zoomLevel, setZoomLevel] = useState(0)
 
     // Scanned food editable state
     const [scannedFood, setScannedFood] = useState<ScannedFood | null>(null)
@@ -143,6 +145,8 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
     const startCamera = async () => {
         try {
             setViewMode('camera')
+            setZoomLevel(0)
+            setFlashEnabled(false)
             const mediaStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment',
@@ -158,6 +162,23 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
             console.error('Camera access denied:', error)
             // Fallback to AI suggestion
             handleAIGenerate()
+        }
+    }
+
+    // Toggle flash (torch mode)
+    const toggleFlash = async () => {
+        if (!stream) return
+        try {
+            const track = stream.getVideoTracks()[0]
+            const capabilities = track.getCapabilities() as any
+            if (capabilities.torch) {
+                await track.applyConstraints({
+                    advanced: [{ torch: !flashEnabled } as any]
+                })
+                setFlashEnabled(!flashEnabled)
+            }
+        } catch (error) {
+            console.error('Flash toggle failed:', error)
         }
     }
 
@@ -409,8 +430,8 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                 <div className="flex-1 overflow-y-auto">
                     {/* CAMERA VIEW */}
                     {viewMode === 'camera' && (
-                        <div className="flex flex-col h-full">
-                            <div className="flex-1 bg-black relative">
+                        <div className="flex flex-col" style={{ height: 'calc(85vh - 120px)', maxHeight: '550px' }}>
+                            <div className="flex-1 bg-black relative overflow-hidden min-h-0">
                                 {!capturedImage ? (
                                     <>
                                         <video
@@ -419,14 +440,56 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                                             playsInline
                                             muted
                                             className="w-full h-full object-cover"
+                                            style={{ transform: `scale(${1 + zoomLevel / 100})` }}
                                         />
                                         {/* Camera overlay */}
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div className="w-64 h-64 border-2 border-white/50 rounded-2xl" />
+                                            <div className="w-44 h-44 sm:w-56 sm:h-56 border-2 border-white/50 rounded-2xl" />
+                                        </div>
+
+                                        {/* Top controls - Flash */}
+                                        <div className="absolute top-3 left-3 right-3 flex justify-between items-center">
+                                            <button
+                                                onClick={toggleFlash}
+                                                className={cn(
+                                                    "p-2.5 rounded-full backdrop-blur-sm transition-all",
+                                                    flashEnabled
+                                                        ? "bg-yellow-500 text-black"
+                                                        : "bg-black/40 text-white"
+                                                )}
+                                            >
+                                                {flashEnabled ? (
+                                                    <Zap className="w-5 h-5 fill-current" />
+                                                ) : (
+                                                    <ZapOff className="w-5 h-5" />
+                                                )}
+                                            </button>
+
+                                            {zoomLevel > 0 && (
+                                                <span className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+                                                    {(1 + zoomLevel / 100).toFixed(1)}x
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Zoom slider */}
+                                        <div className="absolute bottom-16 left-4 right-4">
+                                            <div className="bg-black/40 backdrop-blur-sm rounded-full px-4 py-2.5 flex items-center gap-3">
+                                                <span className="text-white/60 text-xs font-medium">1x</span>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={zoomLevel}
+                                                    onChange={(e) => setZoomLevel(parseInt(e.target.value))}
+                                                    className="flex-1 h-1 bg-white/30 rounded-full appearance-none cursor-pointer accent-white"
+                                                />
+                                                <span className="text-white/60 text-xs font-medium">2x</span>
+                                            </div>
                                         </div>
                                         {/* Instructions */}
                                         <div className="absolute bottom-4 left-0 right-0 text-center">
-                                            <p className="text-white/80 text-sm bg-black/50 inline-block px-4 py-2 rounded-full">
+                                            <p className="text-white/80 text-xs bg-black/50 inline-block px-3 py-1.5 rounded-full">
                                                 Centra tu plato en el recuadro
                                             </p>
                                         </div>
@@ -450,7 +513,7 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                             </div>
 
                             {/* Camera controls */}
-                            <div className="p-4 bg-background border-t border-border">
+                            <div className="shrink-0 p-4 bg-background border-t border-border" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
                                 {!capturedImage ? (
                                     <button
                                         onClick={capturePhoto}
