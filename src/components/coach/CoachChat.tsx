@@ -178,13 +178,20 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
     // Save message to database
     const saveMessage = async (role: "user" | "assistant", content: string) => {
         try {
-            await fetch("/api/coach/history", {
+            const response = await fetch("/api/coach/history", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role, content })
             })
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}))
+                console.error("Error saving message to DB:", response.status, errorData)
+            } else {
+                console.log(`[CoachChat] Saved ${role} message to DB`)
+            }
         } catch (error) {
-            console.error("Error saving message:", error)
+            console.error("Network error saving message:", error)
         }
     }
 
@@ -217,7 +224,7 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
         setIsLoading(true)
 
         // Save user message to DB (without image - too large)
-        saveMessage("user", newUserMsg.content)
+        await saveMessage("user", newUserMsg.content)
 
         try {
             const response = await fetch("/api/coach/chat", {
@@ -270,7 +277,7 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
 
             // Save assistant message to DB
             if (assistantMessage) {
-                saveMessage("assistant", assistantMessage)
+                await saveMessage("assistant", assistantMessage)
             }
         } catch (error) {
             console.error("Chat error:", error)
