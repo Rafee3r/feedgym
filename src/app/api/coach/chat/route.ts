@@ -88,15 +88,34 @@ export async function POST(request: NextRequest) {
         const encoder = new TextEncoder()
         const readable = new ReadableStream({
             async start(controller) {
+                let fullResponse = ""
                 try {
                     for await (const chunk of stream) {
                         const content = chunk.choices[0]?.delta?.content || ""
                         if (content) {
+                            fullResponse += content
                             controller.enqueue(
                                 encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
                             )
                         }
                     }
+
+                    // SAVE ASSISTANT MESSAGE TO DB (PERSISTENCE FIX)
+                    // We save before sending [DONE] to ensure it's persisted.
+                    if (fullResponse) {
+                        try {
+                            await prisma.coachMessage.create({
+                                data: {
+                                    userId: session.user.id,
+                                    role: "assistant",
+                                    content: fullResponse,
+                                }
+                            })
+                        } catch (saveError) {
+                            console.error("Error saving assistant message:", saveError)
+                        }
+                    }
+
                     controller.enqueue(encoder.encode("data: [DONE]\n\n"))
                     controller.close()
                 } catch (error) {
