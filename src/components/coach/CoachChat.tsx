@@ -83,6 +83,7 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingHistory, setIsLoadingHistory] = useState(true)
     const [userAvatarUrl, setUserAvatarUrl] = useState<string | undefined>(session?.user?.image || undefined)
+    const [ironAvatarUrl, setIronAvatarUrl] = useState<string | undefined>(undefined)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -114,6 +115,15 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                 })
                 .catch(console.error)
         }
+        // Fetch IRON's avatar
+        fetch("/api/users/iron")
+            .then(res => res.json())
+            .then(data => {
+                if (data.avatarUrl) {
+                    setIronAvatarUrl(data.avatarUrl)
+                }
+            })
+            .catch(console.error)
     }, [session])
 
     // Load messages from database on mount
@@ -367,9 +377,10 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                 style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
-                        <span className="text-lg font-black text-black">I</span>
-                    </div>
+                    <Avatar className="w-9 h-9 rounded-lg">
+                        <AvatarImage src={ironAvatarUrl} />
+                        <AvatarFallback className="bg-white text-black text-lg font-black rounded-lg">I</AvatarFallback>
+                    </Avatar>
                     <div>
                         <h2 className="font-bold text-sm text-white tracking-tight">IRON</h2>
                         <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Sin excusas</p>
@@ -540,9 +551,10 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
             <div className="flex-1 overflow-y-auto">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-                        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-6">
-                            <span className="text-3xl font-black text-black">I</span>
-                        </div>
+                        <Avatar className="w-16 h-16 rounded-2xl mb-6">
+                            <AvatarImage src={ironAvatarUrl} />
+                            <AvatarFallback className="bg-white text-black text-3xl font-black rounded-2xl">I</AvatarFallback>
+                        </Avatar>
                         <h3 className="text-lg font-bold mb-2">Soy IRON.</h3>
                         <p className="text-sm text-muted-foreground mb-6 max-w-xs">
                             No busco caerte bien. Busco que progreses.
@@ -575,12 +587,12 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                                 )}
                             >
                                 <div className="max-w-2xl mx-auto flex gap-4">
-                                    {/* Avatar - hide in compact mode */}
                                     {!compactMode && (
                                         msg.role === "assistant" ? (
-                                            <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold bg-white text-black">
-                                                I
-                                            </div>
+                                            <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
+                                                <AvatarImage src={ironAvatarUrl} />
+                                                <AvatarFallback className="bg-white text-black text-xs font-bold rounded-lg">I</AvatarFallback>
+                                            </Avatar>
                                         ) : (
                                             <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
                                                 <AvatarImage src={userAvatarUrl} />
@@ -640,9 +652,10 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
                         {isLoading && messages[messages.length - 1]?.role === "user" && (
                             <div className="px-4 py-4 bg-muted/30">
                                 <div className="max-w-2xl mx-auto flex gap-4">
-                                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-xs font-bold text-black">
-                                        I
-                                    </div>
+                                    <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
+                                        <AvatarImage src={ironAvatarUrl} />
+                                        <AvatarFallback className="bg-white text-black text-xs font-bold rounded-lg">I</AvatarFallback>
+                                    </Avatar>
                                     <div className="flex flex-col gap-1 pt-1">
                                         <p className="text-xs font-medium text-muted-foreground">IRON</p>
                                         <div className="flex items-center gap-2">
