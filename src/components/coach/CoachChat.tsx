@@ -402,10 +402,19 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                 style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
             >
                 <div className="flex items-center gap-3">
-                    <Avatar className="w-9 h-9 rounded-lg">
-                        <AvatarImage src={ironAvatarUrl} />
-                        <AvatarFallback className="bg-white text-black text-lg font-black rounded-lg">I</AvatarFallback>
-                    </Avatar>
+                    {ironAvatarUrl ? (
+                        <img
+                            src={ironAvatarUrl}
+                            alt="IRON"
+                            className="w-9 h-9 rounded-lg object-cover"
+                            onError={(e) => {
+                                console.error("IRON avatar failed to load:", ironAvatarUrl)
+                                e.currentTarget.style.display = 'none'
+                            }}
+                        />
+                    ) : (
+                        <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center text-black text-lg font-black">I</div>
+                    )}
                     <div>
                         <h2 className="font-bold text-sm text-white tracking-tight">IRON</h2>
                         <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Sin excusas</p>
@@ -576,10 +585,15 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
             <div className="flex-1 overflow-y-auto">
                 {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full px-6 text-center">
-                        <Avatar className="w-16 h-16 rounded-2xl mb-6">
-                            <AvatarImage src={ironAvatarUrl} />
-                            <AvatarFallback className="bg-white text-black text-3xl font-black rounded-2xl">I</AvatarFallback>
-                        </Avatar>
+                        {ironAvatarUrl ? (
+                            <img
+                                src={ironAvatarUrl}
+                                alt="IRON"
+                                className="w-16 h-16 rounded-2xl object-cover mb-6"
+                            />
+                        ) : (
+                            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-black text-3xl font-black mb-6">I</div>
+                        )}
                         <h3 className="text-lg font-bold mb-2">Soy IRON.</h3>
                         <p className="text-sm text-muted-foreground mb-6 max-w-xs">
                             No busco caerte bien. Busco que progreses.
@@ -614,10 +628,15 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                                 <div className="max-w-2xl mx-auto flex gap-4">
                                     {!compactMode && (
                                         msg.role === "assistant" ? (
-                                            <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
-                                                <AvatarImage src={ironAvatarUrl} />
-                                                <AvatarFallback className="bg-white text-black text-xs font-bold rounded-lg">I</AvatarFallback>
-                                            </Avatar>
+                                            ironAvatarUrl ? (
+                                                <img
+                                                    src={ironAvatarUrl}
+                                                    alt="IRON"
+                                                    className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black text-xs font-bold flex-shrink-0">I</div>
+                                            )
                                         ) : (
                                             <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
                                                 <AvatarImage src={userAvatarUrl} />
@@ -677,10 +696,15 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                         {isLoading && messages[messages.length - 1]?.role === "user" && (
                             <div className="px-4 py-4 bg-muted/30">
                                 <div className="max-w-2xl mx-auto flex gap-4">
-                                    <Avatar className="w-8 h-8 rounded-lg flex-shrink-0">
-                                        <AvatarImage src={ironAvatarUrl} />
-                                        <AvatarFallback className="bg-white text-black text-xs font-bold rounded-lg">I</AvatarFallback>
-                                    </Avatar>
+                                    {ironAvatarUrl ? (
+                                        <img
+                                            src={ironAvatarUrl}
+                                            alt="IRON"
+                                            className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                                        />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black text-xs font-bold flex-shrink-0">I</div>
+                                    )}
                                     <div className="flex flex-col gap-1 pt-1">
                                         <p className="text-xs font-medium text-muted-foreground">IRON</p>
                                         <div className="flex items-center gap-2">
