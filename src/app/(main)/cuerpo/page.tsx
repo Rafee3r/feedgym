@@ -463,23 +463,19 @@ export default function CuerpoPage() {
                     <h3 className="font-semibold text-sm px-1">Tus Comidas</h3>
                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
                         {[
-                            { type: MealType.BREAKFAST, label: "Desayuno", Icon: Sun, bgColor: "bg-primary/10" },
-                            { type: MealType.LUNCH, label: "Almuerzo", Icon: Utensils, bgColor: "bg-primary/10" },
-                            { type: MealType.DINNER, label: "Cena", Icon: Moon, bgColor: "bg-primary/10" },
-                            { type: MealType.SNACK, label: "Snacks", Icon: Cookie, bgColor: "bg-primary/10" },
+                            { type: MealType.BREAKFAST, label: "Desayuno", Icon: Sun },
+                            { type: MealType.LUNCH, label: "Almuerzo", Icon: Utensils },
+                            { type: MealType.DINNER, label: "Cena", Icon: Moon },
+                            { type: MealType.SNACK, label: "Snacks", Icon: Cookie },
                         ].map((meal) => {
                             const data = getMealData(meal.type)
                             return (
                                 <button
                                     key={meal.type}
                                     onClick={() => handleAddFood(meal.type)}
-                                    className={cn(
-                                        "flex-shrink-0 w-28 rounded-2xl p-3 border border-border",
-                                        meal.bgColor,
-                                        "hover:scale-105 transition-transform"
-                                    )}
+                                    className="flex-shrink-0 w-28 rounded-2xl p-3 border border-border bg-card hover:bg-card/80 hover:border-primary/50 transition-all"
                                 >
-                                    <div className="w-full h-16 rounded-xl bg-card/50 flex items-center justify-center mb-2">
+                                    <div className="w-full h-16 rounded-xl bg-muted/30 flex items-center justify-center mb-2">
                                         {data.items.length > 0 ? (
                                             <Check className="w-6 h-6 text-primary" />
                                         ) : (

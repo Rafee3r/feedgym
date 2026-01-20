@@ -92,6 +92,17 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
     const [editedCarbs, setEditedCarbs] = useState(0)
     const [editedFats, setEditedFats] = useState(0)
 
+    // Manual entry state
+    const [manualName, setManualName] = useState("")
+    const [manualCalories, setManualCalories] = useState(0)
+    const [manualProtein, setManualProtein] = useState(0)
+    const [manualCarbs, setManualCarbs] = useState(0)
+    const [manualFats, setManualFats] = useState(0)
+
+    // Recent foods and favorites
+    const [recentFoods, setRecentFoods] = useState<YesterdayMeal[]>([])
+    const [favoriteFoods, setFavoriteFoods] = useState<YesterdayMeal[]>([])
+
     const getCategoryFromType = (type: string): string => {
         switch (type) {
             case "BREAKFAST": return "desayuno"
@@ -378,6 +389,39 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
     // Handle regenerate (new suggestion)
     const handleRegenerate = () => {
         handleAIGenerate(false)
+    }
+
+    // Handle manual food entry
+    const handleManualAdd = () => {
+        if (!manualName.trim() || manualCalories <= 0) return
+
+        onAddFood({
+            name: manualName.trim(),
+            calories: manualCalories,
+            protein: manualProtein,
+            carbs: manualCarbs,
+            fats: manualFats
+        })
+
+        // Reset form
+        setManualName("")
+        setManualCalories(0)
+        setManualProtein(0)
+        setManualCarbs(0)
+        setManualFats(0)
+        onClose()
+    }
+
+    // Quick add from recent or favorites
+    const handleQuickAdd = (food: YesterdayMeal) => {
+        onAddFood({
+            name: food.name,
+            calories: food.calories,
+            protein: food.protein,
+            carbs: food.carbs,
+            fats: food.fats
+        })
+        onClose()
     }
 
     const getMealLabel = (type: string) => {
@@ -720,6 +764,80 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                                     <Wand2 className="w-4 h-4" />
                                     <span>O deja que la IA sugiera algo</span>
                                 </button>
+
+                                {/* Manual Entry Form */}
+                                <div className="mt-4 bg-card border border-border rounded-xl p-4">
+                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                        <Edit3 className="w-4 h-4 text-primary" />
+                                        Agregar manualmente
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre de la comida..."
+                                                value={manualName}
+                                                onChange={(e) => setManualName(e.target.value)}
+                                                className="w-full px-3 py-2.5 bg-muted border border-border rounded-lg text-sm placeholder:text-muted-foreground/50"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-muted-foreground uppercase">Kcal</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={manualCalories || ''}
+                                                    onChange={(e) => setManualCalories(parseInt(e.target.value) || 0)}
+                                                    className="w-full px-2 py-2 bg-muted border border-border rounded-lg text-sm text-center"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-muted-foreground uppercase">Prot</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={manualProtein || ''}
+                                                    onChange={(e) => setManualProtein(parseInt(e.target.value) || 0)}
+                                                    className="w-full px-2 py-2 bg-muted border border-border rounded-lg text-sm text-center"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-muted-foreground uppercase">Carbs</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={manualCarbs || ''}
+                                                    onChange={(e) => setManualCarbs(parseInt(e.target.value) || 0)}
+                                                    className="w-full px-2 py-2 bg-muted border border-border rounded-lg text-sm text-center"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] text-muted-foreground uppercase">Grasas</label>
+                                                <input
+                                                    type="number"
+                                                    placeholder="0"
+                                                    value={manualFats || ''}
+                                                    onChange={(e) => setManualFats(parseInt(e.target.value) || 0)}
+                                                    className="w-full px-2 py-2 bg-muted border border-border rounded-lg text-sm text-center"
+                                                />
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={handleManualAdd}
+                                            disabled={!manualName.trim() || manualCalories <= 0}
+                                            className={cn(
+                                                "w-full py-2.5 rounded-lg font-medium text-sm transition-colors",
+                                                manualName.trim() && manualCalories > 0
+                                                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                                                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                                            )}
+                                        >
+                                            <Check className="w-4 h-4 inline mr-2" />
+                                            Agregar {category}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="p-4 space-y-4">
