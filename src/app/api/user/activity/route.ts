@@ -91,8 +91,10 @@ export async function GET(request: NextRequest) {
                 )
             })
 
-            // Get day name to match against trainingDays (which stores names like "Monday")
-            const dayName = DAY_NAMES[day.getDay()]
+            // Get day name in SANTIAGO timezone to match against trainingDays
+            const santiagoDateStr = day.toLocaleString("en-US", { timeZone: "America/Santiago", weekday: "long" })
+            // toLocaleString with weekday returns the day name directly
+            const dayName = santiagoDateStr.split(",")[0] || DAY_NAMES[day.getDay()]
 
             return {
                 date: day.toISOString(),
@@ -108,8 +110,10 @@ export async function GET(request: NextRequest) {
 
         // Count only scheduled training days that have a post (true consistency!)
         const daysPosted = activity.filter(d => {
-            const dayName = DAY_NAMES[new Date(d.date).getDay()]
-            const isScheduled = trainingDays.includes(dayName)
+            // Use the dayName we already calculated and included in the response
+            const dayDate = new Date(d.date)
+            const santiagoDay = dayDate.toLocaleString("en-US", { timeZone: "America/Santiago", weekday: "long" }).split(",")[0]
+            const isScheduled = trainingDays.includes(santiagoDay)
             return isScheduled && d.hasPost
         }).length
 

@@ -76,10 +76,9 @@ export function ConsistencyCard({
                                     // Day labels in Monday-first order: L M M J V S D
                                     const dayLabels = ["L", "M", "M", "J", "V", "S", "D"]
                                     const dayLabel = dayLabels[index] // Use index since data comes Monday-first
-                                    // Day names for matching trainingDays (which stores "Monday", "Tuesday", etc.)
-                                    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-                                    const dayName = dayNames[date.getDay()]
-                                    const isScheduled = activityData.trainingDays.includes(dayName)
+                                    // Get day name in SANTIAGO timezone to match trainingDays format
+                                    const santiagoDay = date.toLocaleString("en-US", { timeZone: "America/Santiago", weekday: "long" }).split(",")[0]
+                                    const isScheduled = activityData.trainingDays.includes(santiagoDay)
 
                                     return (
                                         <div key={day.date} className="flex flex-col items-center gap-2">
