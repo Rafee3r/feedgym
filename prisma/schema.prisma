@@ -37,6 +37,12 @@ model User {
   goal           GoalType  @default(MAINTAIN)
   targetWeight   Float?    // User's goal weight in kg
   
+  // Nutrition Targets
+  caloriesTarget Int       @default(2000)
+  proteinTarget  Int       @default(150)
+  carbsTarget    Int       @default(200)
+  fatsTarget     Int       @default(60)
+  
   // Privacy settings
   accountPrivacy AccountPrivacy @default(PUBLIC)
   allowDMs       DMPrivacy      @default(EVERYONE)

@@ -62,6 +62,10 @@ export const updateProfileSchema = z.object({
     onboardingCompleted: z.boolean().optional(),
     tutorialCompleted: z.boolean().optional(),
     timezone: z.string().max(50).optional(),
+    caloriesTarget: z.number().positive().optional(),
+    proteinTarget: z.number().positive().optional(),
+    carbsTarget: z.number().positive().optional(),
+    fatsTarget: z.number().positive().optional(),
 });
 
 export const weightLogSchema = z.object({

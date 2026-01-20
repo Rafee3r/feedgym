@@ -275,6 +275,7 @@ export default function CuerpoPage() {
                         protein: entry.protein,
                         carbs: entry.carbs,
                         fats: entry.fats,
+                        unit: "serving"
                     }
                 })
             })
@@ -289,10 +290,36 @@ export default function CuerpoPage() {
         setIsAddFoodOpen(true)
     }
 
-    const handleSaveMacros = (newTargets: MacroTargets) => {
-        setTargets(newTargets)
-        setIsMacroSettingsOpen(false)
-        toast({ title: "Metas actualizadas" })
+    const handleSaveMacros = async (newTargets: MacroTargets) => {
+        try {
+            const res = await fetch("/api/users/me", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    caloriesTarget: newTargets.calories,
+                    proteinTarget: newTargets.protein,
+                    carbsTarget: newTargets.carbs,
+                    fatsTarget: newTargets.fats
+                })
+            })
+
+            if (res.ok) {
+                setTargets(newTargets)
+                setIsMacroSettingsOpen(false)
+                toast({ title: "Metas actualizadas y guardadas" })
+                // Refresh data to ensure everything is in sync
+                await refresh()
+            } else {
+                throw new Error("Error al guardar metas")
+            }
+        } catch (error) {
+            console.error("Failed to save macros", error)
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron guardar las metas"
+            })
+        }
     }
 
     const getMealData = (type: MealType) => {

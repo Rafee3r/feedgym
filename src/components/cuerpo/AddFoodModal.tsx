@@ -289,6 +289,7 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                 carbs: editedCarbs,
                 fats: editedFats,
                 mealType: effectiveMealType,
+                unit: "serving"
             })
             onClose()
         } finally {
@@ -326,6 +327,7 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
                 carbs: selectedRecipe.carbs,
                 fats: selectedRecipe.fats,
                 mealType,
+                unit: "serving"
             })
             onClose()
         } finally {
@@ -400,7 +402,8 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
             calories: manualCalories,
             protein: manualProtein,
             carbs: manualCarbs,
-            fats: manualFats
+            fats: manualFats,
+            unit: "serving"
         })
 
         // Reset form
@@ -419,7 +422,8 @@ export function AddFoodModal({ isOpen, onClose, mealType, onAddFood }: AddFoodMo
             calories: food.calories,
             protein: food.protein,
             carbs: food.carbs,
-            fats: food.fats
+            fats: food.fats,
+            unit: "serving"
         })
         onClose()
     }
