@@ -404,12 +404,11 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                 <div className="flex items-center gap-3">
                     {ironAvatarUrl ? (
                         <img
-                            src={ironAvatarUrl}
+                            src={ironAvatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000"}
                             alt="IRON"
                             className="w-9 h-9 rounded-lg object-cover"
                             onError={(e) => {
-                                console.error("IRON avatar failed to load:", ironAvatarUrl)
-                                e.currentTarget.style.display = 'none'
+                                e.currentTarget.src = "https://ui-avatars.com/api/?name=IRON&background=000&color=fff"
                             }}
                         />
                     ) : (
@@ -587,9 +586,12 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                     <div className="flex flex-col items-center justify-center h-full px-6 text-center">
                         {ironAvatarUrl ? (
                             <img
-                                src={ironAvatarUrl}
+                                src={ironAvatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000"}
                                 alt="IRON"
                                 className="w-16 h-16 rounded-2xl object-cover mb-6"
+                                onError={(e) => {
+                                    e.currentTarget.src = "https://ui-avatars.com/api/?name=IRON&background=000&color=fff"
+                                }}
                             />
                         ) : (
                             <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-black text-3xl font-black mb-6">I</div>
@@ -630,9 +632,12 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                                         msg.role === "assistant" ? (
                                             ironAvatarUrl ? (
                                                 <img
-                                                    src={ironAvatarUrl}
+                                                    src={ironAvatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000"}
                                                     alt="IRON"
                                                     className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                                                    onError={(e) => {
+                                                        e.currentTarget.src = "https://ui-avatars.com/api/?name=IRON&background=000&color=fff"
+                                                    }}
                                                 />
                                             ) : (
                                                 <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black text-xs font-bold flex-shrink-0">I</div>
@@ -698,9 +703,12 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                                 <div className="max-w-2xl mx-auto flex gap-4">
                                     {ironAvatarUrl ? (
                                         <img
-                                            src={ironAvatarUrl}
+                                            src={ironAvatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000"}
                                             alt="IRON"
                                             className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                                            onError={(e) => {
+                                                e.currentTarget.src = "https://ui-avatars.com/api/?name=IRON&background=000&color=fff"
+                                            }}
                                         />
                                     ) : (
                                         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black text-xs font-bold flex-shrink-0">I</div>
