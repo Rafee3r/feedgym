@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Flame, Camera, Settings2, ShoppingCart, Heart, Clock, ChefHat, X, BookmarkPlus } from "lucide-react"
+import { Flame, Camera, Settings2, ShoppingCart, Heart, Clock, ChefHat, X, BookmarkPlus, Sun, Utensils, Moon, Cookie, Check } from "lucide-react"
 import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
 import { RecommendationsCarousel } from "@/components/cuerpo/RecommendationsCarousel"
@@ -346,79 +346,161 @@ export default function CuerpoPage() {
 
             {/* Main Content with proper bottom padding for PWA */}
             <div
-                className="max-w-lg mx-auto px-4 py-4 space-y-5"
+                className="max-w-lg mx-auto px-4 py-4 space-y-6"
                 style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
             >
-                {/* Macro Summary Card */}
-                <div className="bg-card border border-border rounded-2xl p-5">
-                    <div className="flex items-start justify-between mb-4">
-                        <div>
-                            <h2 className="font-semibold text-sm text-muted-foreground">Resumen del día</h2>
-                            <p className="text-3xl font-bold tabular-nums">
-                                {stats.calories}
-                                <span className="text-lg text-muted-foreground font-normal"> / {targets.calories}</span>
-                            </p>
-                            <p className="text-xs text-muted-foreground">calorías</p>
+                {/* Weekly Progress Bar */}
+                <div className="bg-card/50 border border-border rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-5 h-5 rounded-md bg-primary/20 flex items-center justify-center">
+                            <Flame className="w-3 h-3 text-primary" />
                         </div>
-                        <button
-                            onClick={() => setIsMacroSettingsOpen(true)}
-                            className="p-2 rounded-xl hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                            aria-label="Ajustar metas"
-                        >
-                            <Settings2 className="w-5 h-5" />
-                        </button>
+                        <span className="font-semibold text-sm">Meta Semanal</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden mb-2">
+                        <div
+                            className="h-full bg-primary rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, (streak / 7) * 100)}%` }}
+                        />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                        {streak > 0 ? `${Math.round((streak / 7) * 100)}% Completado` : 'Empieza a registrar'}
+                    </p>
+                </div>
+
+                {/* Circular Calorie Tracker + Macros */}
+                <div className="flex items-center gap-6">
+                    {/* Circular Tracker */}
+                    <div className="relative w-40 h-40 flex-shrink-0">
+                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                            {/* Background circle */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="42"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="8"
+                                className="text-muted/30"
+                            />
+                            {/* Progress circle */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="42"
+                                fill="none"
+                                stroke="url(#calorieGradient)"
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                                strokeDasharray={`${Math.min(100, (stats.calories / targets.calories) * 100) * 2.64} 264`}
+                                className="transition-all duration-700"
+                            />
+                            <defs>
+                                <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stopColor="#22c55e" />
+                                    <stop offset="100%" stopColor="#10b981" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-xs text-muted-foreground">Hoy:</span>
+                            <span className="text-2xl font-bold">{stats.calories}</span>
+                            <span className="text-xs text-muted-foreground">/{targets.calories} kcal</span>
+                        </div>
                     </div>
 
-                    {/* Macro Bars */}
-                    <div className="space-y-3">
+                    {/* Macros List */}
+                    <div className="flex-1 space-y-3">
                         {[
-                            { label: "Proteína", current: stats.protein, target: targets.protein, color: "bg-blue-500", unit: "g" },
-                            { label: "Carbohidratos", current: stats.carbs, target: targets.carbs, color: "bg-amber-500", unit: "g" },
-                            { label: "Grasas", current: stats.fats, target: targets.fats, color: "bg-rose-500", unit: "g" },
+                            { label: "Proteína", current: stats.protein, target: targets.protein, color: "text-blue-500", icon: "💪" },
+                            { label: "Carbohidratos", current: stats.carbs, target: targets.carbs, color: "text-amber-500", icon: "⚡" },
+                            { label: "Grasas", current: stats.fats, target: targets.fats, color: "text-rose-500", icon: "🔥" },
                         ].map((macro) => (
-                            <div key={macro.label} className="space-y-1">
-                                <div className="flex items-center justify-between text-xs">
-                                    <span className="text-muted-foreground">{macro.label}</span>
-                                    <span className="font-medium tabular-nums">
-                                        {macro.current} <span className="text-muted-foreground">/ {macro.target}{macro.unit}</span>
-                                    </span>
+                            <div key={macro.label} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className={cn("font-medium text-sm", macro.color)}>{macro.label}</span>
                                 </div>
-                                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                                    <div
-                                        className={cn("h-full rounded-full transition-all duration-500", macro.color)}
-                                        style={{ width: `${Math.min(100, (macro.current / macro.target) * 100)}%` }}
-                                    />
-                                </div>
+                                <span className="text-sm font-semibold tabular-nums">
+                                    {macro.current}<span className="text-muted-foreground font-normal">/{macro.target}g</span>
+                                </span>
                             </div>
                         ))}
+                        <button
+                            onClick={() => setIsMacroSettingsOpen(true)}
+                            className="text-xs text-primary hover:underline flex items-center gap-1 mt-2"
+                        >
+                            <Settings2 className="w-3 h-3" />
+                            Ajustar metas
+                        </button>
                     </div>
                 </div>
 
-                {/* Time-based Recommendations */}
+                {/* Action Buttons */}
+                <div className="bg-card border border-border rounded-2xl p-4">
+                    <div className="flex items-center justify-between">
+                        <span className="font-semibold text-sm">Registrar Comida</span>
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={handleScanFood}
+                                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <Camera className="w-5 h-5" />
+                                <span className="text-[10px]">Escanear</span>
+                            </button>
+                            <button
+                                onClick={() => handleAddFood(MealType.BREAKFAST)}
+                                className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <ChefHat className="w-5 h-5" />
+                                <span className="text-[10px]">Buscar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Meal Photo Cards - Horizontal Scroll */}
+                <div className="space-y-3">
+                    <h3 className="font-semibold text-sm px-1">Tus Comidas</h3>
+                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+                        {[
+                            { type: MealType.BREAKFAST, label: "Desayuno", Icon: Sun, bgColor: "bg-primary/10" },
+                            { type: MealType.LUNCH, label: "Almuerzo", Icon: Utensils, bgColor: "bg-primary/10" },
+                            { type: MealType.DINNER, label: "Cena", Icon: Moon, bgColor: "bg-primary/10" },
+                            { type: MealType.SNACK, label: "Snacks", Icon: Cookie, bgColor: "bg-primary/10" },
+                        ].map((meal) => {
+                            const data = getMealData(meal.type)
+                            return (
+                                <button
+                                    key={meal.type}
+                                    onClick={() => handleAddFood(meal.type)}
+                                    className={cn(
+                                        "flex-shrink-0 w-28 rounded-2xl p-3 border border-border",
+                                        meal.bgColor,
+                                        "hover:scale-105 transition-transform"
+                                    )}
+                                >
+                                    <div className="w-full h-16 rounded-xl bg-card/50 flex items-center justify-center mb-2">
+                                        {data.items.length > 0 ? (
+                                            <Check className="w-6 h-6 text-primary" />
+                                        ) : (
+                                            <meal.Icon className="w-6 h-6 text-muted-foreground" />
+                                        )}
+                                    </div>
+                                    <p className="font-medium text-xs">{meal.label}</p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        {data.calories > 0 ? `${data.calories} kcal` : "Registrar"}
+                                    </p>
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Inspiration Feed */}
                 <RecommendationsCarousel
                     onSelect={handleQuickAdd}
                     onScanFood={handleScanFood}
                 />
-
-                {/* Meal Cards */}
-                <div className="space-y-3">
-                    <h3 className="font-semibold text-sm text-muted-foreground px-1">Tus comidas</h3>
-                    {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((type) => {
-                        const data = getMealData(type)
-                        return (
-                            <MealCard
-                                key={type}
-                                type={type}
-                                calories={data.calories}
-                                items={data.items}
-                                onAddFood={() => handleAddFood(type)}
-                                onRecommend={() => handleRecommend(type)}
-                                onDeleteEntry={handleDeleteEntry}
-                                onRepeatEntry={handleRepeatEntry}
-                            />
-                        )
-                    })}
-                </div>
             </div>
 
             {/* Modals */}
