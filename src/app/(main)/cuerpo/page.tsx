@@ -81,52 +81,53 @@ export default function CuerpoPage() {
         fats: 65
     })
 
-    // Fetch user profile and calculate personalized targets
+    // Fetch user profile and stored targets
     useEffect(() => {
-        const fetchUserAndCalculateTargets = async () => {
+        const fetchUserAndTargets = async () => {
             try {
-                const res = await fetch('/api/user/profile')
+                // We use /api/users/me because it includes the specific target fields we added
+                const res = await fetch('/api/users/me')
                 if (!res.ok) return
 
                 const user = await res.json()
-                const weight = user.weight || 70
-                const goal = user.goal || 'MAINTAIN'
 
-                const baseTDEE = weight * 24 * 1.5
+                // If user has specific targets saved (and they are not just the schema defaults if we want to be strict, 
+                // but usually we trust the DB values), use them.
+                // We trust the DB values because handleSaveMacros updates them.
 
-                let targetCalories: number
-                let proteinPerKg: number
+                if (user.caloriesTarget) {
+                    setTargets({
+                        calories: user.caloriesTarget,
+                        protein: user.proteinTarget,
+                        carbs: user.carbsTarget,
+                        fats: user.fatsTarget
+                    })
+                } else {
+                    // Fallback calculation only if no targets exist (legacy support)
+                    const weight = user.weight || 70
+                    const goal = user.goal || 'MAINTAIN'
+                    const baseTDEE = weight * 24 * 1.5
+                    let targetCalories = Math.round(baseTDEE)
+                    if (goal === 'CUT') targetCalories -= 500
+                    if (goal === 'BULK') targetCalories += 400
 
-                switch (goal) {
-                    case 'CUT':
-                        targetCalories = Math.round(baseTDEE - 500)
-                        proteinPerKg = 2.2
-                        break
-                    case 'BULK':
-                        targetCalories = Math.round(baseTDEE + 400)
-                        proteinPerKg = 1.8
-                        break
-                    default:
-                        targetCalories = Math.round(baseTDEE)
-                        proteinPerKg = 2.0
+                    const protein = Math.round(weight * 2)
+                    const fats = Math.round((targetCalories * 0.25) / 9)
+                    const carbs = Math.round((targetCalories - (protein * 4) - (fats * 9)) / 4)
+
+                    setTargets({
+                        calories: targetCalories,
+                        protein: Math.max(protein, 100),
+                        carbs: Math.max(carbs, 100),
+                        fats: Math.max(fats, 40)
+                    })
                 }
-
-                const protein = Math.round(weight * proteinPerKg)
-                const fats = Math.round((targetCalories * 0.25) / 9)
-                const carbs = Math.round((targetCalories - (protein * 4) - (fats * 9)) / 4)
-
-                setTargets({
-                    calories: targetCalories,
-                    protein: Math.max(protein, 100),
-                    carbs: Math.max(carbs, 100),
-                    fats: Math.max(fats, 40)
-                })
             } catch (error) {
                 console.error('Failed to fetch user profile:', error)
             }
         }
 
-        fetchUserAndCalculateTargets()
+        fetchUserAndTargets()
     }, [])
 
     const handleAddFood = (type: MealType) => {

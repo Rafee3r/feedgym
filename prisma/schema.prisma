@@ -59,6 +59,8 @@ model User {
   // Onboarding & Tutorial
   onboardingCompleted Boolean   @default(false)
   tutorialCompleted   Boolean   @default(false)
+  
+  shoppingList        ShoppingList?
   timezone            String    @default("America/Santiago")
   
   // Engagement & Gamification
@@ -475,4 +477,31 @@ model KitchenItem {
   createdAt   DateTime @default(now())
   
   @@index([userId])
+}
+// ============================================
+// SHOPPING LIST MODELS
+// ============================================
+
+model ShoppingList {
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     ShoppingItem[]
+  updatedAt DateTime       @updatedAt
+}
+
+model ShoppingItem {
+  id             String       @id @default(cuid())
+  shoppingListId String
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+  
+  name      String
+  quantity  String?
+  category  String       @default("Otros")
+  checked   Boolean      @default(false)
+  
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([shoppingListId])
 }

@@ -703,7 +703,7 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
                                 <div className="max-w-2xl mx-auto flex gap-4">
                                     {ironAvatarUrl ? (
                                         <img
-                                            src={ironAvatarUrl || "https://api.dicebear.com/7.x/bottts/svg?seed=IRON&backgroundColor=000000"}
+                                            src={ironAvatarUrl || "https://cdn.discordapp.com/attachments/1121155418039791686/1462512040882212875/7c041661d2a1c8e3a88088c56c09ae64.webp?ex=696fc77a&is=696e75fa&hm=a016741b61e0bd2b18f4f5fbd31639338f2a661c03c7a8ccba57475070ecef97&"}
                                             alt="IRON"
                                             className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
                                             onError={(e) => {
