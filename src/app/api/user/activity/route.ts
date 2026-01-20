@@ -82,7 +82,14 @@ export async function GET(request: NextRequest) {
             },
         })
 
-        const trainingDays = user?.trainingDays || []
+        // Raw trainingDays from DB - might contain mixed formats (numbers and day names)
+        const rawTrainingDays = user?.trainingDays || []
+
+        // Filter to only valid day names (Monday, Tuesday, etc.)
+        const validDayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        const trainingDays = rawTrainingDays.filter(day =>
+            typeof day === "string" && validDayNames.includes(day)
+        )
 
         // Helper to compare dates in Santiago timezone
         function isSameDay(date1: Date, date2: Date): boolean {

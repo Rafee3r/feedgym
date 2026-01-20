@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Flame, Camera, Settings2, ShoppingCart, Heart, Clock, ChefHat, X, BookmarkPlus, Sun, Utensils, Moon, Cookie, Check } from "lucide-react"
+import { Flame, Camera, Settings2, ShoppingCart, Heart, Clock, ChefHat, X, BookmarkPlus, Sun, Utensils, Moon, Cookie, Check, MessageSquare } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
 import { RecommendationsCarousel } from "@/components/cuerpo/RecommendationsCarousel"
@@ -36,11 +37,17 @@ interface RecipeDetail {
 export default function CuerpoPage() {
     const { data: session } = useSession()
     const { toast } = useToast()
+    const router = useRouter()
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [isAddFoodOpen, setIsAddFoodOpen] = useState(false)
     const [isShoppingListOpen, setIsShoppingListOpen] = useState(false)
     const [isMacroSettingsOpen, setIsMacroSettingsOpen] = useState(false)
     const [activeMealType, setActiveMealType] = useState<MealType>(MealType.BREAKFAST)
+
+    // Navigate to IRON chat with pre-filled message
+    const handleAskIron = (question: string) => {
+        router.push(`/coach?message=${encodeURIComponent(question)}`)
+    }
 
     // Recipe detail modal
     const [selectedRecipe, setSelectedRecipe] = useState<RecipeDetail | null>(null)
@@ -413,7 +420,7 @@ export default function CuerpoPage() {
                     <div className="flex-1 space-y-3">
                         {[
                             { label: "Proteína", current: stats.protein, target: targets.protein, color: "text-blue-500", icon: "💪" },
-                            { label: "Carbohidratos", current: stats.carbs, target: targets.carbs, color: "text-amber-500", icon: "⚡" },
+                            { label: "Carbs", current: stats.carbs, target: targets.carbs, color: "text-amber-500", icon: "⚡" },
                             { label: "Grasas", current: stats.fats, target: targets.fats, color: "text-rose-500", icon: "🔥" },
                         ].map((macro) => (
                             <div key={macro.label} className="flex items-center justify-between">
@@ -458,38 +465,24 @@ export default function CuerpoPage() {
                     </div>
                 </div>
 
-                {/* Meal Photo Cards - Horizontal Scroll */}
+                {/* Meal Cards - Original Design */}
                 <div className="space-y-3">
-                    <h3 className="font-semibold text-sm px-1">Tus Comidas</h3>
-                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-                        {[
-                            { type: MealType.BREAKFAST, label: "Desayuno", Icon: Sun },
-                            { type: MealType.LUNCH, label: "Almuerzo", Icon: Utensils },
-                            { type: MealType.DINNER, label: "Cena", Icon: Moon },
-                            { type: MealType.SNACK, label: "Snacks", Icon: Cookie },
-                        ].map((meal) => {
-                            const data = getMealData(meal.type)
-                            return (
-                                <button
-                                    key={meal.type}
-                                    onClick={() => handleAddFood(meal.type)}
-                                    className="flex-shrink-0 w-28 rounded-2xl p-3 border border-border bg-card hover:bg-card/80 hover:border-primary/50 transition-all"
-                                >
-                                    <div className="w-full h-16 rounded-xl bg-muted/30 flex items-center justify-center mb-2">
-                                        {data.items.length > 0 ? (
-                                            <Check className="w-6 h-6 text-primary" />
-                                        ) : (
-                                            <meal.Icon className="w-6 h-6 text-muted-foreground" />
-                                        )}
-                                    </div>
-                                    <p className="font-medium text-xs">{meal.label}</p>
-                                    <p className="text-[10px] text-muted-foreground">
-                                        {data.calories > 0 ? `${data.calories} kcal` : "Registrar"}
-                                    </p>
-                                </button>
-                            )
-                        })}
-                    </div>
+                    <h3 className="font-semibold text-sm text-muted-foreground px-1">Tus comidas</h3>
+                    {[MealType.BREAKFAST, MealType.LUNCH, MealType.DINNER, MealType.SNACK].map((type) => {
+                        const data = getMealData(type)
+                        return (
+                            <MealCard
+                                key={type}
+                                type={type}
+                                calories={data.calories}
+                                items={data.items}
+                                onAddFood={() => handleAddFood(type)}
+                                onRecommend={() => handleRecommend(type)}
+                                onDeleteEntry={handleDeleteEntry}
+                                onRepeatEntry={handleRepeatEntry}
+                            />
+                        )
+                    })}
                 </div>
 
                 {/* Inspiration Feed */}
@@ -497,6 +490,30 @@ export default function CuerpoPage() {
                     onSelect={handleQuickAdd}
                     onScanFood={handleScanFood}
                 />
+
+                {/* Ask IRON Section */}
+                <div className="space-y-3">
+                    <h3 className="font-semibold text-sm px-1 flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-primary" />
+                        Preguntar a IRON
+                    </h3>
+                    <div className="flex flex-col gap-2">
+                        {[
+                            "¿Qué me recomiendas comer?",
+                            "¿Cómo ves mi dieta de hoy?",
+                            "Me resulta difícil mi dieta"
+                        ].map((question) => (
+                            <button
+                                key={question}
+                                onClick={() => handleAskIron(question)}
+                                className="w-full text-left px-4 py-3 bg-card border border-border rounded-xl text-sm hover:bg-muted/50 hover:border-primary/30 transition-all flex items-center justify-between group"
+                            >
+                                <span>{question}</span>
+                                <MessageSquare className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
 
             {/* Modals */}

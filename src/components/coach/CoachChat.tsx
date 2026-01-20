@@ -73,9 +73,10 @@ interface Message {
 interface CoachChatProps {
     onClose?: () => void
     className?: string
+    initialMessage?: string
 }
 
-export function CoachChat({ onClose, className }: CoachChatProps) {
+export function CoachChat({ onClose, className, initialMessage }: CoachChatProps) {
     const { data: session } = useSession()
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
@@ -83,6 +84,7 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingHistory, setIsLoadingHistory] = useState(true)
     const [userAvatarUrl, setUserAvatarUrl] = useState<string | undefined>(session?.user?.image || undefined)
+    const [hasAutoSentInitial, setHasAutoSentInitial] = useState(false)
     const [ironAvatarUrl, setIronAvatarUrl] = useState<string | undefined>(undefined)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -150,6 +152,20 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "auto" })
     }, [messages])
+
+    // Auto-send initial message if provided (from cuerpo page IRON questions)
+    useEffect(() => {
+        if (initialMessage && !isLoadingHistory && !hasAutoSentInitial && !isLoading) {
+            setHasAutoSentInitial(true)
+            // Use setTimeout to ensure state is ready
+            setTimeout(() => {
+                setInput(initialMessage)
+                // Trigger submit programmatically
+                const submitEvent = new Event('submit', { bubbles: true })
+                document.querySelector('form')?.dispatchEvent(submitEvent)
+            }, 100)
+        }
+    }, [initialMessage, isLoadingHistory, hasAutoSentInitial, isLoading])
 
     // Auto-resize textarea
     useEffect(() => {

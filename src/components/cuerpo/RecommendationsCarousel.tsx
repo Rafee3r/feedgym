@@ -185,11 +185,8 @@ export function RecommendationsCarousel({
                                 )}
                             >
                                 {/* Food Image Banner */}
-                                <div className={cn(
-                                    "h-12 bg-gradient-to-r flex items-center justify-center",
-                                    getGradient()
-                                )}>
-                                    <span className="text-2xl drop-shadow-md">{getEmoji()}</span>
+                                <div className="h-12 bg-muted/50 flex items-center justify-center">
+                                    <span className="text-2xl">{getEmoji()}</span>
                                 </div>
 
                                 {/* Content */}
