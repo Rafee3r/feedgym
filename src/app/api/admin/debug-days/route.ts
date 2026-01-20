@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
-import { startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
+import { startOfWeek, endOfWeek, eachDayOfInterval, addHours } from "date-fns"
+
+// Day names in Monday-first order (matches weekStartsOn: 1)
+const WEEKDAY_NAMES_MONDAY_FIRST = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+]
 
 // DEBUG endpoint to see what's happening with training days
 export async function GET(request: NextRequest) {
@@ -15,12 +20,11 @@ export async function GET(request: NextRequest) {
         const santiagoString = santiagoNow.toLocaleString("en-US", { timeZone: "America/Santiago" })
         const santiagoDate = new Date(santiagoString)
 
-        // Get week days
+        // Get week days at NOON (not midnight) to avoid timezone edge cases
         const weekStart = startOfWeek(santiagoDate, { weekStartsOn: 1 })
         const weekEnd = endOfWeek(santiagoDate, { weekStartsOn: 1 })
-        const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
-
-        const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+        const rawDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+        const days = rawDays.map(d => addHours(d, 12)) // Move to noon!
 
         // Get user's training days
         const user = await prisma.user.findUnique({
@@ -40,38 +44,24 @@ export async function GET(request: NextRequest) {
             },
             savedTrainingDays: user?.trainingDays || [],
             weekDaysAnalysis: days.map((day, index) => {
-                // Method 1: Using getDay() directly
-                const getdayResult = day.getDay()
-                const dayNameFromGetDay = DAY_NAMES[getdayResult]
+                // Use INDEX to get day name (this is the FIX!)
+                const dayNameByIndex = WEEKDAY_NAMES_MONDAY_FIRST[index]
 
-                // Method 2: Using toLocaleString with weekday
+                // Old method for comparison
                 const santiagoWeekday = day.toLocaleString("en-US", {
                     timeZone: "America/Santiago",
                     weekday: "long"
                 })
 
-                // Method 3: Split method we're using
-                const santiagoSplit = day.toLocaleString("en-US", {
-                    timeZone: "America/Santiago",
-                    weekday: "long"
-                }).split(",")[0]
-
-                // Expected day name based on index (Mon=0, Tue=1, etc for our Monday-first week)
-                const expectedDayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                const expectedDayName = expectedDayNames[index]
+                const isScheduled = (user?.trainingDays || []).includes(dayNameByIndex)
 
                 return {
                     index,
                     dayISO: day.toISOString(),
-                    dayLocalString: day.toString(),
-                    getDay: getdayResult,
-                    dayNameFromGetDay,
-                    santiagoWeekday,
-                    santiagoSplit,
-                    expectedDayName,
-                    match: santiagoSplit === expectedDayName,
-                    isScheduled: (user?.trainingDays || []).includes(santiagoSplit),
-                    isScheduledExpected: (user?.trainingDays || []).includes(expectedDayName),
+                    dayNameByIndex, // This is what we use now
+                    santiagoWeekday, // This is what toLocaleString returns (should match now with noon)
+                    match: dayNameByIndex === santiagoWeekday,
+                    isScheduled,
                 }
             })
         }
