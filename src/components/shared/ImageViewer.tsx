@@ -112,11 +112,11 @@ export function ImageViewer({ src, alt = "Image", isOpen, onClose }: ImageViewer
 
     return (
         <div
-            className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+            className="fixed inset-0 z-[60] bg-black/95 flex flex-col"
             onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 text-white">
+            <div className="flex items-center justify-between p-4 pt-[calc(env(safe-area-inset-top)+1rem)] text-white relative z-10 w-full bg-gradient-to-b from-black/50 to-transparent">
                 <div className="flex items-center gap-2">
                     <Button
                         variant="ghost"
@@ -198,7 +198,7 @@ export function ImageViewer({ src, alt = "Image", isOpen, onClose }: ImageViewer
             </div>
 
             {/* Footer hints */}
-            <div className="p-2 text-center text-xs text-white/50">
+            <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-center text-xs text-white/50 bg-gradient-to-t from-black/50 to-transparent w-full">
                 Scroll para zoom • Click para ampliar • Arrastra para mover • ESC para cerrar
             </div>
         </div>

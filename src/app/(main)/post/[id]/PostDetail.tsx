@@ -55,7 +55,7 @@ export function PostDetail({ postId }: PostDetailProps) {
     }
 
     return (
-        <div>
+        <div className="pb-24 sm:pb-8">
             {/* Parent Post (if reply) */}
             {post.parent && (
                 <>

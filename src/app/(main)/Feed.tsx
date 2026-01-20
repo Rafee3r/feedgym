@@ -7,6 +7,7 @@ import { FeedSkeleton } from "@/components/post/PostSkeleton"
 import { Button } from "@/components/ui/button"
 import { Loader2, RefreshCw } from "lucide-react"
 import type { PostData, FeedResponse } from "@/types"
+import { toast } from "@/hooks/use-toast"
 
 export function Feed() {
     const { data: session } = useSession()
@@ -173,9 +174,21 @@ export function Feed() {
             const response = await fetch(`/api/posts/${postId}`, { method: "DELETE" })
             if (response.ok) {
                 setPosts((prev) => prev.filter((p) => p.id !== postId))
+                toast({
+                    title: "Post eliminado",
+                    description: "El post ha sido eliminado correctamente",
+                    variant: "success",
+                })
+            } else {
+                throw new Error("No se pudo eliminar")
             }
         } catch (err) {
             console.error("Delete error:", err)
+            toast({
+                title: "Error",
+                description: "No se pudo eliminar el post. Intenta nuevamente.",
+                variant: "destructive",
+            })
         }
     }
 

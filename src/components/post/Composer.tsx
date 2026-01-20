@@ -291,23 +291,6 @@ export function Composer({
 
                 const createdPost = await response.json()
 
-                // Check if @IRON was mentioned and trigger auto-reply
-                if (content.toLowerCase().includes("@iron")) {
-                    try {
-                        await fetch("/api/coach/reply", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                postId: createdPost.id,
-                                parentId,
-                                content: content.trim(),
-                            }),
-                        })
-                    } catch (ironError) {
-                        console.error("IRON auto-reply error:", ironError)
-                    }
-                }
-
                 // Reset state
                 setContent("")
                 setPostType("NOTE")

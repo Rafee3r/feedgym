@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { buildUserContext, buildFullPrompt } from "@/lib/coach-prompt"
+import prisma from "@/lib/prisma"
 import { getOpenAI } from "@/lib/openai"
 import type OpenAI from "openai"
 
@@ -59,6 +60,20 @@ export async function POST(request: NextRequest) {
             })
         } else {
             messages.push({ role: "user", content: message })
+        }
+
+        // SAVE USER MESSAGE TO DB (PERSISTENCE FIX)
+        try {
+            await prisma.coachMessage.create({
+                data: {
+                    userId: session.user.id,
+                    role: "user",
+                    content: message || "Analiza esta imagen", // Fallback for image-only
+                }
+            })
+        } catch (dbError) {
+            console.error("Error persisting user message in chat route:", dbError)
+            // Non-blocking error, continue to stream
         }
 
         // Create streaming response
