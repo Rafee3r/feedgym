@@ -119,11 +119,13 @@ export function CoachChat({ onClose, className }: CoachChatProps) {
         fetch("/api/users/iron")
             .then(res => res.json())
             .then(data => {
+                console.log("IRON profile data:", data)
                 if (data.avatarUrl) {
                     setIronAvatarUrl(data.avatarUrl)
+                    console.log("IRON avatar URL set:", data.avatarUrl)
                 }
             })
-            .catch(console.error)
+            .catch(err => console.error("Failed to fetch IRON avatar:", err))
     }, [session])
 
     // Load messages from database on mount
