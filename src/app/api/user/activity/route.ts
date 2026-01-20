@@ -2,9 +2,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import prisma from "@/lib/prisma"
-import { startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns"
+import { startOfWeek, endOfWeek, eachDayOfInterval, addHours } from "date-fns"
 
-// Map day index to English day name (matching trainingDays format)
+// Day names in Monday-first order (index 0 = Monday, 6 = Sunday)
+// This matches our weekStartsOn: 1 configuration
+const WEEKDAY_NAMES_MONDAY_FIRST = [
+    "Monday",    // index 0
+    "Tuesday",   // index 1
+    "Wednesday", // index 2
+    "Thursday",  // index 3
+    "Friday",    // index 4
+    "Saturday",  // index 5
+    "Sunday"     // index 6
+]
+
+// Standard JS getDay() names (0 = Sunday, 6 = Saturday)
 const DAY_NAMES = [
     "Sunday",
     "Monday",
@@ -16,7 +28,7 @@ const DAY_NAMES = [
 ]
 
 // Get current date in Santiago, Chile timezone
-function getSantiagoDate(): Date {
+function getSantiagoNow(): Date {
     const now = new Date()
     const santiagoString = now.toLocaleString("en-US", { timeZone: "America/Santiago" })
     return new Date(santiagoString)
@@ -34,7 +46,7 @@ export async function GET(request: NextRequest) {
         const userIdParam = searchParams.get("userId")
         const targetUserId = userIdParam || session.user.id
 
-        // Verify if user exists (optional, but good for safety)
+        // Verify if user exists
         const user = await prisma.user.findUnique({
             where: { id: targetUserId },
             select: { trainingDays: true }
@@ -44,15 +56,16 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
         }
 
-        // Use Santiago timezone for determining current date and week
-        const santiagoNow = getSantiagoDate()
+        // Use Santiago timezone for current date
+        const santiagoNow = getSantiagoNow()
 
         // Get start and end of current week (starting Monday)
         const weekStart = startOfWeek(santiagoNow, { weekStartsOn: 1 })
         const weekEnd = endOfWeek(santiagoNow, { weekStartsOn: 1 })
 
-        // Get all days in the week
-        const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
+        // Get all days in the week - add 12 hours to avoid UTC midnight issues
+        const rawDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
+        const days = rawDays.map(d => addHours(d, 12)) // Move to noon to avoid timezone edge cases
 
         // Fetch posts for this week
         const posts = await prisma.post.findMany({
@@ -69,51 +82,41 @@ export async function GET(request: NextRequest) {
             },
         })
 
-        // Map days to status - use day NAMES to match trainingDays format
         const trainingDays = user?.trainingDays || []
 
-        // Helper to convert UTC date to Santiago timezone date components
-        function getDateInSantiago(utcDate: Date): { date: number, month: number, year: number } {
-            const santiagoString = utcDate.toLocaleString("en-US", { timeZone: "America/Santiago" })
-            const d = new Date(santiagoString)
-            return { date: d.getDate(), month: d.getMonth(), year: d.getFullYear() }
+        // Helper to compare dates in Santiago timezone
+        function isSameDay(date1: Date, date2: Date): boolean {
+            const d1str = date1.toLocaleDateString("en-US", { timeZone: "America/Santiago" })
+            const d2str = date2.toLocaleDateString("en-US", { timeZone: "America/Santiago" })
+            return d1str === d2str
         }
 
-        const activity = days.map((day) => {
-            const dayInSantiago = getDateInSantiago(day)
+        const activity = days.map((day, index) => {
+            // Use INDEX to determine day name since we know the week starts Monday
+            // index 0 = Monday, index 1 = Tuesday, etc.
+            const dayName = WEEKDAY_NAMES_MONDAY_FIRST[index]
 
-            const hasPost = posts.some((post) => {
-                const postInSantiago = getDateInSantiago(post.createdAt)
-                return (
-                    postInSantiago.date === dayInSantiago.date &&
-                    postInSantiago.month === dayInSantiago.month &&
-                    postInSantiago.year === dayInSantiago.year
-                )
-            })
+            // Check if any post was made on this day
+            const hasPost = posts.some((post) => isSameDay(post.createdAt, day))
 
-            // Get day name in SANTIAGO timezone to match against trainingDays
-            const santiagoDateStr = day.toLocaleString("en-US", { timeZone: "America/Santiago", weekday: "long" })
-            // toLocaleString with weekday returns the day name directly
-            const dayName = santiagoDateStr.split(",")[0] || DAY_NAMES[day.getDay()]
+            // Check if this day is today
+            const isToday = isSameDay(day, santiagoNow)
+
+            // Check if this day is in the past
+            const isPast = day < santiagoNow && !isToday
 
             return {
                 date: day.toISOString(),
                 hasPost,
-                isToday:
-                    dayInSantiago.date === santiagoNow.getDate() &&
-                    dayInSantiago.month === santiagoNow.getMonth() &&
-                    dayInSantiago.year === santiagoNow.getFullYear(),
-                isPast: day < santiagoNow,
-                dayName, // Include dayName for frontend debugging
+                isToday,
+                isPast,
+                dayName, // Correct day name based on week position
             }
         })
 
-        // Count only scheduled training days that have a post (true consistency!)
+        // Count scheduled training days that have a post
         const daysPosted = activity.filter(d => {
-            // Use the dayName we already calculated and included in the response
-            const dayDate = new Date(d.date)
-            const santiagoDay = dayDate.toLocaleString("en-US", { timeZone: "America/Santiago", weekday: "long" }).split(",")[0]
-            const isScheduled = trainingDays.includes(santiagoDay)
+            const isScheduled = trainingDays.includes(d.dayName)
             return isScheduled && d.hasPost
         }).length
 

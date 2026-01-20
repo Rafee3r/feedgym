@@ -10,6 +10,7 @@ export interface ActivityData {
         hasPost: boolean
         isToday: boolean
         isPast: boolean
+        dayName: string // Day name from API (Monday, Tuesday, etc.)
     }[]
     trainingDays: string[]
     stats: {
@@ -72,13 +73,11 @@ export function ConsistencyCard({
 
                             <div className="flex justify-between px-1">
                                 {activityData.weekDays.map((day, index) => {
-                                    const date = new Date(day.date)
-                                    // Day labels in Monday-first order: L M M J V S D
-                                    const dayLabels = ["L", "M", "M", "J", "V", "S", "D"]
+                                    // Day labels in Monday-first order: L M X J V S D
+                                    const dayLabels = ["L", "M", "X", "J", "V", "S", "D"]
                                     const dayLabel = dayLabels[index] // Use index since data comes Monday-first
-                                    // Get day name in SANTIAGO timezone to match trainingDays format
-                                    const santiagoDay = date.toLocaleString("en-US", { timeZone: "America/Santiago", weekday: "long" }).split(",")[0]
-                                    const isScheduled = activityData.trainingDays.includes(santiagoDay)
+                                    // Use dayName from API directly (already correctly calculated on server)
+                                    const isScheduled = activityData.trainingDays.includes(day.dayName)
 
                                     return (
                                         <div key={day.date} className="flex flex-col items-center gap-2">
