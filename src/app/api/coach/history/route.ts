@@ -14,7 +14,7 @@ export async function GET() {
 
         const messages = await prisma.coachMessage.findMany({
             where: { userId: session.user.id },
-            orderBy: { createdAt: "asc" },
+            orderBy: { createdAt: "desc" },
             take: 100, // Limit to last 100 messages
             select: {
                 id: true,
@@ -24,7 +24,10 @@ export async function GET() {
             },
         })
 
-        return NextResponse.json({ messages })
+        // Reverse to show in chronological order (oldest -> newest) for the chat UI
+        const sortedMessages = messages.reverse()
+
+        return NextResponse.json({ messages: sortedMessages })
     } catch (error) {
         console.error("Error fetching coach history:", error)
         return NextResponse.json({ error: "Error al obtener historial" }, { status: 500 })
