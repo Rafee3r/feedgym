@@ -11,10 +11,10 @@ import { toast } from "@/hooks/use-toast"
 
 const FEED_CACHE_KEY = "feedgym-feed-cache"
 const FEED_CACHE_TS_KEY = "feedgym-feed-cache-ts"
+const CACHE_STALE_MS = 5 * 60 * 1000 // 5 minutes
 
 function saveFeedToCache(posts: PostData[]) {
     try {
-        // Only cache the first page (max 20 posts) to keep localStorage lean
         const toCache = posts.slice(0, 20)
         localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(toCache))
         localStorage.setItem(FEED_CACHE_TS_KEY, Date.now().toString())
@@ -30,6 +30,16 @@ function loadFeedFromCache(): PostData[] | null {
         return JSON.parse(raw) as PostData[]
     } catch {
         return null
+    }
+}
+
+function isCacheStale(): boolean {
+    try {
+        const ts = localStorage.getItem(FEED_CACHE_TS_KEY)
+        if (!ts) return true
+        return Date.now() - parseInt(ts, 10) > CACHE_STALE_MS
+    } catch {
+        return true
     }
 }
 
@@ -87,28 +97,30 @@ export function Feed() {
         }
     }, [])
 
-    // --- Initial load: show cache immediately, then verify in background ---
+    // --- Initial load: show cache immediately, only check server if stale ---
     useEffect(() => {
         const load = async () => {
-            // 1. Try to show cached posts instantly
             const cached = loadFeedFromCache()
             if (cached && cached.length > 0) {
                 setPosts(cached)
                 latestPostIdRef.current = cached[0].id
                 setIsLoading(false) // No skeleton – instant display
 
-                // 2. Background check for new posts
-                try {
-                    const res = await fetch("/api/posts?limit=1")
-                    if (res.ok) {
-                        const data: FeedResponse = await res.json()
-                        if (data.posts.length > 0 && data.posts[0].id !== cached[0].id) {
-                            // There are newer posts – do a silent full refresh
-                            await fetchPosts()
+                // Only hit the network if the cache is older than 5 min
+                if (isCacheStale()) {
+                    try {
+                        const res = await fetch("/api/posts?limit=5")
+                        if (res.ok) {
+                            const data: FeedResponse = await res.json()
+                            if (data.posts.length > 0 && data.posts[0].id !== cached[0].id) {
+                                // New posts exist – show bubble, don't auto-refresh
+                                const count = data.posts.findIndex((p) => p.id === cached[0].id)
+                                setNewPostCount(count === -1 ? data.posts.length : count)
+                            }
                         }
+                    } catch {
+                        // Network error – keep showing cache
                     }
-                } catch {
-                    // Network error on background check – keep showing cache
                 }
             } else {
                 // No cache – normal loading with skeleton
