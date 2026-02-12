@@ -5,9 +5,33 @@ import { useSession } from "next-auth/react"
 import { PostCard } from "@/components/post/PostCard"
 import { FeedSkeleton } from "@/components/post/PostSkeleton"
 import { Button } from "@/components/ui/button"
-import { Loader2, RefreshCw } from "lucide-react"
+import { Loader2, RefreshCw, ChevronUp } from "lucide-react"
 import type { PostData, FeedResponse } from "@/types"
 import { toast } from "@/hooks/use-toast"
+
+const FEED_CACHE_KEY = "feedgym-feed-cache"
+const FEED_CACHE_TS_KEY = "feedgym-feed-cache-ts"
+
+function saveFeedToCache(posts: PostData[]) {
+    try {
+        // Only cache the first page (max 20 posts) to keep localStorage lean
+        const toCache = posts.slice(0, 20)
+        localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(toCache))
+        localStorage.setItem(FEED_CACHE_TS_KEY, Date.now().toString())
+    } catch {
+        // localStorage full or unavailable – silently ignore
+    }
+}
+
+function loadFeedFromCache(): PostData[] | null {
+    try {
+        const raw = localStorage.getItem(FEED_CACHE_KEY)
+        if (!raw) return null
+        return JSON.parse(raw) as PostData[]
+    } catch {
+        return null
+    }
+}
 
 export function Feed() {
     const { data: session } = useSession()
@@ -17,6 +41,10 @@ export function Feed() {
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    // New-posts notification bubble
+    const [newPostCount, setNewPostCount] = useState(0)
+    const latestPostIdRef = useRef<string | null>(null)
 
     // Pull-to-refresh state
     const [isRefreshing, setIsRefreshing] = useState(false)
@@ -43,6 +71,13 @@ export function Feed() {
                 setPosts((prev) => [...prev, ...data.posts])
             } else {
                 setPosts(data.posts)
+                // Update cache & latest ID reference
+                if (data.posts.length > 0) {
+                    saveFeedToCache(data.posts)
+                    latestPostIdRef.current = data.posts[0].id
+                }
+                // Clear "new posts" bubble since we just did a full refresh
+                setNewPostCount(0)
             }
 
             setNextCursor(data.nextCursor)
@@ -52,11 +87,35 @@ export function Feed() {
         }
     }, [])
 
+    // --- Initial load: show cache immediately, then verify in background ---
     useEffect(() => {
         const load = async () => {
-            setIsLoading(true)
-            await fetchPosts()
-            setIsLoading(false)
+            // 1. Try to show cached posts instantly
+            const cached = loadFeedFromCache()
+            if (cached && cached.length > 0) {
+                setPosts(cached)
+                latestPostIdRef.current = cached[0].id
+                setIsLoading(false) // No skeleton – instant display
+
+                // 2. Background check for new posts
+                try {
+                    const res = await fetch("/api/posts?limit=1")
+                    if (res.ok) {
+                        const data: FeedResponse = await res.json()
+                        if (data.posts.length > 0 && data.posts[0].id !== cached[0].id) {
+                            // There are newer posts – do a silent full refresh
+                            await fetchPosts()
+                        }
+                    }
+                } catch {
+                    // Network error on background check – keep showing cache
+                }
+            } else {
+                // No cache – normal loading with skeleton
+                setIsLoading(true)
+                await fetchPosts()
+                setIsLoading(false)
+            }
         }
         load()
 
@@ -67,6 +126,34 @@ export function Feed() {
         window.addEventListener("feed-refresh", handleRefreshEvent)
         return () => window.removeEventListener("feed-refresh", handleRefreshEvent)
     }, [fetchPosts])
+
+    // --- Background polling every 60s for new posts ---
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch("/api/posts?limit=5")
+                if (!res.ok) return
+                const data: FeedResponse = await res.json()
+                if (data.posts.length === 0) return
+
+                const currentLatest = latestPostIdRef.current
+                if (!currentLatest) return
+
+                // Count how many posts are newer than what we have displayed
+                const newCount = data.posts.findIndex((p) => p.id === currentLatest)
+                if (newCount === -1) {
+                    // All 5 are new (or more) – show generic count
+                    setNewPostCount(data.posts.length)
+                } else if (newCount > 0) {
+                    setNewPostCount(newCount)
+                }
+            } catch {
+                // Polling failed silently
+            }
+        }, 60_000)
+
+        return () => clearInterval(interval)
+    }, [])
 
     // Infinite scroll with IntersectionObserver
     useEffect(() => {
@@ -153,6 +240,13 @@ export function Feed() {
         setIsLoading(false)
     }
 
+    // --- "New posts" bubble click handler ---
+    const handleShowNewPosts = async () => {
+        setNewPostCount(0)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        await fetchPosts()
+    }
+
     const handleLike = async (postId: string) => {
         try {
             await fetch(`/api/posts/${postId}/like`, { method: "POST" })
@@ -173,7 +267,11 @@ export function Feed() {
         try {
             const response = await fetch(`/api/posts/${postId}`, { method: "DELETE" })
             if (response.ok) {
-                setPosts((prev) => prev.filter((p) => p.id !== postId))
+                setPosts((prev) => {
+                    const updated = prev.filter((p) => p.id !== postId)
+                    saveFeedToCache(updated)
+                    return updated
+                })
                 toast({
                     title: "Post eliminado",
                     description: "El post ha sido eliminado correctamente",
@@ -246,6 +344,22 @@ export function Feed() {
 
     return (
         <div ref={containerRef} className="relative">
+            {/* ── New Posts Notification Bubble (Twitter-style) ── */}
+            {newPostCount > 0 && (
+                <button
+                    onClick={handleShowNewPosts}
+                    className="sticky top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-4 py-2 rounded-full
+                               bg-emerald-500 hover:bg-emerald-600 active:scale-95
+                               text-white text-sm font-semibold shadow-lg shadow-emerald-500/30
+                               transition-all duration-200 animate-in slide-in-from-top-4 fade-in"
+                >
+                    <ChevronUp className="w-4 h-4" />
+                    {newPostCount === 1
+                        ? "1 nuevo post"
+                        : `${newPostCount}+ nuevos posts`}
+                </button>
+            )}
+
             {/* Pull-to-refresh indicator */}
             {(pullProgress > 0 || isRefreshing) && (
                 <div

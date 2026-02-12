@@ -51,8 +51,8 @@ export function BanEnforcer() {
         // Check immediately on mount
         checkBanStatus()
 
-        // Then check every 30 seconds
-        const interval = setInterval(checkBanStatus, 30000)
+        // Then check every 5 minutes (reduced from 30s to save bandwidth)
+        const interval = setInterval(checkBanStatus, 300000)
 
         return () => clearInterval(interval)
     }, [status, session?.user, checkBanStatus])

@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/providers/session-provider";
+import { UserProvider } from "@/contexts/UserContext";
 import { BanEnforcer } from "@/components/auth/BanEnforcer";
 import { FeedTutorial } from "@/components/tutorial/FeedTutorial";
 
@@ -88,18 +89,20 @@ export default function RootLayout({
             </head>
             <body className={inter.className}>
                 <SessionProvider>
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="dark"
-                        themes={["light", "dark", "pitch-black", "system"]}
-                        enableSystem
-                        disableTransitionOnChange
-                    >
-                        {children}
-                        <Toaster />
-                        <BanEnforcer />
-                        <FeedTutorial />
-                    </ThemeProvider>
+                    <UserProvider>
+                        <ThemeProvider
+                            attribute="class"
+                            defaultTheme="dark"
+                            themes={["light", "dark", "pitch-black", "system"]}
+                            enableSystem
+                            disableTransitionOnChange
+                        >
+                            {children}
+                            <Toaster />
+                            <BanEnforcer />
+                            <FeedTutorial />
+                        </ThemeProvider>
+                    </UserProvider>
                 </SessionProvider>
             </body>
         </html>

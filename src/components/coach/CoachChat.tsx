@@ -224,7 +224,8 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
         setIsLoading(true)
 
         // Save user message to DB (without image - too large)
-        await saveMessage("user", newUserMsg.content)
+        // MOVED TO SERVER SIDE (api/coach/chat/route.ts)
+        // await saveMessage("user", newUserMsg.content)
 
         try {
             const response = await fetch("/api/coach/chat", {
@@ -276,9 +277,10 @@ export function CoachChat({ onClose, className, initialMessage }: CoachChatProps
             }
 
             // Save assistant message to DB
-            if (assistantMessage) {
-                await saveMessage("assistant", assistantMessage)
-            }
+            // MOVED TO SERVER SIDE (api/coach/chat/route.ts)
+            // if (assistantMessage) {
+            //    await saveMessage("assistant", assistantMessage)
+            // }
         } catch (error) {
             console.error("Chat error:", error)
             setMessages(prev => [

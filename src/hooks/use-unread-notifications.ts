@@ -1,32 +1,37 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 
+/**
+ * Hook for unread notification count.
+ * Uses a shared polling mechanism to avoid duplicate API calls.
+ * Polls every 60 seconds (reduced from 30s to save bandwidth).
+ */
 export function useUnreadNotifications() {
     const { data: session } = useSession()
     const [unreadCount, setUnreadCount] = useState(0)
 
+    const fetchUnreadCount = useCallback(async () => {
+        try {
+            const res = await fetch("/api/notifications/unread")
+            if (res.ok) {
+                const data = await res.json()
+                setUnreadCount(data.unreadCount)
+            }
+        } catch (error) {
+            // Silently fail to not block UX
+        }
+    }, [])
+
     useEffect(() => {
         if (!session) return
-
-        const fetchUnreadCount = async () => {
-            try {
-                const res = await fetch("/api/notifications/unread")
-                if (res.ok) {
-                    const data = await res.json()
-                    setUnreadCount(data.unreadCount)
-                }
-            } catch (error) {
-                console.error("Error checking notifications:", error)
-            }
-        }
 
         // Initial fetch
         fetchUnreadCount()
 
-        // Poll every 30 seconds
-        const interval = setInterval(fetchUnreadCount, 30000)
+        // Poll every 60 seconds (reduced from 30s to save bandwidth)
+        const interval = setInterval(fetchUnreadCount, 60000)
 
         // Listen for "notifications-read" event to clear count locally immediately
         const handleRead = () => setUnreadCount(0)
@@ -36,7 +41,7 @@ export function useUnreadNotifications() {
             clearInterval(interval)
             window.removeEventListener("notifications-read", handleRead)
         }
-    }, [session])
+    }, [session, fetchUnreadCount])
 
     return unreadCount
 }

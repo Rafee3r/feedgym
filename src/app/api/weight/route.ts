@@ -58,6 +58,10 @@ export async function GET(request: NextRequest) {
             },
             goal: targetUser?.goal || "MAINTAIN",
             targetWeight: targetUser?.targetWeight || null,
+        }, {
+            headers: {
+                "Cache-Control": "private, max-age=30, stale-while-revalidate=60",
+            },
         })
     } catch (error) {
         console.error("Get weight logs error:", error)

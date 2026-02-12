@@ -225,8 +225,12 @@ export function PostCard({
                             <DropdownMenuContent align="end">
                                 {post.canDelete && (
                                     <DropdownMenuItem
-                                        onClick={() => onDelete?.(post.id)}
-                                        className="text-destructive focus:text-destructive"
+                                        onClick={(e) => {
+                                            e.preventDefault() // prevent closing instantly
+                                            e.stopPropagation()
+                                            onDelete?.(post.id)
+                                        }}
+                                        className="text-destructive focus:text-destructive cursor-pointer"
                                     >
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Eliminar

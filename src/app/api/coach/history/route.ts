@@ -27,7 +27,11 @@ export async function GET() {
         // Reverse to show in chronological order (oldest -> newest) for the chat UI
         const sortedMessages = messages.reverse()
 
-        return NextResponse.json({ messages: sortedMessages })
+        return NextResponse.json({ messages: sortedMessages }, {
+            headers: {
+                "Cache-Control": "private, max-age=10, stale-while-revalidate=30",
+            },
+        })
     } catch (error) {
         console.error("Error fetching coach history:", error)
         return NextResponse.json({ error: "Error al obtener historial" }, { status: 500 })
