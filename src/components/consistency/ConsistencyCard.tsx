@@ -27,6 +27,7 @@ interface ConsistencyCardProps {
     onOpenSettings?: () => void
     className?: string
     userName?: string
+    compact?: boolean
 }
 
 export function ConsistencyCard({
@@ -34,8 +35,104 @@ export function ConsistencyCard({
     isLoading,
     onOpenSettings,
     className,
-    userName
+    userName,
+    compact = false
 }: ConsistencyCardProps) {
+
+    // ── Compact mode: Instagram stories-style circles ──
+    if (compact) {
+        return (
+            <div className={`shrink-0 ${className ?? ""}`}>
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-1.5">
+                        <Flame className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-semibold text-foreground">Constancia</span>
+                        {activityData && (
+                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full ml-1">
+                                {activityData.stats.daysPosted}/{activityData.stats.scheduledTarget || 0}
+                            </span>
+                        )}
+                    </div>
+                    {onOpenSettings && (
+                        <Button
+                            onClick={onOpenSettings}
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6 text-muted-foreground hover:text-primary"
+                        >
+                            <Settings className="w-3.5 h-3.5" />
+                        </Button>
+                    )}
+                </div>
+
+                {isLoading ? (
+                    <div className="flex justify-center py-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                    </div>
+                ) : activityData ? (
+                    <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                        {activityData.weekDays.map((day, index) => {
+                            const dayLabels = ["L", "M", "X", "J", "V", "S", "D"]
+                            const dayLabel = dayLabels[index]
+                            const isScheduled = activityData.trainingDays.includes(day.dayName)
+                            const completed = isScheduled && day.hasPost
+                            const isActiveToday = day.isToday && isScheduled && !day.hasPost
+                            const missed = isScheduled && day.isPast && !day.hasPost && !day.isToday
+
+                            // Ring style
+                            let ringClass = "bg-muted/20" // not scheduled
+                            if (completed) ringClass = "bg-gradient-to-br from-green-400 to-emerald-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+                            else if (isActiveToday) ringClass = "bg-gradient-to-br from-primary to-primary/60 animate-pulse"
+                            else if (missed) ringClass = "bg-gradient-to-br from-red-400/60 to-red-600/40"
+                            else if (isScheduled) ringClass = "bg-muted-foreground/20"
+
+                            return (
+                                <div key={day.date} className="flex flex-col items-center gap-1 shrink-0">
+                                    {/* Circle with ring */}
+                                    <div className={`w-10 h-10 rounded-full p-[2.5px] ${ringClass} transition-all duration-300`}>
+                                        <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
+                                            {completed ? (
+                                                <span className="text-green-500 text-sm">✓</span>
+                                            ) : isActiveToday ? (
+                                                <div className="w-2 h-2 rounded-full bg-primary" />
+                                            ) : missed ? (
+                                                <span className="text-red-400/60 text-[10px]">✕</span>
+                                            ) : (
+                                                <div className={`w-1.5 h-1.5 rounded-full ${isScheduled ? "bg-muted-foreground/30" : "bg-muted/20"}`} />
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* Day label */}
+                                    <span className={`text-[10px] font-medium leading-none ${
+                                        day.isToday
+                                            ? "text-primary font-bold"
+                                            : isScheduled
+                                                ? "text-foreground/70"
+                                                : "text-muted-foreground/30"
+                                    }`}>
+                                        {day.isToday ? "HOY" : dayLabel}
+                                    </span>
+                                </div>
+                            )
+                        })}
+                    </div>
+                ) : null}
+
+                {/* Compact missed-today alert */}
+                {activityData?.stats.missedToday && (
+                    <div className="flex items-center gap-2 mt-2 px-2 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                        <p className="text-[11px] text-yellow-500 font-medium">
+                            ¡No pierdas la racha! Publica tu progreso hoy.
+                        </p>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    // ── Default full-size mode ──
     return (
         <Card className={`bg-transparent border-0 shadow-none shrink-0 ${className}`}>
             <CardHeader className="pb-2 px-0">
@@ -73,10 +170,8 @@ export function ConsistencyCard({
 
                             <div className="flex justify-between px-1">
                                 {activityData.weekDays.map((day, index) => {
-                                    // Day labels in Monday-first order: L M X J V S D
                                     const dayLabels = ["L", "M", "X", "J", "V", "S", "D"]
-                                    const dayLabel = dayLabels[index] // Use index since data comes Monday-first
-                                    // Use dayName from API directly (already correctly calculated on server)
+                                    const dayLabel = dayLabels[index]
                                     const isScheduled = activityData.trainingDays.includes(day.dayName)
 
                                     return (

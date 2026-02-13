@@ -109,6 +109,7 @@ export function MobileDashboard() {
                 isLoading={loadingActivity}
                 onOpenSettings={() => setIsScheduleDialogOpen(true)}
                 className="bg-transparent"
+                compact
             />
 
             <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
