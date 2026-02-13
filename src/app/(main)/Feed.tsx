@@ -45,8 +45,16 @@ function isCacheStale(): boolean {
 
 export function Feed() {
     const { data: session } = useSession()
-    const [posts, setPosts] = useState<PostData[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+
+    // ── Synchronous cache hydration: no skeleton flash when cache exists ──
+    const [posts, setPosts] = useState<PostData[]>(() => {
+        const cached = loadFeedFromCache()
+        return cached && cached.length > 0 ? cached : []
+    })
+    const [isLoading, setIsLoading] = useState(() => {
+        const cached = loadFeedFromCache()
+        return !cached || cached.length === 0 // only show skeleton if NO cache
+    })
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [hasMore, setHasMore] = useState(false)
@@ -54,7 +62,9 @@ export function Feed() {
 
     // New-posts notification bubble
     const [newPostCount, setNewPostCount] = useState(0)
-    const latestPostIdRef = useRef<string | null>(null)
+    const latestPostIdRef = useRef<string | null>(
+        (() => { try { const c = loadFeedFromCache(); return c && c.length > 0 ? c[0].id : null } catch { return null } })()
+    )
 
     // Pull-to-refresh state
     const [isRefreshing, setIsRefreshing] = useState(false)
@@ -97,39 +107,30 @@ export function Feed() {
         }
     }, [])
 
-    // --- Initial load: show cache immediately, only check server if stale ---
+    // --- Initial load: if we had cache, just silently check for new posts ---
     useEffect(() => {
-        const load = async () => {
-            const cached = loadFeedFromCache()
-            if (cached && cached.length > 0) {
-                setPosts(cached)
-                latestPostIdRef.current = cached[0].id
-                setIsLoading(false) // No skeleton – instant display
+        const cached = loadFeedFromCache()
+        if (cached && cached.length > 0) {
+            // We already displayed the cache synchronously.
+            // Set the latest post ref
+            latestPostIdRef.current = cached[0].id
 
-                // Only hit the network if the cache is older than 5 min
-                if (isCacheStale()) {
-                    try {
-                        const res = await fetch("/api/posts?limit=5")
-                        if (res.ok) {
-                            const data: FeedResponse = await res.json()
-                            if (data.posts.length > 0 && data.posts[0].id !== cached[0].id) {
-                                // New posts exist – show bubble, don't auto-refresh
-                                const count = data.posts.findIndex((p) => p.id === cached[0].id)
-                                setNewPostCount(count === -1 ? data.posts.length : count)
-                            }
+            // Silently check for new content in the background (no loading state)
+            if (isCacheStale()) {
+                fetch("/api/posts?limit=5")
+                    .then(res => res.ok ? res.json() : null)
+                    .then((data: FeedResponse | null) => {
+                        if (data && data.posts.length > 0 && data.posts[0].id !== cached[0].id) {
+                            const count = data.posts.findIndex((p) => p.id === cached[0].id)
+                            setNewPostCount(count === -1 ? data.posts.length : count)
                         }
-                    } catch {
-                        // Network error – keep showing cache
-                    }
-                }
-            } else {
-                // No cache – normal loading with skeleton
-                setIsLoading(true)
-                await fetchPosts()
-                setIsLoading(false)
+                    })
+                    .catch(() => { /* network error – keep showing cache */ })
             }
+        } else {
+            // No cache – normal loading with skeleton (isLoading is already true)
+            fetchPosts().then(() => setIsLoading(false))
         }
-        load()
 
         // Listen for feed refresh requests (e.g. from Composer)
         const handleRefreshEvent = () => {
@@ -139,7 +140,7 @@ export function Feed() {
         return () => window.removeEventListener("feed-refresh", handleRefreshEvent)
     }, [fetchPosts])
 
-    // --- Background polling every 60s for new posts ---
+    // --- Background polling every 3 minutes for new posts ---
     useEffect(() => {
         const interval = setInterval(async () => {
             try {
