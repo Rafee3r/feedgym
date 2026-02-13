@@ -44,7 +44,7 @@ export function ConsistencyCard({
         return (
             <div className={`shrink-0 ${className ?? ""}`}>
                 {/* Header row */}
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-1.5">
                         <Flame className="w-4 h-4 text-primary" />
                         <span className="text-xs font-semibold text-foreground">Constancia</span>
@@ -67,11 +67,11 @@ export function ConsistencyCard({
                 </div>
 
                 {isLoading ? (
-                    <div className="flex justify-center py-2">
+                    <div className="flex justify-center py-3">
                         <Loader2 className="w-4 h-4 animate-spin text-primary" />
                     </div>
                 ) : activityData ? (
-                    <div className="flex items-center gap-3 overflow-x-auto pb-1 scrollbar-hide">
+                    <div className="flex items-start justify-between w-full">
                         {activityData.weekDays.map((day, index) => {
                             const dayLabels = ["L", "M", "X", "J", "V", "S", "D"]
                             const dayLabel = dayLabels[index]
@@ -80,39 +80,46 @@ export function ConsistencyCard({
                             const isActiveToday = day.isToday && isScheduled && !day.hasPost
                             const missed = isScheduled && day.isPast && !day.hasPost && !day.isToday
 
-                            // Ring style
-                            let ringClass = "bg-muted/20" // not scheduled
-                            if (completed) ringClass = "bg-gradient-to-br from-green-400 to-emerald-600 shadow-[0_0_10px_rgba(34,197,94,0.3)]"
-                            else if (isActiveToday) ringClass = "bg-gradient-to-br from-primary to-primary/60 animate-pulse"
-                            else if (missed) ringClass = "bg-gradient-to-br from-red-400/60 to-red-600/40"
-                            else if (isScheduled) ringClass = "bg-muted-foreground/20"
+                            // Ring: only visible for scheduled days
+                            let ringClass = "border-2 border-transparent" // unscheduled — invisible ring
+                            if (completed) ringClass = "border-2 border-green-500 shadow-[0_0_8px_rgba(34,197,94,0.25)]"
+                            else if (isActiveToday) ringClass = "border-2 border-primary animate-pulse"
+                            else if (missed) ringClass = "border-2 border-muted-foreground/25"
+                            else if (isScheduled) ringClass = "border-2 border-muted-foreground/15"
+
+                            // Inner fill
+                            let innerContent: React.ReactNode = null
+                            if (completed) {
+                                innerContent = <span className="text-green-500 text-xs font-bold">✓</span>
+                            } else if (isActiveToday) {
+                                innerContent = <div className="w-2.5 h-2.5 rounded-full bg-primary/80" />
+                            } else if (missed) {
+                                innerContent = <span className="text-muted-foreground/40 text-[9px]">✕</span>
+                            }
 
                             return (
-                                <div key={day.date} className="flex flex-col items-center gap-1 shrink-0">
-                                    {/* Circle with ring */}
-                                    <div className={`w-10 h-10 rounded-full p-[2.5px] ${ringClass} transition-all duration-300`}>
-                                        <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                                            {completed ? (
-                                                <span className="text-green-500 text-sm">✓</span>
-                                            ) : isActiveToday ? (
-                                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                            ) : missed ? (
-                                                <span className="text-red-400/60 text-[10px]">✕</span>
-                                            ) : (
-                                                <div className={`w-1.5 h-1.5 rounded-full ${isScheduled ? "bg-muted-foreground/30" : "bg-muted/20"}`} />
-                                            )}
-                                        </div>
-                                    </div>
-                                    {/* Day label */}
-                                    <span className={`text-[10px] font-medium leading-none ${
-                                        day.isToday
+                                <div key={day.date} className="flex flex-col items-center gap-1.5">
+                                    {/* Day label on top */}
+                                    <span className={`text-[10px] leading-none ${day.isToday
                                             ? "text-primary font-bold"
                                             : isScheduled
-                                                ? "text-foreground/70"
-                                                : "text-muted-foreground/30"
-                                    }`}>
-                                        {day.isToday ? "HOY" : dayLabel}
+                                                ? "text-muted-foreground font-medium"
+                                                : "text-muted-foreground/25 font-medium"
+                                        }`}>
+                                        {dayLabel}
                                     </span>
+                                    {/* Circle */}
+                                    <div className={`w-9 h-9 rounded-full ${ringClass} flex items-center justify-center transition-all duration-300 ${!isScheduled ? "opacity-30" : ""
+                                        }`}>
+                                        <div className={`w-[28px] h-[28px] rounded-full flex items-center justify-center ${completed ? "bg-green-500/10" : "bg-card/50"
+                                            }`}>
+                                            {innerContent}
+                                        </div>
+                                    </div>
+                                    {/* Today indicator */}
+                                    {day.isToday && (
+                                        <div className="w-1 h-1 rounded-full bg-primary" />
+                                    )}
                                 </div>
                             )
                         })}
@@ -121,10 +128,10 @@ export function ConsistencyCard({
 
                 {/* Compact missed-today alert */}
                 {activityData?.stats.missedToday && (
-                    <div className="flex items-center gap-2 mt-2 px-2 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                        <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                        <p className="text-[11px] text-yellow-500 font-medium">
-                            ¡No pierdas la racha! Publica tu progreso hoy.
+                    <div className="flex items-center gap-2 mt-3 px-2.5 py-2 bg-yellow-500/5 border border-yellow-500/15 rounded-lg">
+                        <AlertTriangle className="w-3.5 h-3.5 text-yellow-500/80 shrink-0" />
+                        <p className="text-[11px] text-yellow-500/80 font-medium">
+                            ¡No pierdas la racha! Publica hoy.
                         </p>
                     </div>
                 )}
