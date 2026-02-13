@@ -4,7 +4,6 @@ import React, { useState, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
-    Heart,
     MessageCircle,
     Repeat2,
     Bookmark,
@@ -101,20 +100,12 @@ export function PostCard({
     priority = false, // Add priority prop
     className,
 }: PostCardProps) {
-    const [isLiked, setIsLiked] = useState(post.isLiked || false)
     const [isBookmarked, setIsBookmarked] = useState(post.isBookmarked || false)
     const [isReposted, setIsReposted] = useState(post.isReposted || false)
-    const [likesCount, setLikesCount] = useState(post.likesCount)
     const [isExpanded, setIsExpanded] = useState(false)
     const [viewerImage, setViewerImage] = useState<string | null>(null)
 
     const isOwner = currentUserId === post.author.id
-
-    const handleLike = () => {
-        setIsLiked(!isLiked)
-        setLikesCount(isLiked ? likesCount - 1 : likesCount + 1)
-        onLike?.(post.id)
-    }
 
     const handleBookmark = () => {
         setIsBookmarked(!isBookmarked)
