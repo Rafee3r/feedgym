@@ -107,12 +107,13 @@ export function Feed() {
         }
     }, [])
 
-    // --- Initial load: if we had cache, just silently check for new posts ---
+    // --- Initial load: hydrate from cache instantly, then background-check ---
     useEffect(() => {
         const cached = loadFeedFromCache()
         if (cached && cached.length > 0) {
-            // We already displayed the cache synchronously.
-            // Set the latest post ref
+            // Hydrate from cache immediately (SSR couldn't access localStorage)
+            setPosts(cached)
+            setIsLoading(false)
             latestPostIdRef.current = cached[0].id
 
             // Silently check for new content in the background (no loading state)
