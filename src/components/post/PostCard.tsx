@@ -449,21 +449,7 @@ export function PostCard({
                             </span>
                         </button>
 
-                        {/* Like */}
-                        <button
-                            onClick={handleLike}
-                            className={cn(
-                                "action-button action-button-like flex items-center gap-1",
-                                isLiked && "liked"
-                            )}
-                        >
-                            <Heart
-                                className={cn("w-[18px] h-[18px]", isLiked && "fill-current")}
-                            />
-                            <span className="text-sm">
-                                {likesCount > 0 && formatNumber(likesCount)}
-                            </span>
-                        </button>
+
 
                         {/* Bookmark */}
                         <button
@@ -503,12 +489,7 @@ export function PostCard({
                             </Avatar>
                             <span className="text-sm font-medium">{post.topReply.author.displayName}</span>
                             <span className="text-xs text-muted-foreground">@{post.topReply.author.username}</span>
-                            {post.topReply.likesCount > 0 && (
-                                <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
-                                    <Heart className="w-3 h-3 fill-current text-red-500" />
-                                    {post.topReply.likesCount}
-                                </span>
-                            )}
+
                         </div>
                         <p className="text-sm line-clamp-2 ml-8">
                             {post.topReply.content}

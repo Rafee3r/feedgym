@@ -162,7 +162,7 @@ export function Feed() {
             } catch {
                 // Polling failed silently
             }
-        }, 60_000)
+        }, 180_000) // 3 minutes
 
         return () => clearInterval(interval)
     }, [])
