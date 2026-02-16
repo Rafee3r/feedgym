@@ -214,15 +214,15 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // Helper: strip base64 data URIs – only return real URLs
-        const cleanUrl = (url: string | null | undefined): string | null => {
+        // Helper: replace base64 data URIs with proxy URLs to keep response small
+        const cleanUrl = (url: string | null | undefined, postId: string, idx = 0): string | null => {
             if (!url) return null
-            if (url.startsWith("data:")) return null
+            if (url.startsWith("data:")) return `/api/media/${postId}?idx=${idx}`
             return url
         }
-        const cleanMediaUrls = (urls: string[] | null | undefined): string[] => {
+        const cleanMediaUrls = (urls: string[] | null | undefined, postId: string): string[] => {
             if (!urls || !Array.isArray(urls)) return []
-            return urls.filter(u => !u.startsWith("data:"))
+            return urls.map((u, i) => u.startsWith("data:") ? `/api/media/${postId}?idx=${i}` : u)
         }
 
         const formattedPosts = postsToReturn.map((post) => {
@@ -232,8 +232,8 @@ export async function GET(request: NextRequest) {
             return {
                 id: p.id,
                 content: p.content,
-                imageUrl: cleanUrl(p.imageUrl),
-                mediaUrls: cleanMediaUrls(p.mediaUrls),
+                imageUrl: cleanUrl(p.imageUrl, p.id),
+                mediaUrls: cleanMediaUrls(p.mediaUrls, p.id),
                 type: p.type,
                 metadata: p.metadata,
                 audience: p.audience,
@@ -246,18 +246,18 @@ export async function GET(request: NextRequest) {
                 repostsCount: p.repostsCount,
                 author: {
                     ...p.author,
-                    avatarUrl: cleanUrl(p.author.avatarUrl),
+                    avatarUrl: p.author.avatarUrl?.startsWith("data:") ? null : (p.author.avatarUrl || null),
                 },
                 createdAt: p.createdAt,
                 isLiked: session ? ((p as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
                 isBookmarked: session ? ((p as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
                 repostOf: p.repostOf ? {
                     ...p.repostOf,
-                    imageUrl: cleanUrl(p.repostOf.imageUrl),
-                    mediaUrls: cleanMediaUrls(p.repostOf.mediaUrls),
+                    imageUrl: cleanUrl(p.repostOf.imageUrl, p.repostOf.id || p.id),
+                    mediaUrls: cleanMediaUrls(p.repostOf.mediaUrls, p.repostOf.id || p.id),
                     author: {
                         ...p.repostOf.author,
-                        avatarUrl: cleanUrl(p.repostOf.author?.avatarUrl),
+                        avatarUrl: p.repostOf.author?.avatarUrl?.startsWith("data:") ? null : (p.repostOf.author?.avatarUrl || null),
                     },
                 } : null,
                 topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
@@ -304,7 +304,7 @@ export async function GET(request: NextRequest) {
                         content: topReply.content,
                         author: {
                             ...topReply.author,
-                            avatarUrl: cleanUrl(topReply.author.avatarUrl),
+                            avatarUrl: topReply.author.avatarUrl?.startsWith("data:") ? null : (topReply.author.avatarUrl || null),
                         },
                         likesCount: topReply.likesCount,
                         createdAt: topReply.createdAt,

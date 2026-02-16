@@ -338,12 +338,12 @@ export function PostCard({
                     {/* Images */}
                     {(post.mediaUrls && post.mediaUrls.length > 0) ? (
                         <div className={cn(
-                            "mt-3 grid gap-1 rounded-2xl overflow-hidden border border-border aspect-video bg-muted",
+                            "mt-3 grid gap-1 rounded-2xl overflow-hidden border border-border aspect-video",
                             post.mediaUrls.length === 1 && "grid-cols-1",
                             post.mediaUrls.length === 2 && "grid-cols-2",
                             post.mediaUrls.length === 3 && "grid-cols-2 grid-rows-2",
                             post.mediaUrls.length === 4 && "grid-cols-2 grid-rows-2",
-                            post.mediaUrls.length >= 5 && "grid-cols-6 grid-rows-2", // 2 big, 3 small - simplified common grid
+                            post.mediaUrls.length >= 5 && "grid-cols-6 grid-rows-2",
                         )}>
                             {post.mediaUrls.map((url: string, i: number) => {
                                 // Simplified grid logic
@@ -357,19 +357,26 @@ export function PostCard({
                                 return (
                                     <div
                                         key={i}
-                                        className={cn("relative w-full h-full cursor-pointer", spanClass)}
+                                        className={cn("relative w-full h-full cursor-pointer bg-muted", spanClass)}
                                         onClick={(e) => {
                                             e.preventDefault()
                                             e.stopPropagation()
                                             setViewerImage(url)
                                         }}
                                     >
-                                        <Image
+                                        {/* Shimmer overlay */}
+                                        <div className="absolute inset-0 animate-pulse bg-muted z-10 transition-opacity duration-500 peer-loaded:opacity-0" id={`shimmer-${post.id}-${i}`} />
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
                                             src={url}
                                             alt={`Post image ${i + 1}`}
-                                            fill
-                                            className="object-cover hover:opacity-90 transition-opacity"
-                                            priority={priority}
+                                            className="peer w-full h-full object-cover hover:opacity-90 transition-opacity"
+                                            loading="lazy"
+                                            onLoad={(e) => {
+                                                // Hide shimmer when image loads
+                                                const shimmer = document.getElementById(`shimmer-${post.id}-${i}`)
+                                                if (shimmer) shimmer.style.opacity = '0'
+                                            }}
                                         />
                                     </div>
                                 )
@@ -384,13 +391,18 @@ export function PostCard({
                                 setViewerImage(post.imageUrl!)
                             }}
                         >
-                            <Image
+                            {/* Shimmer overlay */}
+                            <div className="absolute inset-0 animate-pulse bg-muted z-10 transition-opacity duration-500" id={`shimmer-${post.id}-single`} />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
                                 src={post.imageUrl}
                                 alt="Post content"
-                                fill
-                                className="object-cover hover:opacity-90 transition-opacity"
-                                priority={priority}
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                                loading="lazy"
+                                onLoad={() => {
+                                    const shimmer = document.getElementById(`shimmer-${post.id}-single`)
+                                    if (shimmer) shimmer.style.opacity = '0'
+                                }}
                             />
                         </div>
                     )}
