@@ -246,7 +246,7 @@ export async function GET(request: NextRequest) {
                 repostsCount: p.repostsCount,
                 author: {
                     ...p.author,
-                    avatarUrl: p.author.avatarUrl?.startsWith("data:") ? null : (p.author.avatarUrl || null),
+                    avatarUrl: p.author.avatarUrl?.startsWith("data:") ? `/api/avatar/${p.author.id}` : (p.author.avatarUrl || null),
                 },
                 createdAt: p.createdAt,
                 isLiked: session ? ((p as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
@@ -257,7 +257,7 @@ export async function GET(request: NextRequest) {
                     mediaUrls: cleanMediaUrls(p.repostOf.mediaUrls, p.repostOf.id || p.id),
                     author: {
                         ...p.repostOf.author,
-                        avatarUrl: p.repostOf.author?.avatarUrl?.startsWith("data:") ? null : (p.repostOf.author?.avatarUrl || null),
+                        avatarUrl: p.repostOf.author?.avatarUrl?.startsWith("data:") ? `/api/avatar/${p.repostOf.author?.id}` : (p.repostOf.author?.avatarUrl || null),
                     },
                 } : null,
                 topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
@@ -304,7 +304,7 @@ export async function GET(request: NextRequest) {
                         content: topReply.content,
                         author: {
                             ...topReply.author,
-                            avatarUrl: topReply.author.avatarUrl?.startsWith("data:") ? null : (topReply.author.avatarUrl || null),
+                            avatarUrl: topReply.author.avatarUrl?.startsWith("data:") ? `/api/avatar/${topReply.author.id}` : (topReply.author.avatarUrl || null),
                         },
                         likesCount: topReply.likesCount,
                         createdAt: topReply.createdAt,
