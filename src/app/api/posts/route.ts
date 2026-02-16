@@ -214,6 +214,17 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // Helper: strip base64 data URIs – only return real URLs
+        const cleanUrl = (url: string | null | undefined): string | null => {
+            if (!url) return null
+            if (url.startsWith("data:")) return null
+            return url
+        }
+        const cleanMediaUrls = (urls: string[] | null | undefined): string[] => {
+            if (!urls || !Array.isArray(urls)) return []
+            return urls.filter(u => !u.startsWith("data:"))
+        }
+
         const formattedPosts = postsToReturn.map((post) => {
             const p = post as any // Cast to any because local Prisma client is stale
             // Total replies = all posts in thread (from threadRootId count)
@@ -221,8 +232,8 @@ export async function GET(request: NextRequest) {
             return {
                 id: p.id,
                 content: p.content,
-                imageUrl: p.imageUrl,
-                mediaUrls: p.mediaUrls,
+                imageUrl: cleanUrl(p.imageUrl),
+                mediaUrls: cleanMediaUrls(p.mediaUrls),
                 type: p.type,
                 metadata: p.metadata,
                 audience: p.audience,
@@ -233,11 +244,22 @@ export async function GET(request: NextRequest) {
                 likesCount: p.likesCount,
                 repliesCount: totalRepliesCount, // Use total recursive count
                 repostsCount: p.repostsCount,
-                author: p.author,
+                author: {
+                    ...p.author,
+                    avatarUrl: cleanUrl(p.author.avatarUrl),
+                },
                 createdAt: p.createdAt,
                 isLiked: session ? ((p as { likes?: { id: string }[] }).likes?.length ?? 0) > 0 : false,
                 isBookmarked: session ? ((p as { bookmarks?: { id: string }[] }).bookmarks?.length ?? 0) > 0 : false,
-                repostOf: p.repostOf,
+                repostOf: p.repostOf ? {
+                    ...p.repostOf,
+                    imageUrl: cleanUrl(p.repostOf.imageUrl),
+                    mediaUrls: cleanMediaUrls(p.repostOf.mediaUrls),
+                    author: {
+                        ...p.repostOf.author,
+                        avatarUrl: cleanUrl(p.repostOf.author?.avatarUrl),
+                    },
+                } : null,
                 topReply: null as null | { id: string; content: string; author: { id: string; username: string; displayName: string; avatarUrl: string | null }; likesCount: number; createdAt: Date },
                 canDelete: session ? (session.user.id === p.author.id || session.user.role === "ADMIN" || session.user.role === "STAFF") : false,
             }
@@ -280,7 +302,10 @@ export async function GET(request: NextRequest) {
                     post.topReply = {
                         id: topReply.id,
                         content: topReply.content,
-                        author: topReply.author,
+                        author: {
+                            ...topReply.author,
+                            avatarUrl: cleanUrl(topReply.author.avatarUrl),
+                        },
                         likesCount: topReply.likesCount,
                         createdAt: topReply.createdAt,
                     }
