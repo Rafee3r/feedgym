@@ -107,7 +107,7 @@ export function Feed() {
         }
     }, [])
 
-    // --- Initial load: hydrate from cache instantly, then background-check ---
+    // --- Initial load: hydrate from cache instantly, then full background refresh ---
     useEffect(() => {
         const cached = loadFeedFromCache()
         if (cached && cached.length > 0) {
@@ -116,18 +116,10 @@ export function Feed() {
             setIsLoading(false)
             latestPostIdRef.current = cached[0].id
 
-            // Silently check for new content in the background (no loading state)
-            if (isCacheStale()) {
-                fetch("/api/posts?limit=5")
-                    .then(res => res.ok ? res.json() : null)
-                    .then((data: FeedResponse | null) => {
-                        if (data && data.posts.length > 0 && data.posts[0].id !== cached[0].id) {
-                            const count = data.posts.findIndex((p) => p.id === cached[0].id)
-                            setNewPostCount(count === -1 ? data.posts.length : count)
-                        }
-                    })
-                    .catch(() => { /* network error – keep showing cache */ })
-            }
+            // Always do a full background fetch to:
+            // 1. Get fresh posts with proxy URLs for avatars/images
+            // 2. Get pagination cursor so infinite scroll works
+            fetchPosts().catch(() => { /* network error – keep showing cache */ })
         } else {
             // No cache – normal loading with skeleton (isLoading is already true)
             fetchPosts().then(() => setIsLoading(false))
