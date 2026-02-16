@@ -1,7 +1,9 @@
+import { Suspense } from "react"
 import { Header } from "@/components/layout/Header"
 import { Composer } from "@/components/post/Composer"
 import { MobileDashboard } from "@/components/mobile/MobileDashboard"
-import { FeedWrapper } from "./FeedWrapper"
+import { Feed } from "./Feed"
+import { FeedSkeleton } from "@/components/post/PostSkeleton"
 
 export default function HomePage() {
     return (
@@ -15,8 +17,10 @@ export default function HomePage() {
                 <Composer />
             </div>
 
-            {/* Feed - client only, instant cache hydration */}
-            <FeedWrapper />
+            {/* Feed */}
+            <Suspense fallback={<FeedSkeleton />}>
+                <Feed />
+            </Suspense>
         </>
     )
 }

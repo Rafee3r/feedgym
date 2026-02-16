@@ -76,6 +76,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         image: user.avatarUrl,
                         username: user.username,
                         role: (user as { role?: UserRole }).role ?? "USER",
+                        onboardingCompleted: (user as any).onboardingCompleted ?? false,
                     };
                 } catch (error) {
                     console.error("[Auth] Critical error in authorize:", error);
@@ -97,6 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 token.isShadowbanned = u.isShadowbanned ?? false;
                 token.isFrozen = u.isFrozen ?? false;
                 token.mutedUntil = u.mutedUntil ?? null;
+                token.onboardingCompleted = u.onboardingCompleted ?? false;
 
                 // Safety check: Don't store massive base64 in token on initial login
                 if (user.image && user.image.startsWith("data:image")) {
@@ -119,35 +121,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 session.user.image = (token.picture as string) || undefined;
                 session.user.role = (token.role as UserRole) || "USER";
 
-                // Fetch fresh ban status from DB
-                try {
-                    const freshUser = await prisma.user.findUnique({
-                        where: { id: token.id as string },
-                        select: { isBanned: true, isShadowbanned: true, isFrozen: true, mutedUntil: true, onboardingCompleted: true }
-                    }) as any;
-
-                    if (freshUser) {
-                        session.user.isBanned = freshUser.isBanned ?? false;
-                        session.user.isShadowbanned = freshUser.isShadowbanned ?? false;
-                        session.user.isFrozen = freshUser.isFrozen ?? false;
-                        session.user.mutedUntil = freshUser.mutedUntil?.toISOString() ?? null;
-                        session.user.onboardingCompleted = freshUser.onboardingCompleted ?? false;
-                    } else {
-                        session.user.isBanned = token.isBanned as boolean;
-                        session.user.isShadowbanned = token.isShadowbanned as boolean;
-                        session.user.isFrozen = token.isFrozen as boolean;
-                        session.user.mutedUntil = token.mutedUntil as string | null;
-                        session.user.onboardingCompleted = token.onboardingCompleted as boolean ?? false;
-                    }
-                } catch (error) {
-                    session.user.isBanned = token.isBanned as boolean;
-                    session.user.isShadowbanned = token.isShadowbanned as boolean;
-                    session.user.isFrozen = token.isFrozen as boolean;
-                    session.user.mutedUntil = token.mutedUntil as string | null;
-                    // Default to true if fetch fails to avoid locking valid users, or false to be safe? 
-                    // Let's default to false if we can't confirm.
-                    session.user.onboardingCompleted = false;
-                }
+                // Use JWT token data directly — no DB query on every page load
+                // Admin status changes take effect on next login/token refresh
+                session.user.isBanned = (token.isBanned as boolean) ?? false;
+                session.user.isShadowbanned = (token.isShadowbanned as boolean) ?? false;
+                session.user.isFrozen = (token.isFrozen as boolean) ?? false;
+                session.user.mutedUntil = (token.mutedUntil as string | null) ?? null;
+                session.user.onboardingCompleted = (token.onboardingCompleted as boolean) ?? false;
             }
             return session;
         },
@@ -191,5 +171,6 @@ declare module "@auth/core/jwt" {
         isShadowbanned: boolean;
         isFrozen: boolean;
         mutedUntil: Date | string | null;
+        onboardingCompleted: boolean;
     }
 }
