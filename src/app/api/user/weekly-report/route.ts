@@ -11,14 +11,13 @@ export async function GET() {
             return NextResponse.json({ error: "No autorizado" }, { status: 401 })
         }
 
-        // Get posts from last 7 days (WORKOUT and PR types)
+        // Get ALL posts from last 7 days (any type — NOTE, WORKOUT, PROGRESS, PR, MEAL)
         const sevenDaysAgo = new Date()
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
         const weekPosts = await prisma.post.findMany({
             where: {
                 authorId: session.user.id,
-                type: { in: ["WORKOUT", "PR"] },
                 deletedAt: null,
                 createdAt: { gte: sevenDaysAgo },
             },
@@ -49,7 +48,11 @@ export async function GET() {
         }
 
         const prsText = Array.from(bestPRs.values())
-            .map(pr => `- ${pr.exercise}: ${pr.weight}${pr.unit === "KG" ? "kg" : "lb"} x${pr.reps}`)
+            .map(pr => {
+                let line = `- ${pr.exercise}: ${pr.weight}${pr.unit === "KG" ? "kg" : "lb"} x${pr.reps}`
+                if (pr.notes) line += ` (${pr.notes})`
+                return line
+            })
             .join("\n")
 
         const postsText = weekPosts.map(p => {

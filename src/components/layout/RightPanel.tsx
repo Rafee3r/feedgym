@@ -147,59 +147,64 @@ export function RightPanel() {
     if (!session) return null
 
     return (
-        <aside className="hidden lg:flex flex-col w-80 xl:w-96 h-screen sticky top-0 p-4 gap-4">
+        <aside className="hidden lg:flex flex-col w-80 xl:w-96 h-screen sticky top-0">
 
-            {/* Consitency Tracker (FIRST) */}
-            <ConsistencyCard
-                activityData={activityData}
-                isLoading={loadingActivity}
-                onOpenSettings={!profileUser ? () => setIsScheduleDialogOpen(true) : undefined}
-                userName={profileUser?.displayName}
-            />
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto p-4 pb-0 space-y-4 scrollbar-hide">
 
-            <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Configurar Días de Entrenamiento</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 pt-4">
-                        <p className="text-sm text-muted-foreground">
-                            Selecciona los días que planeas ir al gimnasio.
-                            Te recordaremos publicar tu progreso en estos días.
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                            {daysOfWeek.map((day) => (
-                                <div key={day.id} className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent cursor-pointer" onClick={() => toggleDay(day.id)}>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedDays.includes(day.id)}
-                                        onChange={() => { }} // handled by parent div
-                                        className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
-                                    />
-                                    <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                        {day.label}
-                                    </span>
-                                </div>
-                            ))}
+                {/* Consitency Tracker (FIRST) */}
+                <ConsistencyCard
+                    activityData={activityData}
+                    isLoading={loadingActivity}
+                    onOpenSettings={!profileUser ? () => setIsScheduleDialogOpen(true) : undefined}
+                    userName={profileUser?.displayName}
+                />
+
+                <Dialog open={isScheduleDialogOpen} onOpenChange={setIsScheduleDialogOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Configurar Días de Entrenamiento</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 pt-4">
+                            <p className="text-sm text-muted-foreground">
+                                Selecciona los días que planeas ir al gimnasio.
+                                Te recordaremos publicar tu progreso en estos días.
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                                {daysOfWeek.map((day) => (
+                                    <div key={day.id} className="flex items-center space-x-2 border p-3 rounded-lg hover:bg-accent cursor-pointer" onClick={() => toggleDay(day.id)}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedDays.includes(day.id)}
+                                            onChange={() => { }} // handled by parent div
+                                            className="h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                            {day.label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <Button onClick={handleSaveSchedule} disabled={isSavingSchedule} className="w-full">
+                                {isSavingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Horario"}
+                            </Button>
                         </div>
-                        <Button onClick={handleSaveSchedule} disabled={isSavingSchedule} className="w-full">
-                            {isSavingSchedule ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar Horario"}
-                        </Button>
-                    </div>
-                </DialogContent>
-            </Dialog>
+                    </DialogContent>
+                </Dialog>
 
-            {/* Weight Tracker - TradingView style (SECOND) */}
-            <WeightSummaryCard userId={profileUser?.id} userName={profileUser?.displayName} />
+                {/* Weight Tracker - TradingView style (SECOND) */}
+                <WeightSummaryCard userId={profileUser?.id} userName={profileUser?.displayName} />
 
-            {/* PRs Actuales */}
-            <PRsCard />
+                {/* PRs Actuales */}
+                <PRsCard />
 
-            {/* Reporte Semanal IA */}
-            <WeeklyReportCard />
+                {/* Reporte Semanal IA */}
+                <WeeklyReportCard />
 
-            {/* Footer */}
-            <div className="text-xs text-muted-foreground mt-auto shrink-0 py-2">
+            </div>
+
+            {/* Footer — pinned at bottom */}
+            <div className="text-xs text-muted-foreground shrink-0 px-4 py-3 border-t border-border/30">
                 <Link href="/terms" className="hover:underline">
                     Términos
                 </Link>
