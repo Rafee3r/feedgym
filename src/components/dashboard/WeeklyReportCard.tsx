@@ -6,6 +6,24 @@ import { Sparkles, Loader2, RefreshCw, Calendar } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
+// Simple markdown renderer: **bold** → <strong>, newlines → paragraphs
+function renderMarkdown(text: string) {
+    const paragraphs = text.split(/\n{1,}/g).filter(p => p.trim())
+    return paragraphs.map((para, i) => {
+        // Split on **bold** and render
+        const parts = para.split(/(\*\*[^*]+\*\*)/g)
+        return (
+            <p key={i} className="mb-2 last:mb-0">
+                {parts.map((part, j) =>
+                    part.startsWith("**") && part.endsWith("**")
+                        ? <strong key={j} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+                        : <span key={j}>{part}</span>
+                )}
+            </p>
+        )
+    })
+}
+
 const REPORT_CACHE_KEY = "feedgym-weekly-report"
 const REPORT_CACHE_TS_KEY = "feedgym-weekly-report-ts"
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000 // 24 hours
@@ -70,57 +88,58 @@ export function WeeklyReportCard({ compact = false, className }: WeeklyReportCar
     if (compact) {
         return (
             <div className={`shrink-0 ${className ?? ""}`}>
-                <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-violet-500" />
-                        <span className="text-xs font-semibold text-foreground">Reporte Semanal</span>
+                <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+                        <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-violet-500" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground">Reporte Semanal</span>
+                            <span className="text-[10px] text-violet-400 font-medium bg-violet-500/10 px-1.5 py-0.5 rounded-full">IA</span>
+                        </div>
+                        {report && (
+                            <button
+                                onClick={generateReport}
+                                className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-violet-500 transition-colors"
+                                disabled={isLoading}
+                                aria-label="Regenerar"
+                            >
+                                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                            </button>
+                        )}
                     </div>
-                    {report && (
-                        <Button
-                            onClick={generateReport}
-                            size="icon"
-                            variant="ghost"
-                            className="h-6 w-6 text-muted-foreground hover:text-violet-500"
-                            disabled={isLoading}
-                        >
-                            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                        </Button>
+
+                    {report ? (
+                        <div className="px-4 py-3">
+                            <div className="text-xs text-muted-foreground leading-relaxed">
+                                {renderMarkdown(report)}
+                            </div>
+                            {stats && (
+                                <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-border/30">
+                                    <Calendar className="w-3 h-3 text-muted-foreground" />
+                                    <span className="text-[10px] text-muted-foreground">
+                                        {stats.postsAnalyzed} entrenamientos · {stats.prsCount} PRs
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="px-4 py-4">
+                            <button
+                                onClick={generateReport}
+                                disabled={isLoading}
+                                className="w-full rounded-xl py-3 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                            >
+                                {isLoading ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /> Analizando...</>
+                                ) : (
+                                    <><Sparkles className="w-4 h-4" /> Generar reporte IA</>
+                                )}
+                            </button>
+                        </div>
                     )}
                 </div>
-
-                {report ? (
-                    <div className="bg-card/50 border border-border/50 rounded-lg p-3">
-                        <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap">{report}</p>
-                        {stats && (
-                            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border/30">
-                                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                                    <Calendar className="w-3 h-3" />
-                                    {stats.postsAnalyzed} entrenamientos · {stats.prsCount} PRs
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <Button
-                        onClick={generateReport}
-                        disabled={isLoading}
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs h-9 border-violet-500/20 text-violet-500 hover:bg-violet-500/10"
-                    >
-                        {isLoading ? (
-                            <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                                Analizando...
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                                Generar reporte IA
-                            </>
-                        )}
-                    </Button>
-                )}
             </div>
         )
     }

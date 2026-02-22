@@ -204,7 +204,7 @@ export function MobileDashboardPanels() {
                     className={`transition-all duration-300 ease-in-out ${weightExpanded ? "col-span-2" : "col-span-1"}`}
                 >
                     <div
-                        className={`relative rounded-2xl bg-card border border-border/50 overflow-hidden transition-all duration-300 ${weightExpanded ? "p-4" : "p-3 aspect-square"}`}
+                        className={`relative rounded-2xl bg-card border border-border/50 overflow-hidden transition-all duration-300 ${weightExpanded ? "p-4" : "p-3 aspect-square flex flex-col"}`}
                         onClick={() => !weightExpanded && toggle("weight")}
                         style={{ cursor: weightExpanded ? "default" : "pointer" }}
                     >
@@ -235,24 +235,26 @@ export function MobileDashboardPanels() {
 
                         {/* Collapsed: compact stats */}
                         {!weightExpanded && (
-                            <div className="flex flex-col justify-end h-[calc(100%-32px)]">
+                            <div className="flex flex-col justify-between flex-1">
                                 {loadingWeight ? (
                                     <Loader2 className="w-4 h-4 animate-spin text-primary mx-auto mt-4" />
                                 ) : (
                                     <>
-                                        <span className="text-2xl font-bold leading-none">
-                                            {weightStats?.latest ?? "—"}
-                                            <span className="text-xs font-normal text-muted-foreground ml-0.5">kg</span>
-                                        </span>
+                                        <div>
+                                            <span className="text-3xl font-bold leading-none">
+                                                {weightStats?.latest ?? "—"}
+                                            </span>
+                                            <span className="text-sm font-normal text-muted-foreground ml-0.5">kg</span>
+                                        </div>
                                         {weightStats?.change != null && (
-                                            <div className="flex items-center gap-0.5 mt-1">
+                                            <div className="flex items-center gap-0.5 mt-1.5">
                                                 {trendEl()}
-                                                <span className="text-[11px] text-muted-foreground">
+                                                <span className="text-xs text-muted-foreground">
                                                     {weightStats.change > 0 ? "+" : ""}{weightStats.change.toFixed(1)} kg
                                                 </span>
                                             </div>
                                         )}
-                                        <span className="text-[10px] text-muted-foreground/60 mt-auto">
+                                        <span className="text-[11px] text-muted-foreground/60 mt-auto pt-2">
                                             {userGoal === "CUT" ? "Definición" : userGoal === "BULK" ? "Volumen" : userGoal === "MAINTAIN" ? "Mantener" : "Recomp"}
                                         </span>
                                     </>
@@ -353,7 +355,7 @@ export function MobileDashboardPanels() {
                     className={`transition-all duration-300 ease-in-out ${prsExpanded ? "col-span-2" : "col-span-1"}`}
                 >
                     <div
-                        className={`relative rounded-2xl bg-card border border-border/50 overflow-hidden transition-all duration-300 ${prsExpanded ? "p-4" : "p-3 aspect-square"}`}
+                        className={`relative rounded-2xl bg-card border border-border/50 overflow-hidden transition-all duration-300 ${prsExpanded ? "p-4" : "p-3 aspect-square flex flex-col"}`}
                         onClick={() => !prsExpanded && toggle("prs")}
                         style={{ cursor: prsExpanded ? "default" : "pointer" }}
                     >
@@ -387,16 +389,27 @@ export function MobileDashboardPanels() {
                             </div>
                         </div>
 
-                        {/* Collapsed: big number + trophy */}
+                        {/* Collapsed: top PR preview */}
                         {!prsExpanded && (
-                            <div className="flex flex-col justify-end h-[calc(100%-32px)]">
+                            <div className="flex flex-col justify-between flex-1">
                                 {loadingPRs ? (
                                     <Loader2 className="w-4 h-4 animate-spin text-amber-500 mx-auto mt-4" />
+                                ) : prs.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center flex-1 gap-1">
+                                        <span className="text-3xl">🏆</span>
+                                        <span className="text-[11px] text-muted-foreground text-center">Sin PRs</span>
+                                    </div>
                                 ) : (
                                     <>
-                                        <span className="text-4xl">🏆</span>
-                                        <span className="text-2xl font-bold leading-none mt-1">{prs.length}</span>
-                                        <span className="text-[10px] text-muted-foreground/60 mt-0.5">records</span>
+                                        <div>
+                                            <p className="text-[11px] text-muted-foreground truncate mb-0.5">{prs[0].exercise}</p>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-3xl font-bold leading-none">{prs[0].weight}</span>
+                                                <span className="text-sm text-muted-foreground">kg</span>
+                                            </div>
+                                            <p className="text-[11px] text-muted-foreground mt-0.5">x{prs[0].reps}</p>
+                                        </div>
+                                        <p className="text-[10px] text-amber-500/70 mt-auto pt-2">{prs.length} record{prs.length !== 1 ? "s" : ""}</p>
                                     </>
                                 )}
                             </div>
