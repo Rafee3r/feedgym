@@ -55,6 +55,7 @@ model User {
   isShadowbanned Boolean        @default(false)
   isFrozen       Boolean        @default(false)
   mutedUntil     DateTime?
+  inactivityLockedAt DateTime?  // When the user was locked for inactivity (14 days no posts)
   
   // Onboarding & Tutorial
   onboardingCompleted Boolean   @default(false)

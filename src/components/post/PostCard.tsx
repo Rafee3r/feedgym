@@ -2,7 +2,6 @@
 
 import React, { useState, useRef } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import {
     MessageCircle,
     Repeat2,
@@ -303,25 +302,45 @@ export function PostCard({
                             {/* Repost Media - Images */}
                             {(post.repostOf.mediaUrls && post.repostOf.mediaUrls.length > 0) ? (
                                 <div className="mt-2 rounded-lg overflow-hidden relative aspect-video bg-muted">
-                                    <Image
+                                    <div
+                                        className="absolute inset-0 bg-muted animate-pulse z-[1]"
+                                        id={`shimmer-repost-${post.id}`}
+                                    />
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
                                         src={post.repostOf.mediaUrls[0]}
                                         alt="Repost content"
-                                        fill
-                                        className="object-cover"
+                                        className="absolute inset-0 w-full h-full object-cover z-[2] opacity-0 transition-opacity duration-500"
+                                        loading="lazy"
+                                        onLoad={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '1'
+                                            const shimmer = document.getElementById(`shimmer-repost-${post.id}`)
+                                            if (shimmer) shimmer.style.display = 'none'
+                                        }}
                                     />
                                     {post.repostOf.mediaUrls.length > 1 && (
-                                        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                        <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded z-[3]">
                                             +{post.repostOf.mediaUrls.length - 1}
                                         </div>
                                     )}
                                 </div>
                             ) : post.repostOf.imageUrl && (
                                 <div className="mt-2 rounded-lg overflow-hidden relative aspect-video bg-muted">
-                                    <Image
+                                    <div
+                                        className="absolute inset-0 bg-muted animate-pulse z-[1]"
+                                        id={`shimmer-repost-single-${post.id}`}
+                                    />
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
                                         src={post.repostOf.imageUrl}
                                         alt="Repost content"
-                                        fill
-                                        className="object-cover"
+                                        className="absolute inset-0 w-full h-full object-cover z-[2] opacity-0 transition-opacity duration-500"
+                                        loading="lazy"
+                                        onLoad={(e) => {
+                                            (e.target as HTMLImageElement).style.opacity = '1'
+                                            const shimmer = document.getElementById(`shimmer-repost-single-${post.id}`)
+                                            if (shimmer) shimmer.style.display = 'none'
+                                        }}
                                     />
                                 </div>
                             )}

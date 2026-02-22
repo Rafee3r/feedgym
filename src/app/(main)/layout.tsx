@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { Sidebar } from "@/components/layout/Sidebar"
 import { RightPanel } from "@/components/layout/RightPanel"
 import { MobileNav } from "@/components/layout/MobileNav"
+import { InactivityGuard } from "@/components/auth/InactivityGuard"
 
 export default async function MainLayout({
     children,
@@ -23,7 +24,9 @@ export default async function MainLayout({
 
                 {/* Main Content */}
                 <main className="flex-1 min-h-screen border-x border-border min-w-0">
-                    {children}
+                    <InactivityGuard>
+                        {children}
+                    </InactivityGuard>
                 </main>
 
                 {/* Right Panel - Desktop */}
@@ -35,3 +38,4 @@ export default async function MainLayout({
         </div>
     )
 }
+

@@ -137,6 +137,7 @@ export async function updateUserStreak(userId: string): Promise<void> {
                 longestStreak: newLongestStreak,
                 consistencyTitle: newTitle,
                 badges: allBadges,
+                inactivityLockedAt: null, // Clear inactivity lock on post
             }
         })
 
