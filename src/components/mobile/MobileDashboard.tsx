@@ -3,8 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { ConsistencyCard, type ActivityData } from "@/components/consistency/ConsistencyCard"
-import { WeightSummaryCard } from "@/components/dashboard/WeightSummaryCard"
-import { PRsCard } from "@/components/dashboard/PRsCard"
+import { MobileDashboardPanels } from "@/components/mobile/MobileDashboardPanels"
 import { WeeklyReportCard } from "@/components/dashboard/WeeklyReportCard"
 import { Button } from "@/components/ui/button"
 import {
@@ -146,11 +145,11 @@ export function MobileDashboard() {
                 </DialogContent>
             </Dialog>
 
-            <WeightSummaryCard />
+            <MobileDashboardPanels />
 
-            <PRsCard compact />
-
-            <WeeklyReportCard compact />
+            <div className="px-4">
+                <WeeklyReportCard compact />
+            </div>
         </div>
     )
 }
