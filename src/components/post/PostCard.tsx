@@ -22,6 +22,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog"
 import { FitnessMetadata } from "./FitnessMetadata"
 import { PostTypeBadge } from "./PostTypeBadge"
 import type { PostData } from "@/types"
@@ -103,6 +111,7 @@ export function PostCard({
     const [isReposted, setIsReposted] = useState(post.isReposted || false)
     const [isExpanded, setIsExpanded] = useState(false)
     const [viewerImage, setViewerImage] = useState<string | null>(null)
+    const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
     const isOwner = currentUserId === post.author.id
 
@@ -216,9 +225,9 @@ export function PostCard({
                                 {post.canDelete && (
                                     <DropdownMenuItem
                                         onClick={(e) => {
-                                            e.preventDefault() // prevent closing instantly
+                                            e.preventDefault()
                                             e.stopPropagation()
-                                            onDelete?.(post.id)
+                                            setConfirmDeleteOpen(true)
                                         }}
                                         className="text-destructive focus:text-destructive cursor-pointer"
                                     >
@@ -554,6 +563,32 @@ export function PostCard({
                 isOpen={!!viewerImage}
                 onClose={() => setViewerImage(null)}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>¿Eliminar publicación?</DialogTitle>
+                        <DialogDescription>
+                            Esta acción no se puede deshacer. Tu publicación se eliminará permanentemente.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex gap-2 sm:gap-0">
+                        <Button variant="outline" onClick={() => setConfirmDeleteOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                setConfirmDeleteOpen(false)
+                                onDelete?.(post.id)
+                            }}
+                        >
+                            Eliminar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </article>
     )
 }
