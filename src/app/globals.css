@@ -189,9 +189,10 @@
 
     /* Mobile bottom nav */
     .mobile-nav {
-        @apply fixed bottom-0 left-0 right-0 bg-background border-t border-border;
-        @apply flex justify-around items-center h-14 px-4;
+        @apply fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-xl;
+        @apply flex justify-around items-center h-16 px-4;
         @apply md:hidden;
+        border-top: 1px solid hsl(var(--muted-foreground) / 0.2);
         padding-bottom: env(safe-area-inset-bottom);
     }
 
@@ -234,7 +235,7 @@
 
     /* Floating action button with glow animation */
     .fab {
-        @apply fixed bottom-20 left-1/2 -translate-x-1/2 h-12 px-5 rounded-full z-40;
+        @apply fixed bottom-[76px] left-1/2 -translate-x-1/2 h-12 px-5 rounded-full z-40;
         @apply bg-primary text-primary-foreground;
         @apply flex items-center justify-center gap-2;
         @apply transition-transform hover:scale-105 active:scale-95;
