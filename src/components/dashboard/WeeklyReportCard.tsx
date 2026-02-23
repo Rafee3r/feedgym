@@ -58,7 +58,7 @@ export function WeeklyReportCard({ compact = false, className }: WeeklyReportCar
     const { data: session } = useSession()
     const [report, setReport] = useState<string | null>(() => getCachedReport()?.report ?? null)
     const [isLoading, setIsLoading] = useState(false)
-    const [isOpen, setIsOpen] = useState(true)
+    const [isOpen, setIsOpen] = useState(false)
     const [stats, setStats] = useState<{ postsAnalyzed: number; prsCount: number } | null>(
         () => {
             const cached = getCachedReport()
