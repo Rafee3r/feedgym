@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { ConsistencyCard, type ActivityData } from "@/components/consistency/ConsistencyCard"
 import { MobileDashboardPanels } from "@/components/mobile/MobileDashboardPanels"
 import { WeeklyReportCard } from "@/components/dashboard/WeeklyReportCard"
+import { RoutinesCard } from "@/components/dashboard/RoutinesCard"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -147,8 +148,9 @@ export function MobileDashboard() {
 
             <MobileDashboardPanels />
 
-            <div className="px-4">
+            <div className="px-4 space-y-3">
                 <WeeklyReportCard compact />
+                <RoutinesCard compact />
             </div>
         </div>
     )

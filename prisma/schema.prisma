@@ -95,6 +95,7 @@ model User {
   // Nutrition (Cuerpo)
   dailyLogs      DailyLog[]
   kitchenItems   KitchenItem[]
+  routines       Routine[]
   
   @@index([username])
   @@index([email])
@@ -505,4 +506,41 @@ model ShoppingItem {
   updatedAt DateTime     @updatedAt
 
   @@index([shoppingListId])
+}
+
+// ROUTINE MODELS
+
+model Routine {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String   // e.g., "Piernas", "Pecho y Bíceps"
+  dayOfWeek String   // e.g., "Monday", "Wednesday"
+  order     Int      @default(0)
+
+  exercises RoutineExercise[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, dayOfWeek])
+}
+
+model RoutineExercise {
+  id        String  @id @default(cuid())
+  routineId String
+  routine   Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+
+  exercise  String  // e.g., "Leg press"
+  weight    Float?  // in kg, nullable for bodyweight exercises
+  sets      Int
+  reps      Int
+  order     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([routineId])
 }
