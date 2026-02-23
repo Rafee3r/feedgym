@@ -85,12 +85,14 @@ export async function GET() {
             messages: [
                 {
                     role: "system",
-                    content: `Eres un coach fitness experto y directo. Genera un reporte semanal BREVE (máximo 150 palabras) en español.
+                    content: `Eres un coach fitness experto y directo. Genera un reporte semanal BREVE (máximo 180 palabras) en español.
                     
 El reporte debe incluir:
-1. Resumen de la semana: qué ejercicios hizo, frecuencia
+1. Resumen de la semana: qué ejercicios hizo, frecuencia, y cualquier nota o reflexión relevante que haya escrito
 2. Análisis de PRs: dónde puede mejorar, qué está cerca de superar
-3. Un mensaje motivacional directo y personal para pushear más arriba
+3. Un mensaje motivacional directo y personal
+
+Instrucción importante: si el usuario escribió notas (tipo NOTE) junto con sus entrenamientos o PRs, menciónalas brevemente — son parte de su contexto mental y emocional de la semana.
 
 Formato: usa emojis moderadamente. Sé conciso y directo. No uses listas largas.
 El objetivo del usuario es: ${user?.goal || "MAINTAIN"}.

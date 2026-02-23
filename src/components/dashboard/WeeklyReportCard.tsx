@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useSession } from "next-auth/react"
-import { Sparkles, Loader2, RefreshCw, Calendar } from "lucide-react"
+import { Sparkles, Loader2, RefreshCw, Calendar, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -58,6 +58,7 @@ export function WeeklyReportCard({ compact = false, className }: WeeklyReportCar
     const { data: session } = useSession()
     const [report, setReport] = useState<string | null>(() => getCachedReport()?.report ?? null)
     const [isLoading, setIsLoading] = useState(false)
+    const [isOpen, setIsOpen] = useState(true)
     const [stats, setStats] = useState<{ postsAnalyzed: number; prsCount: number } | null>(
         () => {
             const cached = getCachedReport()
@@ -89,8 +90,12 @@ export function WeeklyReportCard({ compact = false, className }: WeeklyReportCar
         return (
             <div className={`shrink-0 ${className ?? ""}`}>
                 <div className="rounded-2xl bg-card border border-border/50 overflow-hidden">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+                    {/* Header — acts as toggle */}
+                    <button
+                        className="flex items-center justify-between w-full px-4 py-3 border-b border-border/30"
+                        onClick={() => setIsOpen(o => !o)}
+                        aria-expanded={isOpen}
+                    >
                         <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center">
                                 <Sparkles className="w-4 h-4 text-violet-500" />
@@ -98,47 +103,52 @@ export function WeeklyReportCard({ compact = false, className }: WeeklyReportCar
                             <span className="text-sm font-semibold text-foreground">Reporte Semanal</span>
                             <span className="text-[10px] text-violet-400 font-medium bg-violet-500/10 px-1.5 py-0.5 rounded-full">IA</span>
                         </div>
-                        {report && (
-                            <button
-                                onClick={generateReport}
-                                className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-violet-500 transition-colors"
-                                disabled={isLoading}
-                                aria-label="Regenerar"
-                            >
-                                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                            </button>
-                        )}
-                    </div>
-
-                    {report ? (
-                        <div className="px-4 py-3">
-                            <div className="text-xs text-muted-foreground leading-relaxed">
-                                {renderMarkdown(report)}
-                            </div>
-                            {stats && (
-                                <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-border/30">
-                                    <Calendar className="w-3 h-3 text-muted-foreground" />
-                                    <span className="text-[10px] text-muted-foreground">
-                                        {stats.postsAnalyzed} entrenamientos · {stats.prsCount} PRs
-                                    </span>
-                                </div>
+                        <div className="flex items-center gap-1">
+                            {report && (
+                                <span
+                                    role="button"
+                                    onClick={e => { e.stopPropagation(); generateReport() }}
+                                    className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-violet-500 transition-colors"
+                                    aria-label="Regenerar"
+                                >
+                                    <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                                </span>
                             )}
+                            <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
                         </div>
-                    ) : (
-                        <div className="px-4 py-4">
-                            <button
-                                onClick={generateReport}
-                                disabled={isLoading}
-                                className="w-full rounded-xl py-3 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-                            >
-                                {isLoading ? (
-                                    <><Loader2 className="w-4 h-4 animate-spin" /> Analizando...</>
-                                ) : (
-                                    <><Sparkles className="w-4 h-4" /> Generar reporte IA</>
+                    </button>
+
+                    {/* Collapsible body */}
+                    {isOpen && (
+                        report ? (
+                            <div className="px-4 py-3">
+                                <div className="text-xs text-muted-foreground leading-relaxed">
+                                    {renderMarkdown(report)}
+                                </div>
+                                {stats && (
+                                    <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-border/30">
+                                        <Calendar className="w-3 h-3 text-muted-foreground" />
+                                        <span className="text-[10px] text-muted-foreground">
+                                            {stats.postsAnalyzed} entrenamientos · {stats.prsCount} PRs
+                                        </span>
+                                    </div>
                                 )}
-                            </button>
-                        </div>
-                    )}
+                            </div>
+                        ) : (
+                            <div className="px-4 py-4">
+                                <button
+                                    onClick={generateReport}
+                                    disabled={isLoading}
+                                    className="w-full rounded-xl py-3 text-sm font-medium text-white bg-gradient-to-r from-violet-600 to-violet-500 hover:from-violet-700 hover:to-violet-600 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+                                >
+                                    {isLoading ? (
+                                        <><Loader2 className="w-4 h-4 animate-spin" /> Analizando...</>
+                                    ) : (
+                                        <><Sparkles className="w-4 h-4" /> Generar reporte IA</>
+                                    )}
+                                </button>
+                            </div>
+                        ))}
                 </div>
             </div>
         )
