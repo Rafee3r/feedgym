@@ -200,8 +200,18 @@ export function Feed() {
             const touchY = e.touches[0].clientY
             const pullDistance = touchY - touchStartY.current
 
-            if (pullDistance > 0 && pullDistance < 150) {
-                const progress = Math.min(pullDistance / 100, 1)
+            // Only respond to downward pulls with a minimum threshold
+            if (pullDistance < 10) {
+                // If swiping up, cancel the gesture entirely
+                if (pullDistance < -5) {
+                    isPulling.current = false
+                    setPullProgress(0)
+                }
+                return
+            }
+
+            if (pullDistance < 150) {
+                const progress = Math.min((pullDistance - 10) / 90, 1)
                 setPullProgress(progress)
 
                 // Prevent default scroll when pulling
@@ -369,9 +379,9 @@ export function Feed() {
             {/* Pull-to-refresh indicator */}
             {(pullProgress > 0 || isRefreshing) && (
                 <div
-                    className="absolute left-0 right-0 flex justify-center z-10 transition-transform"
+                    className="fixed left-0 right-0 flex justify-center z-50 transition-transform"
                     style={{
-                        top: -50 + (pullProgress * 60),
+                        top: -50 + (pullProgress * 70),
                         opacity: pullProgress > 0.3 ? 1 : pullProgress * 3
                     }}
                 >
