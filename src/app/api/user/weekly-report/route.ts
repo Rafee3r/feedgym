@@ -81,7 +81,8 @@ export async function GET() {
         // Generate AI report
         const openai = getOpenAI()
         const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini",
+            model: "gpt-5.2",
+            reasoning_effort: "medium",
             messages: [
                 {
                     role: "system",
@@ -109,7 +110,7 @@ ${prsText || "(Sin PRs registrados)"}
 Genera el reporte semanal.`
                 }
             ],
-            max_tokens: 300,
+            max_completion_tokens: 500,
         })
 
         const report = completion.choices[0]?.message?.content?.trim() || "No se pudo generar el reporte."
