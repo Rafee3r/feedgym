@@ -50,12 +50,28 @@ const DAY_LABELS: Record<string, string> = {
     Sunday: "Domingo",
 }
 
+const ROUTINES_CACHE_KEY = "feedgym-routines-cache"
+
+function saveRoutinesCache(data: { routines: Routine[]; trainingDays: string[] }) {
+    try { localStorage.setItem(ROUTINES_CACHE_KEY, JSON.stringify(data)) } catch { /* ignore */ }
+}
+
+function loadRoutinesCache(): { routines: Routine[]; trainingDays: string[] } | null {
+    try {
+        const raw = localStorage.getItem(ROUTINES_CACHE_KEY)
+        return raw ? JSON.parse(raw) : null
+    } catch { return null }
+}
+
 export function RoutinesCard({ compact = false }: { compact?: boolean }) {
     const { data: session } = useSession()
     const [isOpen, setIsOpen] = useState(false)
-    const [routines, setRoutines] = useState<Routine[]>([])
-    const [trainingDays, setTrainingDays] = useState<string[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+
+    // Hydrate from cache instantly
+    const cached = loadRoutinesCache()
+    const [routines, setRoutines] = useState<Routine[]>(cached?.routines ?? [])
+    const [trainingDays, setTrainingDays] = useState<string[]>(cached?.trainingDays ?? [])
+    const [isLoading, setIsLoading] = useState(!cached)
     const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null)
     const [isEditorOpen, setIsEditorOpen] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -71,11 +87,14 @@ export function RoutinesCard({ compact = false }: { compact?: boolean }) {
             const res = await fetch("/api/user/routines")
             if (res.ok) {
                 const data = await res.json()
-                setRoutines(data.routines ?? data)
-                if (data.trainingDays) setTrainingDays(data.trainingDays)
+                const r = data.routines ?? data
+                const d = data.trainingDays ?? []
+                setRoutines(r)
+                setTrainingDays(d)
+                saveRoutinesCache({ routines: r, trainingDays: d })
             }
         } catch {
-            // silently fail
+            // silently fail — cached data still shown
         } finally {
             setIsLoading(false)
         }
@@ -168,7 +187,9 @@ export function RoutinesCard({ compact = false }: { compact?: boolean }) {
         try {
             const res = await fetch(`/api/user/routines?id=${id}`, { method: "DELETE" })
             if (res.ok) {
-                setRoutines((prev) => prev.filter((r) => r.id !== id))
+                const updated = routines.filter((r) => r.id !== id)
+                setRoutines(updated)
+                saveRoutinesCache({ routines: updated, trainingDays })
             }
         } catch {
             // silently fail

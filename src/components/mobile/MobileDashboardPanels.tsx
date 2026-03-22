@@ -42,26 +42,54 @@ function goalColor(goal: GoalType, isGaining: boolean) {
 }
 
 // ─────────────────────────────────────────
+// Cache helpers
+// ─────────────────────────────────────────
+const WEIGHT_CACHE_KEY = "feedgym-weight-cache"
+const PRS_CACHE_KEY = "feedgym-prs-cache"
+
+interface WeightCache {
+    chartData: WeightChartData[]
+    stats: { latest: number | null; change: number | null }
+    goal: GoalType
+    targetWeight: number | null
+}
+
+function saveCache(key: string, data: unknown) {
+    try { localStorage.setItem(key, JSON.stringify(data)) } catch { /* ignore */ }
+}
+
+function loadCache<T>(key: string): T | null {
+    try {
+        const raw = localStorage.getItem(key)
+        return raw ? JSON.parse(raw) as T : null
+    } catch { return null }
+}
+
+// ─────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────
 export function MobileDashboardPanels() {
     const { data: session } = useSession()
     const [expanded, setExpanded] = useState<PanelId | null>(null)
 
+    // Hydrate from cache instantly
+    const weightCache = loadCache<WeightCache>(WEIGHT_CACHE_KEY)
+    const prsCache = loadCache<{ prs: PR[] }>(PRS_CACHE_KEY)
+
     // Weight state
-    const [weightData, setWeightData] = useState<WeightChartData[]>([])
-    const [weightStats, setWeightStats] = useState<{ latest: number | null; change: number | null } | null>(null)
-    const [loadingWeight, setLoadingWeight] = useState(true)
-    const [userGoal, setUserGoal] = useState<GoalType>("MAINTAIN")
-    const [targetWeight, setTargetWeight] = useState<number | null>(null)
+    const [weightData, setWeightData] = useState<WeightChartData[]>(weightCache?.chartData ?? [])
+    const [weightStats, setWeightStats] = useState<{ latest: number | null; change: number | null } | null>(weightCache?.stats ?? null)
+    const [loadingWeight, setLoadingWeight] = useState(!weightCache)
+    const [userGoal, setUserGoal] = useState<GoalType>(weightCache?.goal ?? "MAINTAIN")
+    const [targetWeight, setTargetWeight] = useState<number | null>(weightCache?.targetWeight ?? null)
     const [isAddWeightOpen, setIsAddWeightOpen] = useState(false)
     const [newWeight, setNewWeight] = useState("")
     const [newWeightDate, setNewWeightDate] = useState(new Date().toISOString().split("T")[0])
     const [isSavingWeight, setIsSavingWeight] = useState(false)
 
     // PRs state
-    const [prs, setPrs] = useState<PR[]>([])
-    const [loadingPRs, setLoadingPRs] = useState(true)
+    const [prs, setPrs] = useState<PR[]>(prsCache?.prs ?? [])
+    const [loadingPRs, setLoadingPRs] = useState(!prsCache)
     const [isAddPROpen, setIsAddPROpen] = useState(false)
     const [editingPR, setEditingPR] = useState<PR | null>(null)
     const [prExercise, setPrExercise] = useState("")
@@ -79,6 +107,12 @@ export function MobileDashboardPanels() {
                 setWeightStats(data.stats)
                 if (data.goal) setUserGoal(data.goal)
                 if (data.targetWeight !== undefined) setTargetWeight(data.targetWeight)
+                saveCache(WEIGHT_CACHE_KEY, {
+                    chartData: data.chartData,
+                    stats: data.stats,
+                    goal: data.goal ?? "MAINTAIN",
+                    targetWeight: data.targetWeight ?? null,
+                })
             }
         } catch { /* silent */ } finally { setLoadingWeight(false) }
     }, [])
@@ -89,6 +123,7 @@ export function MobileDashboardPanels() {
             if (res.ok) {
                 const data = await res.json()
                 setPrs(data.prs)
+                saveCache(PRS_CACHE_KEY, { prs: data.prs })
             }
         } catch { /* silent */ } finally { setLoadingPRs(false) }
     }, [])

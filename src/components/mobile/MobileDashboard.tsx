@@ -16,23 +16,40 @@ import {
 import { Loader2 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
+const ACTIVITY_CACHE_KEY = "feedgym-activity-cache"
+
+function saveActivityCache(data: ActivityData) {
+    try { localStorage.setItem(ACTIVITY_CACHE_KEY, JSON.stringify(data)) } catch { /* ignore */ }
+}
+
+function loadActivityCache(): ActivityData | null {
+    try {
+        const raw = localStorage.getItem(ACTIVITY_CACHE_KEY)
+        return raw ? JSON.parse(raw) : null
+    } catch { return null }
+}
+
 export function MobileDashboard() {
     const { data: session } = useSession()
 
+    // Hydrate from cache instantly
+    const cached = loadActivityCache()
+
     // Consistency state
-    const [activityData, setActivityData] = useState<ActivityData | null>(null)
-    const [loadingActivity, setLoadingActivity] = useState(true)
+    const [activityData, setActivityData] = useState<ActivityData | null>(cached)
+    const [loadingActivity, setLoadingActivity] = useState(!cached)
     const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
     const [selectedDays, setSelectedDays] = useState<string[]>([])
     const [isSavingSchedule, setIsSavingSchedule] = useState(false)
 
-    // Fetch activity data
+    // Fetch activity data (background refresh)
     const fetchActivityData = useCallback(async () => {
         try {
             const response = await fetch("/api/user/activity")
             if (response.ok) {
                 const data = await response.json()
                 setActivityData(data)
+                saveActivityCache(data)
             }
         } catch (error) {
             console.error("Error fetching activity data:", error)
