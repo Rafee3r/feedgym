@@ -8,6 +8,7 @@ import { CalendarStrip } from "@/components/cuerpo/CalendarStrip"
 import { MealCard } from "@/components/cuerpo/MealCard"
 import { RecommendationsCarousel } from "@/components/cuerpo/RecommendationsCarousel"
 import { ShoppingListModal } from "@/components/cuerpo/ShoppingListModal"
+import { ProgressPhotosCard } from "@/components/dashboard/ProgressPhotosCard"
 import { MealType } from "@/types"
 import { AddFoodModal } from "@/components/cuerpo/AddFoodModal"
 import { useNutrition } from "@/hooks/useNutrition"
@@ -492,6 +493,9 @@ export default function CuerpoPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* Progress Photos */}
+                <ProgressPhotosCard compact />
 
                 {/* Meal Cards - Original Design */}
                 <div className="space-y-3">

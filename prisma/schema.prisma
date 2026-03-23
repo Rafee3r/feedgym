@@ -96,6 +96,7 @@ model User {
   dailyLogs      DailyLog[]
   kitchenItems   KitchenItem[]
   routines       Routine[]
+  bodyProgress   BodyProgress[]
   
   @@index([username])
   @@index([email])
@@ -543,4 +544,31 @@ model RoutineExercise {
   updatedAt DateTime @updatedAt
 
   @@index([routineId])
+}
+
+// BODY PROGRESS TRACKING
+
+enum ProgressCategory {
+  FRONT
+  SIDE
+  BACK
+}
+
+model BodyProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  imageUrl  String   @db.Text  // base64 data URI
+  category  ProgressCategory @default(FRONT)
+  week      Int               // ISO week number (1-53)
+  year      Int               // Year for grouping
+  weight    Float?            // Optional weight at time of photo
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, year, week])
 }

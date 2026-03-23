@@ -6,6 +6,7 @@ import { ConsistencyCard, type ActivityData } from "@/components/consistency/Con
 import { MobileDashboardPanels } from "@/components/mobile/MobileDashboardPanels"
 import { WeeklyReportCard } from "@/components/dashboard/WeeklyReportCard"
 import { RoutinesCard } from "@/components/dashboard/RoutinesCard"
+import { ProgressPhotosCard } from "@/components/dashboard/ProgressPhotosCard"
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
@@ -168,6 +169,7 @@ export function MobileDashboard() {
             <div className="px-4 space-y-3">
                 <WeeklyReportCard compact />
                 <RoutinesCard compact />
+                <ProgressPhotosCard compact />
             </div>
         </div>
     )
