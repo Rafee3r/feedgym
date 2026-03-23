@@ -235,6 +235,7 @@ export function MobileDashboardPanels() {
             <div className="grid grid-cols-2 gap-3">
 
                 {/* ── WEIGHT PANEL ── */}
+                {expanded !== "prs" && (
                 <div
                     className={`transition-all duration-300 ease-in-out ${weightExpanded ? "col-span-2" : "col-span-1"}`}
                 >
@@ -384,8 +385,10 @@ export function MobileDashboardPanels() {
                         )}
                     </div>
                 </div>
+                )}
 
                 {/* ── PRs PANEL ── */}
+                {expanded !== "weight" && (
                 <div
                     className={`transition-all duration-300 ease-in-out ${prsExpanded ? "col-span-2" : "col-span-1"}`}
                 >
@@ -502,6 +505,7 @@ export function MobileDashboardPanels() {
                         )}
                     </div>
                 </div>
+                )}
             </div>
 
             {/* ── Add Weight Dialog ── */}
